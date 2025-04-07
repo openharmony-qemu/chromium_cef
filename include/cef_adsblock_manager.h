@@ -39,6 +39,7 @@
 #pragma once
 
 #include <vector>
+
 #include "build/build_config.h"
 #include "include/cef_base.h"
 #include "include/cef_callback.h"
@@ -60,19 +61,21 @@ class CefAdsBlockManager : public virtual CefBaseRefCounted {
   /// Set Ads Block ruleset file, containing easylist rules.
   ///
   /*--cef()--*/
-  virtual void SetAdsBlockRules(const CefString &rulesFile, bool replace) = 0;
+  virtual void SetAdsBlockRules(const CefString& rulesFile, bool replace) = 0;
 
   ///
   /// Add items to Ads Block Disallowed list.
   ///
   /*--cef()--*/
-  virtual void AddAdsBlockDisallowedList(const std::vector<CefString> &domainSuffixes) = 0;
+  virtual void AddAdsBlockDisallowedList(
+      const std::vector<CefString>& domainSuffixes) = 0;
 
   ///
   /// Remove items from Ads Block disallowed list.
   ///
   /*--cef()--*/
-  virtual void RemoveAdsBlockDisallowedList(const std::vector<CefString> &domainSuffixes) = 0;
+  virtual void RemoveAdsBlockDisallowedList(
+      const std::vector<CefString>& domainSuffixes) = 0;
 
   ///
   /// Clear Ads Block disallowed list.
@@ -84,21 +87,21 @@ class CefAdsBlockManager : public virtual CefBaseRefCounted {
   /// Add items to Ads Block Allowed list.
   ///
   /*--cef()--*/
-  virtual void AddAdsBlockAllowedList(const std::vector<CefString> &domainSuffixes) = 0;
+  virtual void AddAdsBlockAllowedList(
+      const std::vector<CefString>& domainSuffixes) = 0;
 
   ///
   /// Remove items from Ads Block allowed list.
   ///
   /*--cef()--*/
-  virtual void RemoveAdsBlockAllowedList(const std::vector<CefString> &domainSuffixes) = 0;
+  virtual void RemoveAdsBlockAllowedList(
+      const std::vector<CefString>& domainSuffixes) = 0;
 
   ///
   /// Clear Ads Block allow list.
   ///
   /*--cef()--*/
   virtual void ClearAdsBlockAllowedList() = 0;
-
 };
-
 
 #endif  // CEF_INCLUDE_CEF_ADSBLOCK_MANAGER_H_
