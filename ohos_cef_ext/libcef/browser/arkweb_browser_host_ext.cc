@@ -990,7 +990,7 @@ void ArkWebBrowserHostExtImpl::SetNWebId(int NWebID) {
 void ArkWebBrowserHostExtImpl::EnableAppLinking(bool enable) {
   is_arkweb_applinking_enabled_ = enable;
 }
- 
+
 bool ArkWebBrowserHostExtImpl::IsAppLinkingEnabled() const {
   return is_arkweb_applinking_enabled_;
 }
@@ -1104,8 +1104,9 @@ void ArkWebBrowserHostExtImpl::LoadWithData(const CefString& data,
   }
 }
 
-void ArkWebDealWithPostData(const std::string& post_data, 
-                           content::NavigationController::LoadURLParams* params) {
+void ArkWebDealWithPostData(
+    const std::string& post_data,
+    content::NavigationController::LoadURLParams* params) {
   if (post_data.empty()) {
       params->post_data = new network::ResourceRequestBody();
   } else {
@@ -1137,10 +1138,11 @@ void ArkWebBrowserHostExtImpl::LoadUrlWithParams(
  
   loadUrlParams.url = GURL(new_url);
   loadUrlParams.load_type = static_cast<content::NavigationController::LoadURLType>(load_type);
-  
-  loadUrlParams.referrer = content::Referrer(GURL(static_cast<std::optional<std::string>>(refer).value_or("")), 
-                           network::mojom::ReferrerPolicy::kDefault);
-  
+
+  loadUrlParams.referrer = content::Referrer(
+      GURL(static_cast<std::optional<std::string>>(refer).value_or("")),
+      network::mojom::ReferrerPolicy::kDefault);
+
   loadUrlParams.extra_headers = headers;
   if (loadUrlParams.load_type == content::NavigationController::LOAD_TYPE_HTTP_POST) {
       ArkWebDealWithPostData(post_data, &loadUrlParams);
@@ -1830,7 +1832,7 @@ int ArkWebBrowserHostExtImpl::PrerenderPage(const CefString& url,
     return ARKWEB_INIT_ERROR;
   }
 }
- 
+
 void ArkWebBrowserHostExtImpl::CancelAllPrerendering() {
   prerender_handles_.clear();
 }
@@ -3199,8 +3201,6 @@ void ArkWebBrowserHostExtImpl::EnableAdsBlock(bool enable) {
   }
   GetWebContents()->EnableAdsBlock(enable);
 
-  LOG(INFO) << "web adblock enabled : " << enable;
-
 #if BUILDFLAG(ARKWEB_LOGGER_REPORT)
   LOG_FEEDBACK(INFO) << "web adblock enabled :" << enable;
 #endif
@@ -3209,7 +3209,6 @@ void ArkWebBrowserHostExtImpl::EnableAdsBlock(bool enable) {
   if (!OHOS::adblock::AdBlockConfig::GetInstance()
            ->GetUserEasylistReplaceSwitch() &&
       enable) {
-    LOG(INFO) << "[Adblock] enable cloud control for easylist";
 
 #if BUILDFLAG(ARKWEB_LOGGER_REPORT)
     LOG_FEEDBACK(INFO) << "[Adblock] enable cloud control for easylist";
@@ -3376,7 +3375,6 @@ void ArkWebBrowserHostExtImpl::EnableIntelligentTrackingPrevention(
     base::AutoLock locker(lock_);
     intelligent_tracking_prevention_cookies_enabled_ = enable;
   }
-  LOG(INFO) << "Intelligent tracking prevention cookies enabled " << enable;
 #if BUILDFLAG(ARKWEB_LOGGER_REPORT)
   LOG_FEEDBACK(INFO) << "Intelligent tracking prevention cookies enabled "
                      << enable;
@@ -3669,7 +3667,6 @@ bool ArkWebBrowserHostExtImpl::IsSafeBrowsingEnabled() {
 
 void ArkWebBrowserHostExtImpl::EnableSafeBrowsing(bool enable) {
   if (settings_.is_safe_browsing_enable != enable) {
-    LOG(INFO) << "enable safe browsing" << enable;
 #if BUILDFLAG(ARKWEB_LOGGER_REPORT)
     LOG_FEEDBACK(INFO) << "enable safe browsing" << enable;
 #endif
@@ -3823,20 +3820,16 @@ void ArkWebBrowserHostExtImpl::SetBackForwardCacheOptions(int32_t size,
                                                           int32_t timeToLive) {
   auto web_contents = GetWebContents();
   if (!web_contents) {
-    LOG(ERROR) << "SetBackForwardCacheOptions failed to get web contents in "
-                  "CefBrowserHostBase.";
 #if BUILDFLAG(ARKWEB_LOGGER_REPORT)
-    LOG_FEEDBACK(ERROR) << "SetBackForwardCacheOptions failed to get web "
-                           "contents in CefBrowserHostBase.";
+    LOG_FEEDBACK(ERROR, kNetwork)
+        << "SetBackForwardCacheOptions message:noWebContents";
 #endif
     return;
   }
 
-  LOG(INFO) << "SetBackForwardCacheOptions size: " << size
-            << " timeToLive: " << timeToLive;
 #if BUILDFLAG(ARKWEB_LOGGER_REPORT)
-  LOG_FEEDBACK(INFO) << "SetBackForwardCacheOptions size: " << size
-                     << " timeToLive: " << timeToLive;
+  LOG_FEEDBACK(INFO, kNetwork) << "SetBackForwardCacheOptions size:" << size
+                               << " timeToLive:" << timeToLive << "s";
 #endif
   content::NavigationController& controller = web_contents->GetController();
   controller.GetBackForwardCache().SetCacheSize(size);
@@ -4404,7 +4397,8 @@ void ArkWebBrowserHostExtImpl::GetFocusedFrameInfo(int32_t& frame_id,
 void ArkWebBrowserHostExtImpl::EnableHttpsUpgrades(bool enable) {
   auto web_contents = GetWebContents();
   if (!web_contents) {
-    LOG(ERROR) << "ArkWebBrowserHostExtImpl::EnableHttpsUpgrades, web_contents is null";
+    LOG_FEEDBACK(WARNING, kHttpsUpgrades)
+        << "EnableHttpsUpgrades message:webContentsIsNull";
     return;
   }
   OhosHttpsUpgradesHelper::CreateForWebContents(web_contents);

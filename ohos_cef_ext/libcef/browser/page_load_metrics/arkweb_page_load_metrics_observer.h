@@ -46,6 +46,22 @@ class OhPageLoadMetricsObserver
       const page_load_metrics::mojom::PageLoadTiming& timing) override;
   void OnComplete(
       const page_load_metrics::mojom::PageLoadTiming& timing) override;
+  void OnFailedProvisionalLoad(
+      const page_load_metrics::FailedProvisionalLoadInfo&
+          failed_provisional_load_info) override;
+  ObservePolicy OnShown() override;
+  ObservePolicy OnCommit(content::NavigationHandle* navigation_handle) override;
+
+  ObservePolicy OnPreviewStart(content::NavigationHandle* navigation_handle,
+                               const GURL& currently_committed_url) override;
+  void OnDidInternalNavigationAbort(
+      content::NavigationHandle* navigation_handle) override;
+  void OnCommitSameDocumentNavigation(
+      content::NavigationHandle* navigation_handle) override;
+  void OnFirstPaintAfterBackForwardCacheRestoreInPage(
+      const page_load_metrics::mojom::BackForwardCacheTiming& timing,
+      size_t index) override;
+  void OnPrimaryPageRenderProcessGone() override;
 
   // PageLoadMetricsObserver event callbacks
   void OnFirstContentfulPaintInPage(
@@ -68,8 +84,7 @@ class OhPageLoadMetricsObserver
   static void RenderInitBlock(int64_t block_time);
 #endif
 #if BUILDFLAG(ARKWEB_BFCACHE)
-  page_load_metrics::PageLoadMetricsObserver::ObservePolicy
-  OnEnterBackForwardCache(
+  ObservePolicy OnEnterBackForwardCache(
       const page_load_metrics::mojom::PageLoadTiming& timing) override;
   void OnFirstContentfulPaintAfterBackForwardCacheRestoreInPage(
       const page_load_metrics::mojom::BackForwardCacheTiming& timing,
