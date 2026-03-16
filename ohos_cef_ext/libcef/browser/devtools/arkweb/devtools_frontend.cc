@@ -331,7 +331,12 @@ CefDevToolsFrontend* CefDevToolsFrontend::Show(
     // of the CefSettings.background_color value.
     new_settings.background_color = SK_ColorWHITE;
   }
-
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+  if (!inspected_browser) {
+    LOG(ERROR) << " func:" << __func__ << " inspected_browser is null.";
+    return nullptr;
+  }
+#endif // ARKWEB_DEVTOOLS
   CefBrowserCreateParams create_params;
   if (inspected_browser->is_views_hosted()) {
     create_params.popup_with_views_hosted_opener = true;
@@ -363,6 +368,42 @@ CefDevToolsFrontend* CefDevToolsFrontend::Show(
 }
 
 #if BUILDFLAG(ARKWEB_DEVTOOLS)
+// static
+CefDevToolsFrontend* CefDevToolsFrontend::StaticShowWith(
+      const CefString& source_id,
+      const CefString& target_id,
+      AlloyBrowserHostImpl* frontend_browser,
+      CefRefPtr<CefDevToolsMessageHandlerDelegate> devtools_message_handler,
+      content::WebContents* inspected_contents,
+      const CefPoint& inspect_element_at,
+      base::OnceClosure frontend_destroyed_callback,
+      const CefOpenDevToolsExtOpt& ext_opt) {
+  LOG(INFO) << "CefDevToolsFrontend::StaticShowWith";
+  auto handler = std::make_unique<CefDevToolsMessageHandler>(
+      std::move(devtools_message_handler),
+      Profile::FromBrowserContext(
+          frontend_browser->web_contents()->GetBrowserContext()),
+      ext_opt);
+
+  // CefDevToolsFrontend will delete itself when the frontend WebContents is
+  // destroyed.
+  CefDevToolsFrontend* devtools_frontend = new CefDevToolsFrontend(
+      frontend_browser,
+      std::move(handler),
+      inspected_contents, inspect_element_at,
+      std::move(frontend_destroyed_callback));
+
+  if (devtools_frontend) {
+    devtools_frontend->SetSourceTargetId(source_id, target_id);
+#if BUILDFLAG(ARKWEB_CRASHPAD)
+    DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+#endif
+    // Need to load the URL after creating the DevTools objects.
+    frontend_browser->GetMainFrame()->LoadURL(GetFrontendURL(false, devtools_frontend->isTabTarget_, false));
+  }
+  return devtools_frontend;
+}
+
 // static
 CefDevToolsFrontend* CefDevToolsFrontend::ShowWith(
       AlloyBrowserHostImpl* frontend_browser,
@@ -475,7 +516,7 @@ CefDevToolsFrontend::CefDevToolsFrontend(
     : content::WebContentsObserver(frontend_browser->web_contents()),
       frontend_browser_(frontend_browser),
 #if BUILDFLAG(ARKWEB_CRASHPAD)
-  inspected_contents_(inspected_contents->GetWeakPtr()),
+  inspected_contents_(inspected_contents ? inspected_contents->GetWeakPtr() : nullptr),
 #else
   inspected_contents_(inspected_contents),
 #endif
@@ -500,7 +541,7 @@ CefDevToolsFrontend::CefDevToolsFrontend(
     : content::WebContentsObserver(frontend_browser->web_contents()),
       frontend_browser_(frontend_browser),
 #if BUILDFLAG(ARKWEB_CRASHPAD)
-  inspected_contents_(inspected_contents->GetWeakPtr()),
+  inspected_contents_(inspected_contents ? inspected_contents->GetWeakPtr() : nullptr),
 #else
   inspected_contents_(inspected_contents),
 #endif
@@ -570,17 +611,22 @@ void CefDevToolsFrontend::PrimaryMainDocumentElementAvailable() {
   // Don't call AttachClient multiple times for the same DevToolsAgentHost.
   // Otherwise it will call AgentHostClosed which closes the DevTools window.
   // This may happen in cases where the DevTools content fails to load.
-#if BUILDFLAG(ARKWEB_CRASHPAD)
-  if (!inspected_contents_) {
-    return;
-  }
-#endif
 
 #if BUILDFLAG(ARKWEB_DEVTOOLS)
   isTabTarget_ = ShouldUseTabTarget();
   scoped_refptr<content::DevToolsAgentHost> agent_host;
+  if (!inspected_contents_) {
+    content::DevToolsAgentHost::List targets = content::DevToolsAgentHost::GetOrCreateAll();
+    for (const scoped_refptr<content::DevToolsAgentHost>& host : targets) {
+      if (CefString(host->GetId()) == target_id_) {
+        agent_host = host;
+        LOG(INFO) << " func:" << __func__;
+        break;
+      }
+    }
+  }
 #if BUILDFLAG(ARKWEB_CRASHPAD)
-  if (isTabTarget_) {
+  else if (isTabTarget_) {
     agent_host = content::DevToolsAgentHost::GetOrCreateForTab(inspected_contents_.get());
   } else {
     agent_host = content::DevToolsAgentHost::GetOrCreateFor(inspected_contents_.get());
@@ -591,13 +637,13 @@ void CefDevToolsFrontend::PrimaryMainDocumentElementAvailable() {
   } else {
     agent_host = content::DevToolsAgentHost::GetOrCreateFor(inspected_contents_);
   }
-#endif
+#endif // ARKWEB_CRASHPAD
 #else
 #if BUILDFLAG(ARKWEB_CRASHPAD)
   agent_host = content::DevToolsAgentHost::GetOrCreateFor(inspected_contents_.get());
 #else
   agent_host = content::DevToolsAgentHost::GetOrCreateFor(inspected_contents_);
-#endif
+#endif // ARKWEB_CRASHPAD
 #endif // BUILDFLAG(ARKWEB_DEVTOOLS)
 
   if (agent_host != agent_host_) {
@@ -608,6 +654,11 @@ void CefDevToolsFrontend::PrimaryMainDocumentElementAvailable() {
     agent_host_->AttachClient(this);
     if (!inspect_element_at_.IsEmpty()) {
 #if BUILDFLAG(ARKWEB_DEVTOOLS)
+#if BUILDFLAG(ARKWEB_CRASHPAD)
+      if (!inspected_contents_) {
+        return;
+      }
+#endif
       content::RenderFrameHost* rfh = inspected_contents_->GetFocusedFrame();
       if (!rfh) {
         rfh = inspected_contents_->GetPrimaryMainFrame();
@@ -691,6 +742,10 @@ void CefDevToolsFrontend::HandleMessageFromDevToolsFrontend(
   } else if (*method == "loadCompleted") {
 #if BUILDFLAG(ARKWEB_ARKWEB_EXTENSIONS)
 #if BUILDFLAG(ARKWEB_CRASHPAD)
+    if (!inspected_contents_) {
+      LOG(ERROR) << " func:" << __func__ << " inspected_contents_ is null.";
+      return;
+    }
     int tab_id = cef::GetTabIdForWebContents(inspected_contents_.get());
 #else
     int tab_id = cef::GetTabIdForWebContents(inspected_contents_);
@@ -1075,6 +1130,12 @@ PrefService* CefDevToolsFrontend::GetPrefs() const {
 }
 
 #if BUILDFLAG(ARKWEB_DEVTOOLS)
+void CefDevToolsFrontend::SetSourceTargetId(const CefString& source_id,
+                                            const CefString& target_id) {
+  source_id_ = source_id;
+  target_id_ = target_id;
+}
+
 AlloyBrowserHostImpl* CefDevToolsFrontend::GetFrontendBrowser() {
   return frontend_browser_.get();
 }

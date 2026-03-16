@@ -15,7 +15,9 @@
 #include "include/cef_x509_certificate.h"
 #include "ohos_cef_ext/include/arkweb_cef_ssl_callback.h"
 #include "ohos_cef_ext/include/arkweb_cef_verify_pin_callback.h"
-
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+struct RequestOpenDevToolsParams;
+#endif // ARKWEB_DEVTOOLS
 class CefSelectClientCertificateCallbackExt
     : public virtual CefSelectClientCertificateCallback {
  public:
@@ -200,6 +202,14 @@ class CefRequestHandlerExt : public virtual CefRequestHandler {
       CefRefPtr<CefVerifyPinCallback> callback) {
     return false;
   }
+
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+  ///
+  /// Called when request opening devtools window. 
+  ///
+  /*--cef()--*/
+  virtual void OnRequestOpenDevTools(const RequestOpenDevToolsParams& params) {}
+#endif // ARKWEB_DEVTOOLS
 
   CefRefPtr<CefRequestHandlerExt> AsCefRequestHandlerExt() override {
     return this;
