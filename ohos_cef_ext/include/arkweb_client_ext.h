@@ -27,6 +27,10 @@
 #include "include/cef_permission_request.h"
 #include "include/cef_web_client_extension_handler.h"
 
+#if BUILDFLAG(ARKWEB_AI)
+#include "arkweb/chromium_ext/content/public/browser/ai_session_types.h"
+#endif
+
 #if BUILDFLAG(ARKWEB_CUSTOM_VIDEO_PLAYER)
 #include "include/cef_custom_media_info.h"
 #include "include/cef_custom_media_player_delegate.h"
@@ -198,6 +202,19 @@ class ArkWebClientExt : public CefClient, public virtual CefBaseRefCounted {
   ///
   /*--cef()--*/
   virtual void OnIsPageDistillable(int page_type, const std::string& distillable_page_url, const std::string& title) {}
+#endif
+
+#if BUILDFLAG(ARKWEB_AI)
+  virtual void OnCreateAISession(content::AISessionType type,
+                                 const std::string& id,
+                                 const std::string& params,
+                                 content::AISessionCallback callback) {}
+  virtual void OnExecuteAIAction(content::AISessionType type,
+                                 const std::string& id,
+                                 const std::string& params,
+                                 content::AISessionCallback callback) {}
+  virtual void OnDestroyAISession(content::AISessionType type,
+                                  const std::string& id) {}
 #endif
 
 #if BUILDFLAG(ARKWEB_NETWORK_LOAD)

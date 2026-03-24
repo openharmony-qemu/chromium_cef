@@ -51,6 +51,19 @@ public:
   void OnPdfLoadEvent(int32_t result, const std::string& url) override;
 #endif  // BUILDFLAG(ARKWEB_PDF)
 
+#if BUILDFLAG(ARKWEB_AI)
+  void OnCreateAISession(content::AISessionType type,
+                         const std::string& id,
+                         const std::string& params,
+                         content::AISessionCallback callback) override;
+  void OnExecuteAIAction(content::AISessionType type,
+                         const std::string& id,
+                         const std::string& params,
+                         content::AISessionCallback callback) override;
+  void OnDestroyAISession(content::AISessionType type,
+                          const std::string& id) override;
+#endif
+
 #if BUILDFLAG(ARKWEB_MEDIA_CAST)
   void OnMediaCastEnter() override;
 #endif // BUILDFLAG(ARKWEB_MEDIA_CAST)
