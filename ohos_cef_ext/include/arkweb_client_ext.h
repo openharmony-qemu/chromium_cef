@@ -222,6 +222,8 @@ class ArkWebClientExt : public CefClient, public virtual CefBaseRefCounted {
                                 CefRefPtr<CefResponse> response_info,
                                 bool is_from_network) {}
 #endif
+
+  virtual void OnInputMethodAttached() {}
 };
 
 #endif  // OHOS_CEF_EXT_INCLUDE_ARKWEB_CLIENT_EXT_H_
