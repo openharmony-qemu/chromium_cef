@@ -133,4 +133,8 @@ static inline void setForInclude(const struct_type* src,
 #if BUILDFLAG(ARKWEB_DRAG_DROP)
   target->is_drag_enabled = src->is_drag_enabled;
 #endif  // BUILDFLAG(ARKWEB_DRAG_DROP)
+
+#if BUILDFLAG(ARKWEB_MENU)
+  target->smart_edge_state = src->smart_edge_state;
+#endif  // BUILDFLAG(ARKWEB_MENU)
 }
