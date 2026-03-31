@@ -194,6 +194,7 @@ bool ArkWebTouchSelectionControllerClientOSRExt::HandleContextMenu(
       AsArkWebTouchSelectionControllerClientOSRExt()->SelectionTextNotEmpty(!params.selection_text.empty());
     }
 #endif
+    handles_hidden_by_selection_ui_ = false;
     return true;
   }
 
