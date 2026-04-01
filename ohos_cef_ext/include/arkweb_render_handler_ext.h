@@ -364,12 +364,8 @@ class ArkWebRenderHandlerExt : public virtual CefRenderHandler,
   /// Called when scroll.
   ///
   /*--cef()--*/
-  virtual bool OnNestedScroll(CefRefPtr<CefBrowser> browser,
-                              float& x,
-                              float& y,
-                              float& fling_x,
-                              float& fling_y,
-                              bool& isAvailable) {
+  virtual bool OnNestedScroll(CefRefPtr<CefBrowser> browser, float& x,
+                              float& y) {
     return false;
   }
 
