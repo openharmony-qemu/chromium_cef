@@ -164,8 +164,8 @@ using content::KeyboardEventProcessingResult;
 #endif  // ARKWEB_VIDEO_ASSISTANT
 
 #if BUILDFLAG(ARKWEB_NWEB_EX)
-#include "ohos_nweb_ex/core/extension/nweb_extension_tabs_dispatcher.h"
-#include "ohos_nweb_ex/core/extension/nweb_extension_manager_dispatcher.h"
+#include "ohos_nweb_ex/core/arkweb/nweb_extension_tabs_delegate_impl.h"
+#include "ohos_nweb_ex/core/arkweb/nweb_extension_manager_delegate_impl.h"
 #endif  // ARKWEB_NWEB_EX
 
 #if BUILDFLAG(ARKWEB_MEDIA_POLICY)
@@ -987,7 +987,7 @@ int32_t AlloyBrowserHostImplExt::ExtensionGetTabId() {
     return -1;
   }
 #if BUILDFLAG(ARKWEB_NWEB_EX)
-  int32_t tab_id = NWebExtensionTabDispatcher::GetTabIdByNwebId(nweb_id);
+  int32_t tab_id = nweb_ex::NWebExtensionTabDelegateImpl::GetInstance().GetTabIdByNwebId(nweb_id);
   LOG(INFO) << "ExtensionGetTabId tab_id_=" << tab_id_
             << "; tab_id=" << tab_id;
   tab_id_ = tab_id;

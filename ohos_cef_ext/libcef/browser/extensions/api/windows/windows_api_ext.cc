@@ -23,7 +23,6 @@
 #include "chrome/browser/profiles/profile.h"
 #include "libcef/browser/extensions/window_extensions_util.h"
 #include "ohos_nweb/src/cef_delegate/nweb_extension_window_cef_delegate.h"
-#include "ohos_nweb/src/cef_delegate/nweb_extension_window_delegate_handler.h"
 #include "ohos_nweb/src/cef_delegate/nweb_extension_utils.h"
 #include "ohos_nweb/src/nweb_common.h"
 
@@ -32,7 +31,6 @@ using content::WebContents;
 namespace extensions {
 
 typedef OHOS::NWeb::NweExtensionWindowCefDelegate NweExtensionWindowCefDelegate;
-typedef OHOS::NWeb::NweExtensionWindowDelegateHandler NweExtensionWindowDelegateHandler;
 
 namespace windows = api::windows;
 
@@ -278,16 +276,9 @@ std::optional<WebExtensionWindow> getWindow(int id, std::optional<api::windows::
   }
   WebExtensionWindowQueryOptions windowQueryOptions = GetWindowQueryOptions(query_options);
 
-  if (IsNativeApiEnable()) {
-    if (NweExtensionWindowCefDelegate::GetInstance()->HasOnGetWindowV2CallBack()) {
-      WebExtensionWindowQueryOptionsV2 windowQueryOptionsV2 =
-        GetWindowQueryOptionsV2(query_options, browser_context, includeIncognitoInfo);
-      return NweExtensionWindowCefDelegate::GetInstance()->OnGetWindowV2(window_id, windowQueryOptionsV2);
-    } else {
-      return NweExtensionWindowCefDelegate::GetInstance()->OnGetWindow(window_id, windowQueryOptions);
-    }
-  }
-  return NweExtensionWindowDelegateHandler::GetInstance()->OnGetWindow(window_id, windowQueryOptions);
+  WebExtensionWindowQueryOptionsV2 windowQueryOptionsV2 =
+    GetWindowQueryOptionsV2(query_options, browser_context, includeIncognitoInfo);
+  return NweExtensionWindowCefDelegate::GetInstance()->OnGetWindowV2(window_id, windowQueryOptionsV2);
 }
 
 ExtensionFunction::ResponseAction WindowsGetFunction::Run() {
@@ -355,17 +346,9 @@ ExtensionFunction::ResponseAction WindowsGetLastFocusedFunction::Run() {
 
   WebExtensionWindowQueryOptions windowQueryOptions = GetWindowQueryOptions(params->query_options);
   std::optional<WebExtensionWindow> window;
-  if (IsNativeApiEnable()) {
-    if (NweExtensionWindowCefDelegate::GetInstance()->HasOnGetLastFocusedWindowV2CallBack()) {
-      WebExtensionWindowQueryOptionsV2 windowQueryOptionsV2 =
-        GetWindowQueryOptionsV2(params->query_options, browser_context(), include_incognito_information());
-      window = NweExtensionWindowCefDelegate::GetInstance()->OnGetLastFocusedWindowV2(windowQueryOptionsV2);
-    } else {
-      window = NweExtensionWindowCefDelegate::GetInstance()->OnGetLastFocusedWindow(windowQueryOptions);
-    }
-  } else {
-    window = NweExtensionWindowDelegateHandler::GetInstance()->OnGetLastFocusedWindow(windowQueryOptions);
-  }
+  WebExtensionWindowQueryOptionsV2 windowQueryOptionsV2 =
+    GetWindowQueryOptionsV2(params->query_options, browser_context(), include_incognito_information());
+  window = NweExtensionWindowCefDelegate::GetInstance()->OnGetLastFocusedWindowV2(windowQueryOptionsV2);
   if (!window) {
     return RespondNow(Error(extensions::tabs_constants::kNoLastFocusedWindowError));
   }
@@ -392,17 +375,9 @@ ExtensionFunction::ResponseAction WindowsGetAllFunction::Run() {
 
   WebExtensionWindowQueryOptions windowQueryOptions = GetWindowQueryOptions(params->query_options);
   std::vector<WebExtensionWindow> windows;
-  if (IsNativeApiEnable()) {
-    if (NweExtensionWindowCefDelegate::GetInstance()->HasOnGetAllWindowsV2CallBack()) {
-      WebExtensionWindowQueryOptionsV2 windowQueryOptionsV2 =
-        GetWindowQueryOptionsV2(params->query_options, browser_context(), include_incognito_information());
-      windows = NweExtensionWindowCefDelegate::GetInstance()->OnGetAllWindowsV2(windowQueryOptionsV2);
-    } else {
-      windows = NweExtensionWindowCefDelegate::GetInstance()->OnGetAllWindows(windowQueryOptions);
-    }
-  } else {
-    windows = NweExtensionWindowDelegateHandler::GetInstance()->OnGetAllWindows(windowQueryOptions);
-  }
+  WebExtensionWindowQueryOptionsV2 windowQueryOptionsV2 =
+    GetWindowQueryOptionsV2(params->query_options, browser_context(), include_incognito_information());
+  windows = NweExtensionWindowCefDelegate::GetInstance()->OnGetAllWindowsV2(windowQueryOptionsV2);
 
   bool populate = false;
   if (params->query_options && params->query_options->populate) {
@@ -485,17 +460,10 @@ ExtensionFunction::ResponseAction WindowsCreateFunction::Run() {
 
   call_create_window_ = true;
   bool success;
-  if (IsNativeApiEnable()) {
-    WebExtensionWindowCreateDataV2 data_V2 = GetWindowCreateDataV2(
-        data, browser_context(), include_incognito_information(), extension()->id());
-      success = NweExtensionWindowCefDelegate::GetInstance()->OnCreateWindowV2(
-      data, data_V2, base::BindRepeating(&WindowsCreateFunction::OnCreateWindow,
-                                    weak_ptr_factory_.GetWeakPtr()));        
-    } else {
-    success = NweExtensionWindowDelegateHandler::GetInstance()->OnCreateWindow(
-        data, base::BindRepeating(&WindowsCreateFunction::OnCreateWindow,
-                                  weak_ptr_factory_.GetWeakPtr()));
-  }
+  WebExtensionWindowCreateDataV2 data_V2 =
+      GetWindowCreateDataV2(data, browser_context(), include_incognito_information(), extension()->id());
+  success = NweExtensionWindowCefDelegate::GetInstance()->OnCreateWindowV2(
+      data, data_V2, base::BindRepeating(&WindowsCreateFunction::OnCreateWindow, weak_ptr_factory_.GetWeakPtr()));
   call_create_window_ = false;
 
   if (did_respond()) {
@@ -556,23 +524,10 @@ ExtensionFunction::ResponseAction WindowsUpdateFunction::Run() {
 
   call_update_window_ = true;
   bool success;
-  if (IsNativeApiEnable()) {
-    if (NweExtensionWindowCefDelegate::GetInstance()->HasOnUpdateWindowV2CallBack()) {
-      WebExtensionWindowUpdateInfoV2 infoV2 = GetWindowUpdateInfoV2(
-        info, browser_context(), include_incognito_information(), extension()->id());
-      success = NweExtensionWindowCefDelegate::GetInstance()->OnUpdateWindowV2(
-          window_id, infoV2, base::BindRepeating(&WindowsUpdateFunction::OnUpdateWindow,
-                                                 weak_ptr_factory_.GetWeakPtr()));  
-    } else {
-      success = NweExtensionWindowCefDelegate::GetInstance()->OnUpdateWindow(
-          window_id, info, base::BindRepeating(&WindowsUpdateFunction::OnUpdateWindow,
-                                               weak_ptr_factory_.GetWeakPtr()));
-    }
-  } else {
-    success = NweExtensionWindowDelegateHandler::GetInstance()->OnUpdateWindow(
-        window_id, info, base::BindRepeating(&WindowsUpdateFunction::OnUpdateWindow,
-                                             weak_ptr_factory_.GetWeakPtr()));
-  }
+  WebExtensionWindowUpdateInfoV2 infoV2 =
+      GetWindowUpdateInfoV2(info, browser_context(), include_incognito_information(), extension()->id());
+  success = NweExtensionWindowCefDelegate::GetInstance()->OnUpdateWindowV2(
+      window_id, infoV2, base::BindRepeating(&WindowsUpdateFunction::OnUpdateWindow, weak_ptr_factory_.GetWeakPtr()));
   call_update_window_ = false;
 
   if (did_respond()) {
@@ -621,23 +576,10 @@ ExtensionFunction::ResponseAction WindowsRemoveFunction::Run() {
 
   call_remove_window_ = true;
   bool success;
-  if (IsNativeApiEnable()) {
-    if (NweExtensionWindowCefDelegate::GetInstance()->HasOnRemoveWindowV2CallBack()) {
-      WebExtensionWindowRemoveInfoV2 infoV2 = GetWindowRemoveInfoV2(
-        browser_context(), include_incognito_information(), extension()->id());
-      success = NweExtensionWindowCefDelegate::GetInstance()->OnRemoveWindowV2(
-          window_id, infoV2, base::BindRepeating(&WindowsRemoveFunction::OnRemoveWindow,
-                                                 weak_ptr_factory_.GetWeakPtr()));
-    } else {
-      success = NweExtensionWindowCefDelegate::GetInstance()->OnRemoveWindow(
-          window_id, base::BindRepeating(&WindowsRemoveFunction::OnRemoveWindow,
-                                         weak_ptr_factory_.GetWeakPtr()));
-    }
-  } else {
-    success = NweExtensionWindowDelegateHandler::GetInstance()->OnRemoveWindow(
-        window_id, base::BindRepeating(&WindowsRemoveFunction::OnRemoveWindow,
-                                       weak_ptr_factory_.GetWeakPtr()));
-  }
+  WebExtensionWindowRemoveInfoV2 infoV2 =
+      GetWindowRemoveInfoV2(browser_context(), include_incognito_information(), extension()->id());
+  success = NweExtensionWindowCefDelegate::GetInstance()->OnRemoveWindowV2(
+      window_id, infoV2, base::BindRepeating(&WindowsRemoveFunction::OnRemoveWindow, weak_ptr_factory_.GetWeakPtr()));
   call_remove_window_ = false;
 
   if (did_respond()) {

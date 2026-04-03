@@ -20,7 +20,7 @@
 #endif
 
 #if BUILDFLAG(ARKWEB_NWEB_EX)
-#include "ohos_nweb_ex/core/extension/nweb_extension_tabs_dispatcher.h"
+#include "ohos_nweb_ex/core/arkweb/nweb_extension_tabs_delegate_impl.h"
 #endif
 
 #include "cef/ohos_cef_ext/libcef/browser/alloy/alloy_browser_host_impl_ext.h"
@@ -32,7 +32,7 @@ int GetTabIdForWebContents(const content::WebContents* web_contents) {
   if ((*base::CommandLine::ForCurrentProcess())
           .HasSwitch(switches::kEnableNwebEx)
 #if BUILDFLAG(ARKWEB_NWEB_EX)
-      && NWebExtensionTabDispatcher::HasGetTabIdByNwebIdV2Callback()
+      && nweb_ex::NWebExtensionTabDelegateImpl::GetInstance().HasGetTabIdByNwebIdV2Callback()
 #endif
   ) {
     auto host_base = CefBrowserHostBase::GetBrowserForContents(web_contents);
@@ -104,7 +104,7 @@ content::WebContents* GetWebContentByTabIdOrSessionId(int id) {
   if ((*base::CommandLine::ForCurrentProcess())
           .HasSwitch(switches::kEnableNwebEx)
 #if BUILDFLAG(ARKWEB_NWEB_EX)
-      && NWebExtensionTabDispatcher::HasGetTabIdByNwebIdV2Callback()
+      && nweb_ex::NWebExtensionTabDelegateImpl::GetInstance().HasGetTabIdByNwebIdV2Callback()
 #endif
   ) {
     return GetWebContentByTabId(id);
@@ -117,7 +117,7 @@ bool ArkWebExtensionIsNotTabId(content::WebContents* web_contents, int tab_id) {
   if ((*base::CommandLine::ForCurrentProcess())
           .HasSwitch(switches::kEnableNwebEx)
 #if BUILDFLAG(ARKWEB_NWEB_EX)
-      && NWebExtensionTabDispatcher::HasGetTabIdByNwebIdV2Callback()
+      && nweb_ex::NWebExtensionTabDelegateImpl::GetInstance().HasGetTabIdByNwebIdV2Callback()
 #endif
   ) {
     if (web_contents->ExtensionGetTabId() != tab_id) {

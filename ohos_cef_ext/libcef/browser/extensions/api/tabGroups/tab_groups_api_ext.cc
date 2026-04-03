@@ -96,7 +96,7 @@ ExtensionFunction::ResponseAction TabGroupsGetFunction::Run() {
 void TabGroupsGetFunction::OnGetTabGroup(
     const base::WeakPtr<TabGroupsGetFunction>& function,
     const NWebExtensionTabGroup& tabGroup,
-    std::optional<std::string>& error) {
+    const std::optional<std::string>& error) {
   DCHECK(function);
   if (!function) {
     LOG(ERROR) << "OnGetTabGroup is empty!!!!";
@@ -155,7 +155,7 @@ ExtensionFunction::ResponseAction TabGroupsMoveFunction::Run() {
 void TabGroupsMoveFunction::OnMoveTabGroup(
     const base::WeakPtr<TabGroupsMoveFunction>& function,
     const NWebExtensionTabGroup& tabGroup,
-    std::optional<std::string>& error) {
+    const std::optional<std::string>& error) {
   DCHECK(function);
   if (!function) {
     LOG(ERROR) << "OnMoveTabGroup is empty!!!!";
@@ -223,7 +223,7 @@ ExtensionFunction::ResponseAction TabGroupsQueryFunction::Run() {
 void TabGroupsQueryFunction::OnQueryTabGroup(
     const base::WeakPtr<TabGroupsQueryFunction>& function,
     const std::vector<NWebExtensionTabGroup>& tabGroups,
-    std::optional<std::string>& error) {
+    const std::optional<std::string>& error) {
   DCHECK(function);
   if (!function) {
     LOG(ERROR) << "OnQueryTabGroup is empty!!!!";
@@ -287,7 +287,7 @@ ExtensionFunction::ResponseAction TabGroupsUpdateFunction::Run() {
 void TabGroupsUpdateFunction::OnUpdateTabGroup(
     const base::WeakPtr<TabGroupsUpdateFunction>& function,
     const NWebExtensionTabGroup& tabGroup,
-    std::optional<std::string>& error) {
+    const std::optional<std::string>& error) {
   DCHECK(function);
   if (!function) {
     LOG(ERROR) << "OnUpdateTabGroup is empty!!!!";

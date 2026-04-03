@@ -34,7 +34,7 @@
 #include "ohos_nweb/src/nweb_common.h"
 
 #if BUILDFLAG(ARKWEB_NWEB_EX)
-#include "ohos_nweb_ex/core/extension/nweb_extension_context_menus_dispatcher.h"
+#include "ohos_nweb_ex/core/arkweb/nweb_extension_context_menus_delegate_impl.h"
 #endif
 
 std::string GetTypeStr(extensions::MenuItem::Type type) {
@@ -454,16 +454,8 @@ void CefWebExtensionMenuManager::OnContextMenusCreate(
     extensions::MenuItem* menu_item) {
 #if BUILDFLAG(ARKWEB_NWEB_EX)
   NWebContextMenusItem item = GetNWebContextMenusItem(menu_item);
-  if (IsNativeApiEnable()) {
-    if (NWebExtensionContextMenusDispatcher::HasOnCreateNativeByPbCallback()) {
-      NWebContextMenusItemV2 item_v2 = GetNWebContextMenusItemV2(menu_item);
-      NWebExtensionContextMenusDispatcher::OnCreateNativeByPb(extension_id, item_v2);
-    } else {
-      NWebExtensionContextMenusDispatcher::OnCreateNative(extension_id, item);
-    }
-  } else {
-    NWebExtensionContextMenusDispatcher::OnCreate(extension_id, item);
-  }
+  NWebContextMenusItemV2 item_v2 = GetNWebContextMenusItemV2(menu_item);
+  nweb_ex::NWebExtensionContextMenusDelegateImpl::GetInstance().OnCreateNativeByPb(extension_id, item_v2);
 #endif
 }
  
@@ -473,16 +465,8 @@ void CefWebExtensionMenuManager::OnContextMenusUpdate(
     extensions::MenuItem* menu_item) {
 #if BUILDFLAG(ARKWEB_NWEB_EX)
   NWebContextMenusItem item = GetNWebContextMenusItem(menu_item);
-  if (IsNativeApiEnable()) {
-    if (NWebExtensionContextMenusDispatcher::HasOnUpdateNativeByPbCallback()) {
-      NWebContextMenusItemV2 item_v2 = GetNWebContextMenusItemV2(menu_item);
-      NWebExtensionContextMenusDispatcher::OnUpdateNativeByPb(extension_id, item_v2);
-    } else {
-      NWebExtensionContextMenusDispatcher::OnUpdateNative(extension_id, item);
-    }
-  } else {
-    NWebExtensionContextMenusDispatcher::OnUpdate(extension_id, item);
-  }
+  NWebContextMenusItemV2 item_v2 = GetNWebContextMenusItemV2(menu_item);
+  nweb_ex::NWebExtensionContextMenusDelegateImpl::GetInstance().OnUpdateNativeByPb(extension_id, item_v2);
 #endif
 }
 
@@ -490,7 +474,7 @@ NO_SANITIZE("cfi-icall")
 void CefWebExtensionMenuManager::OnContextMenusRemove(const std::string& extension_id,
     int menu_item_id) {
 #if BUILDFLAG(ARKWEB_NWEB_EX)
-  NWebExtensionContextMenusDispatcher::OnRemoveNative(extension_id, menu_item_id, nullptr);
+  nweb_ex::NWebExtensionContextMenusDelegateImpl::GetInstance().OnRemoveNative(extension_id, menu_item_id, nullptr);
 #endif
 }
 
@@ -499,12 +483,7 @@ void CefWebExtensionMenuManager::OnContextMenusRemove(
     const std::string& extension_id,
     const std::string& menu_item_id) {
 #if BUILDFLAG(ARKWEB_NWEB_EX)
-  if (IsNativeApiEnable()) {
-    NWebExtensionContextMenusDispatcher::OnRemoveNative(extension_id, 0,
-                                                        menu_item_id.c_str());
-  } else {
-    NWebExtensionContextMenusDispatcher::OnRemove(extension_id, menu_item_id);
-  }
+  nweb_ex::NWebExtensionContextMenusDelegateImpl::GetInstance().OnRemoveNative(extension_id, 0, menu_item_id.c_str());
 #endif
 }
  
@@ -512,11 +491,7 @@ NO_SANITIZE("cfi-icall")
 void CefWebExtensionMenuManager::OnContextMenusRemoveAll(
     const std::string& extension_id) {
 #if BUILDFLAG(ARKWEB_NWEB_EX)
-  if (IsNativeApiEnable()) {
-    NWebExtensionContextMenusDispatcher::OnRemoveAllNative(extension_id);
-  } else {
-    NWebExtensionContextMenusDispatcher::OnRemoveAll(extension_id);
-  }
+  nweb_ex::NWebExtensionContextMenusDelegateImpl::GetInstance().OnRemoveAllNative(extension_id);
 #endif
 }
 
@@ -532,15 +507,10 @@ void CefWebExtensionMenuManager::OnContextMenusRemove(
     return;
   }
 
-  if (NWebExtensionContextMenusDispatcher::HasOnRemoveByIntPbCallback()) {
-    NWebContextMenusItemV2 v2 = {};
-    v2.isOffTheRecord = browser_context->IsOffTheRecord();
-    NWebExtensionContextMenusDispatcher::OnRemoveByPb(
-        extension_id, menu_item_id, /*menu_item_id_string=*/nullptr, v2);
-  } else {
-    CefWebExtensionMenuManager::OnContextMenusRemove(extension_id,
-                                                     menu_item_id);
-  }
+  NWebContextMenusItemV2 v2 = {};
+  v2.isOffTheRecord = browser_context->IsOffTheRecord();
+  nweb_ex::NWebExtensionContextMenusDelegateImpl::GetInstance().OnRemoveByPb(
+      extension_id, menu_item_id, /*menu_item_id_string=*/nullptr, v2);
 #endif
 }
 
@@ -556,19 +526,10 @@ void CefWebExtensionMenuManager::OnContextMenusRemove(
     return;
   }
 
-  if (IsNativeApiEnable()) {
-    if (NWebExtensionContextMenusDispatcher::HasOnRemoveByPbCallback()) {
-      NWebContextMenusItemV2 v2 = {};
-      v2.isOffTheRecord = browser_context->IsOffTheRecord();
-      NWebExtensionContextMenusDispatcher::OnRemoveByPb(
-          extension_id,
-          /*menu_item_id_int=*/0, menu_item_id.c_str(), v2);
-    } else {
-      NWebExtensionContextMenusDispatcher::OnRemoveNative(extension_id, 0,
-                                                          menu_item_id.c_str());
-    }
-  } else {
-    NWebExtensionContextMenusDispatcher::OnRemove(extension_id, menu_item_id);
-  }
+  NWebContextMenusItemV2 v2 = {};
+  v2.isOffTheRecord = browser_context->IsOffTheRecord();
+  nweb_ex::NWebExtensionContextMenusDelegateImpl::GetInstance().OnRemoveByPb(
+      extension_id,
+      /*menu_item_id_int=*/0, menu_item_id.c_str(), v2);
 #endif
 }
