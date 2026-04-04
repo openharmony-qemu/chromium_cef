@@ -4313,6 +4313,15 @@ void ArkWebBrowserHostExtImpl::GetLastJavaScriptProxyCallingFrameInfo(
 #endif
 
 #if BUILDFLAG(ARKWEB_READER_MODE)
+void ArkWebBrowserHostExtImpl::EnableReaderMode(bool enabled) {
+  auto web_contents = GetWebContents();
+  if (!web_contents) {
+    LOG(ERROR) << "ArkWebBrowserHostExtImpl::EnableReaderMode web_contents is null";
+    return;
+  }
+  GetWebContents()->EnableReaderMode(enabled);
+}
+
 void ArkWebBrowserHostExtImpl::Distill(uint64_t request_id, const DistillOptions& distill_options,
   CefRefPtr<CefDistillCallback> callback) {
   auto web_contents = GetWebContents();
