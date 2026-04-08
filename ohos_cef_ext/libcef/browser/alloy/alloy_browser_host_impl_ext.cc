@@ -1807,6 +1807,23 @@ void AlloyBrowserHostImplExt::OnDumpJavaScriptStackCallback(
     int pid,
     content::RendererIsUnresponsiveReason reason,
     const std::string& stack) {
+  content::GetUIThreadTaskRunner({})->PostTask(
+    FROM_HERE,
+    base::BindOnce(
+      [](base::WeakPtr<AlloyBrowserHostImplExt> weak_self, const std::string& stack_data) {
+        if (auto* self = weak_self.get()) {
+          content::WebContents* webContents = self->web_contents();
+          if (webContents) {
+            content::RenderFrameHost* main_frame = webContents->GetPrimaryMainFrame();
+            if (main_frame) {
+              content::RenderProcessHost* host = main_frame->GetProcess();
+              if (host && host->GetProcess().IsValid()) {
+                host->ReportRenderUnresponsive(static_cast<int32_t>(host->GetProcess().Pid()), stack_data);
+              }
+            }
+          }
+        }
+      }, weak_ptr_factory_.GetWeakPtr(), stack));
   if (client_) {
     if (auto handler = client_->GetRequestHandler()) {
       int anr_reason = static_cast<int>(
