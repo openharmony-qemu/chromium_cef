@@ -754,6 +754,10 @@ typedef struct _cef_browser_settings_t {
   /* ohos webview end */
 #endif  // BUILDFLAG(IS_OHOS)
 
+#if BUILDFLAG(ARKWEB_NIGHT_MODE)
+  cef_state_t night_prefer_color_scheme_enabled;
+#endif
+
 #if BUILDFLAG(ARKWEB_AI)
   cef_state_t arkweb_agent_enabled;
   cef_state_t agent_need_highlight;

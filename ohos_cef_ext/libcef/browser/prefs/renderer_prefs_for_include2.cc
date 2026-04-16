@@ -107,6 +107,16 @@ void SetCefPrefsSetStateExt(const CefBrowserSettings& cef,
     web.preferred_color_scheme = blink::mojom::PreferredColorScheme::kLight;
   }
 #endif
+#if BUILDFLAG(ARKWEB_NIGHT_MODE)
+  if (cef.night_prefer_color_scheme_enabled == STATE_ENABLED) {
+    web.preferred_color_scheme = blink::mojom::PreferredColorScheme::kNight;
+    web.night_mode_enabled = true;
+    web.force_dark_mode_enabled = false;
+    web.turn_image_gray = false;
+    web.turn_all_gray = false;
+    web.not_process_images = false;
+  }
+#endif
   SET_STATE(cef.loads_images_automatically, web.loads_images_automatically);
   SET_STATE(cef.allow_running_insecure_content,
             web.allow_running_insecure_content);
