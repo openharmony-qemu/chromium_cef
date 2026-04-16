@@ -4,6 +4,7 @@
 
 #include "components/password_manager/core/browser/password_store/password_store_backend.h"
 
+#include "chrome/browser/browser_process.h"
 #include "components/password_manager/core/browser/password_store/login_database.h"
 #include "components/password_manager/core/browser/password_store/password_store_built_in_backend.h"
 #include "components/password_manager/core/browser/password_store_factory_util.h"
@@ -16,7 +17,7 @@ std::unique_ptr<PasswordStoreBackend> PasswordStoreBackend::Create(
     PrefService* prefs) {
   return std::make_unique<PasswordStoreBuiltInBackend>(
       CreateLoginDatabase(password_manager::kProfileStore, login_db_path, prefs),
-      syncer::WipeModelUponSyncDisabledBehavior::kNever, prefs, nullptr);
+      syncer::WipeModelUponSyncDisabledBehavior::kNever, prefs, g_browser_process->os_crypt_async());
 }
 
 }  // namespace password_manager
