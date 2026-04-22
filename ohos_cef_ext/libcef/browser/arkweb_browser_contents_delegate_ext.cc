@@ -60,6 +60,10 @@
 #include "arkweb/ohos_adapter_ndk/ohos_adapter_helper_ext.h"
 #endif
 
+#if BUILDFLAG(ARKWEB_WEB_APP)
+#include "ohos_cef_ext/include/arkweb_client_ext.h"
+#endif
+
 namespace {
   
 #if BUILDFLAG(ARKWEB_INPUT_EVENTS)
@@ -468,3 +472,16 @@ void ArkWebBrowserContentsDelegateExt::OnRequestOpenDevTools(RequestOpenDevTools
   }
 }
 #endif // ARKWEB_DEVTOOLS
+
+#if BUILDFLAG(ARKWEB_WEB_APP)
+void ArkWebBrowserContentsDelegateExt::DidUpdateWebManifestURL(
+    content::RenderFrameHost* target_frame,
+    const GURL& manifest_url) {
+  LOG(INFO) << "ArkWebBrowserContentsDelegateExt::DidUpdateWebManifestURL";
+  if (auto c = client()) {
+    if (c->AsArkWebClient()) {
+      c->AsArkWebClient()->DidUpdateWebManifestURL(target_frame, manifest_url);
+    }
+  }
+}
+#endif
