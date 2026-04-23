@@ -497,8 +497,10 @@ void ArkWebTouchSelectionControllerClientOSRExt::OnSelectionEvent(
 void ArkWebTouchSelectionControllerClientOSRExt::
     UpdateClientClippedSelectionBounds(
         const gfx::Rect& clipped_selection_bounds) {
+  if (clipped_selection_bounds_ != clipped_selection_bounds) {
+    MouseMayUpdateClientClippedSelectionBounds(clipped_selection_bounds);
+  }
   clipped_selection_bounds_ = clipped_selection_bounds;
-  MouseMayUpdateClientClippedSelectionBounds(clipped_selection_bounds);
 }
 
 bool ArkWebTouchSelectionControllerClientOSRExt::IsVaildSelectionHandleMove() {
