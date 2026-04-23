@@ -362,9 +362,10 @@ OHOS::NWeb::PrintAttributesAdapter OhosPrintManager::CreateCustomOptions()
 
 bool OhosPrintManager::PrintNow() {
   if (is_print_now_) {
-    LOG(ERROR) << "printing in progress.";
+    LOG(ERROR) << "OhosPrintManager printing in progress.";
     return false;
   }
+  is_print_now_ = true;
   LOG(INFO) << "OhosPrintManager::PrintNow";
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
 
