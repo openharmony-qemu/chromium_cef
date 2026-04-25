@@ -142,6 +142,12 @@ void SetIsFling(bool is_fling);
   void UpdateHitTestData(int32_t type, const std::string& extra_data, int32_t node_id) override;
   void SetOverscrollMode(int mode);
   bool IsElementExist(std::string xPath);
+  int32_t ExecuteInputCommand(const std::string& xpath,
+                              const std::string& value,
+                              const std::string& event_type);
+  int32_t ExecuteSelectCommand(const std::string& xpath,
+                               const std::vector<int32_t>& indexes,
+                               const std::vector<std::string>& values);
 #endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
 
 #if BUILDFLAG(ARKWEB_MEDIA)
@@ -189,6 +195,12 @@ void SetIsFling(bool is_fling);
 #if BUILDFLAG(ARKWEB_INPUT_EVENTS)
   bool SetFocusByPosition(float x, float y); // only in ui thread
   void RequirePositionEditAble(std::shared_ptr<std::promise<bool>> result_promise, float x, float y,
+      mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote); // only in io thread
+  void ExecuteInputCommandOnIO(std::shared_ptr<std::promise<int32_t>> result_promise,
+      const std::string& xpath, const std::string& value, const std::string& event_type,
+      mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote); // only in io thread
+  void ExecuteSelectCommandOnIO(std::shared_ptr<std::promise<int32_t>> result_promise,
+      const std::string& xpath, const std::vector<int32_t> indexes, const std::vector<std::string> values,
       mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote); // only in io thread
   void OnIoRenderFrameDisconnect(); // only in io thread
   mojo::Remote<cef::mojom::RenderFrame> io_thread_render_frame_; // only in io thread

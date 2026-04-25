@@ -1619,6 +1619,32 @@ bool ArkWebBrowserHostExtImpl::IsElementExist(CefString& xPath) {
   return false;
 }
 
+int32_t ArkWebBrowserHostExtImpl::ExecuteInputCommand(
+    const std::string& xpath,
+    const std::string& value,
+    const std::string& event_type) {
+  auto frame = GetMainFrame();
+  if (frame && frame->IsValid()) {
+    return static_cast<ArkwebFrameHostExtImpl*>(frame.get())
+        ->ExecuteInputCommand(xpath, value, event_type);
+  }
+  LOG(ERROR) << "ExecuteInputCommand: main frame is null or invalid";
+  return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
+}
+
+int32_t ArkWebBrowserHostExtImpl::ExecuteSelectCommand(
+    const std::string& xpath,
+    const std::vector<int32_t>& indexes,
+    const std::vector<std::string>& values) {
+  auto frame = GetMainFrame();
+  if (frame && frame->IsValid()) {
+    return static_cast<ArkwebFrameHostExtImpl*>(frame.get())
+        ->ExecuteSelectCommand(xpath, indexes, values);
+  }
+  LOG(ERROR) << "ExecuteSelectCommand: main frame is null or invalid";
+  return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
+}
+
 void ArkWebBrowserHostExtImpl::SetOverscrollMode(int overscrollMode) {
   auto frame = GetMainFrame();
   if (frame && frame->IsValid()) {

@@ -16,6 +16,7 @@
 #include <signal.h>
 
 #include "arkweb/build/features/features.h"
+#include "arkweb/ohos_nweb/include/nweb_errors.h"
 #include "build/build_config.h"
 #define INSIDE_BLINK 1
 #include "cef/libcef/renderer/frame_impl.h"
@@ -799,6 +800,42 @@ void ArkwebFrameExtImpl::IsElementExist(
   std::move(callback).Run(isExist);
   LOG(INFO) << "IsElementExist cef frame done. isExist:"
             << (isExist ? "true" : "false");
+}
+
+void ArkwebFrameExtImpl::ExecuteInputCommand(
+    const std::string& xpath,
+    const std::string& value,
+    const std::string& event_type,
+    cef::mojom::RenderFrame::ExecuteInputCommandCallback callback) {
+  LOG(INFO) << "ExecuteInputCommand in cef frame";
+  int32_t result = static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::FAILED);
+  auto render_frame = content::RenderFrame::FromWebFrame(frame_);
+  if (!render_frame) {
+    LOG(ERROR) << "ExecuteInputCommand: render_frame NULL";
+    std::move(callback).Run(result);
+    return;
+  }
+  result = render_frame->ExecuteInputCommand(xpath, value, event_type);
+  LOG(INFO) << "ExecuteInputCommand cef frame done. result=" << result;
+  std::move(callback).Run(result);
+}
+
+void ArkwebFrameExtImpl::ExecuteSelectCommand(
+    const std::string& xpath,
+    const std::vector<int32_t>& indexes,
+    const std::vector<std::string>& values,
+    cef::mojom::RenderFrame::ExecuteSelectCommandCallback callback) {
+  LOG(INFO) << "ExecuteSelectCommand in cef frame";
+  int32_t result = static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::FAILED);
+  auto render_frame = content::RenderFrame::FromWebFrame(frame_);
+  if (!render_frame) {
+    LOG(ERROR) << "ExecuteSelectCommand: render_frame NULL";
+    std::move(callback).Run(result);
+    return;
+  }
+  result = render_frame->ExecuteSelectCommand(xpath, indexes, values);
+  LOG(INFO) << "ExecuteSelectCommand cef frame done. result=" << result;
+  std::move(callback).Run(result);
 }
 
 void ArkwebFrameExtImpl::SetFocusByPosition(
