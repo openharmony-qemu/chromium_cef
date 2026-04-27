@@ -167,6 +167,11 @@ OhGinJavascriptBridgeDispatcher::InvokeJavascriptMethodFlowbuf(
 
 OhGinJavascriptBridgeObject* OhGinJavascriptBridgeDispatcher::GetObject(
     const ObjectID object_id) {
+  if (!render_frame() || !render_frame()->GetWebFrame()) {
+    LOG(ERROR)
+        << "OhGinJavascriptBridgeDispatcher::GetObject frame null";
+    return nullptr;
+  }
   OhGinJavascriptBridgeObject* result = objects_.Lookup(object_id);
   if (!result) {
     result =
