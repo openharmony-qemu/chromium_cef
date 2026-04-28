@@ -382,6 +382,7 @@ class ArkWebRenderWidgetHostViewOSRExt : public CefRenderWidgetHostViewOSR {
 
 #if BUILDFLAG(ARKWEB_FLING)
   bool OnNestedScroll(float& delta_x, float& delta_y) override;
+  bool OnNestedFling(float& velocity_x, float& velocity_y) override;
 #endif
  private:
   bool is_popup = false;
