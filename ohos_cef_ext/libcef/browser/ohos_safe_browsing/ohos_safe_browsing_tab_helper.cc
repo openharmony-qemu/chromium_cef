@@ -4,6 +4,7 @@
 
 #include "libcef/browser/ohos_safe_browsing/ohos_safe_browsing_tab_helper.h"
 
+#include "arkweb/chromium_ext/base/arkweb_report_statistics.h"
 #include "base/base_switches.h"
 #include "arkweb/chromium_ext/content/public/common/content_switches_ext.h"
 #include "base/command_line.h"
@@ -18,6 +19,7 @@
 #include "libcef/browser/alloy/alloy_browser_host_impl.h"
 #include "libcef/browser/browser_context.h"
 #include "libcef/browser/ohos_safe_browsing/ohos_sb_prefs.h"
+#include "libcef/browser/ohos_safe_browsing/safe_browsing_metrics_collector.h"
 #include "net/base/net_errors.h"
 #include "net/base/registry_controlled_domains/registry_controlled_domain.h"
 #include "net/http/http_status_code.h"
@@ -58,7 +60,8 @@ SafeBrowsingTabHelper::SafeBrowsingTabHelper(content::WebContents* web_contents,
                                              bool incognito_mode,
                                              CefBrowserHostBase* browser)
     : content::WebContentsObserver(web_contents),
-      content::WebContentsUserData<SafeBrowsingTabHelper>(*web_contents) {
+      content::WebContentsUserData<SafeBrowsingTabHelper>(*web_contents),
+      metrics_collector_(std::make_unique<SafeBrowsingMetricsCollector>()) {
   content::BrowserContext* browser_context = GetBrowserContext();
   if (!browser_context) {
     return;
@@ -111,6 +114,8 @@ void SafeBrowsingTabHelper::DidRedirectNavigation(
 
 void SafeBrowsingTabHelper::DidStartNavigation(
     content::NavigationHandle* navigation_handle) {
+    metrics_collector_->Reset();
+    metrics_collector_->RecordSbStartTime();
     DoQuerySafeBrowsing(navigation_handle, NavigationSourceType::kStart);
 }
 
@@ -131,26 +136,52 @@ void SafeBrowsingTabHelper::QuerySafeBrowsingResults(
   }
 }
 
-void SafeBrowsingTabHelper::OnDetectionResult(int code,
-                                              int policy,
-                                              const std::string& mapping_type,
-                                              const std::string& url) {
+void SafeBrowsingTabHelper::OnDetectionResult(
+    const SafeBrowsingDetectionResult& safeBrowsingDetectionResult) {
   if (!content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
     content::GetUIThreadTaskRunner({})->PostTask(
         FROM_HERE, base::BindOnce(&SafeBrowsingTabHelper::OnDetectionResult,
-                                  weak_ptr_factory_.GetWeakPtr(), code, policy,
-                                  mapping_type, url));
+                                  weak_ptr_factory_.GetWeakPtr(),
+                                  safeBrowsingDetectionResult));
     return;
   }
 
-  LOG(INFO) << "SafeBrowsing SA detection with policy: " << policy
-            << ", code: " << code << ", type: " << mapping_type;
+  LOG(INFO) << "SafeBrowsing SA detection with policy: "
+            << safeBrowsingDetectionResult.policy
+            << ", code: " << safeBrowsingDetectionResult.code
+            << ", type: " << safeBrowsingDetectionResult.mapping_type;
+
+  metrics_collector_->RecordSbEndTime();
+
+  OHSBThreatType threat_type =
+      TransformMappingType(safeBrowsingDetectionResult.mapping_type);
+
+  if (safeBrowsingDetectionResult.is_from_af_detect) {
+    metrics_collector_->SetAfInfo(safeBrowsingDetectionResult.policy, threat_type,
+                                   safeBrowsingDetectionResult.code);
+  } else {
+    metrics_collector_->SetSbInfo(
+        static_cast<int>(threat_type), safeBrowsingDetectionResult.code,
+        safeBrowsingDetectionResult.policy);
+  }
 
   if (sb_client_) {
-    OHSBThreatType threat_type = TransformMappingType(mapping_type);
-    sb_client_->SetEvilUrlPolicyAndHwCode(GURL(url), policy, threat_type, code,
-                                          GURL(""));
+    sb_client_->SetEvilUrlPolicyAndHwCode(
+        GURL(safeBrowsingDetectionResult.access_url),
+        safeBrowsingDetectionResult.policy, threat_type,
+        safeBrowsingDetectionResult.code, GURL(""));
   }
+}
+
+void SafeBrowsingTabHelper::DidFinishNavigation(
+    content::NavigationHandle* navigation_handle) {
+  if (!navigation_handle->IsInMainFrame() ||
+      !navigation_handle->HasCommitted()) {
+    return;
+  }
+
+  metrics_collector_->SetHost(std::string(navigation_handle->GetURL().host()));
+  metrics_collector_->ReportMetrics();
 }
 
 WEB_CONTENTS_USER_DATA_KEY_IMPL(SafeBrowsingTabHelper);
