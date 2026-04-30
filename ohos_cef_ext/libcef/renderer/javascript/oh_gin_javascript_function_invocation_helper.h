@@ -10,6 +10,7 @@
 
 #include "base/memory/weak_ptr.h"
 #include "cef/ohos_cef_ext/libcef/renderer/javascript/oh_gin_javascript_bridge_dispatcher.h"
+#include "cef/ohos_cef_ext/libcef/common/mojom/oh_gin_javascript_bridge.mojom.h"
 #include "gin/arguments.h"
 #include "gin/handle.h"
 
@@ -44,7 +45,15 @@ class OhGinJavascriptFunctionInvocationHelper {
       gin::Arguments* args,
       OhGinJavascriptBridgeObject* object);
 
-  bool StoreString(int index, void* mem, const char* str);
+  bool StoreString(int index, void* mem, const char* str, size_t str_len);
+
+  std::unique_ptr<base::Value> InvokeMethodFlowbufMojo(
+      OhGinJavascriptBridgeObject* object,
+      const std::string& url,
+      const std::string& method_name,
+      base::Value::List& arguments,
+      base::WritableSharedMemoryRegion flowbuf_region,
+      content::mojom::OhGinJavascriptBridgeError* error);
 
   static int32_t maxFdNum_;
   static std::atomic<int32_t> usedFd_;
