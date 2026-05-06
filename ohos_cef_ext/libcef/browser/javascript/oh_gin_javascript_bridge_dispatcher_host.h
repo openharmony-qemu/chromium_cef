@@ -14,7 +14,6 @@
 #include "base/json/json_reader.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/ref_counted_delete_on_sequence.h"
-#include "base/memory/read_only_shared_memory_region.h"
 #include "cef/ohos_cef_ext/include/arkweb_client_ext.h"
 #include "cef/ohos_cef_ext/libcef/common/mojom/oh_gin_javascript_bridge.mojom.h"
 #include "content/public/browser/web_contents_observer.h"
@@ -184,8 +183,15 @@ class OhGinJavascriptBridgeDispatcherHost
   void InvokeMethodFlowbuf(const std::string& method_name,
                            const std::string& document_url,
                            base::Value::List arguments,
-                           base::ReadOnlySharedMemoryRegion flowbuf_region,
+                           int fd,
                            InvokeMethodFlowbufCallback callback) override;
+  void InvokeMethodFlowbufInternal(int routing_id,
+                                   int32_t object_id,
+                                   const std::string& method_name,
+                                   const std::string& document_url,
+                                   base::Value::List arguments,
+                                   int fd,
+                                   InvokeMethodFlowbufCallback callback);
 
  private:
   friend class base::RefCountedThreadSafe<OhGinJavascriptBridgeDispatcherHost>;
@@ -256,14 +262,6 @@ class OhGinJavascriptBridgeDispatcherHost
                              const std::string& method_name,
                              int32_t object_id,
                              bool is_async);
-
-void CombinedArgsToRunOnInvokeMethod(int32_t routing_id,
-                                     int32_t object_id,
-                                     const std::string& method_name,
-                                     const std::string& document_url,
-                                     base::Value::List arguments,
-                                     base::ReadOnlySharedMemoryRegion flowbuf_region,
-                                     InvokeMethodFlowbufCallback callback);
 
   // Run on the UI thread.
   FrameInfos GetLastCallingFrameInfos(int32_t routing_id);
