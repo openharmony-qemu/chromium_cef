@@ -15,6 +15,8 @@
 #include "include/cef_x509_certificate.h"
 #include "ohos_cef_ext/include/arkweb_cef_ssl_callback.h"
 #include "ohos_cef_ext/include/arkweb_cef_verify_pin_callback.h"
+#include "ohos_cef_ext/include/cef_web_navigation_info.h"
+
 #if BUILDFLAG(ARKWEB_DEVTOOLS)
 struct RequestOpenDevToolsParams;
 #endif // ARKWEB_DEVTOOLS
@@ -210,6 +212,10 @@ class CefRequestHandlerExt : public virtual CefRequestHandler {
   /*--cef()--*/
   virtual void OnRequestOpenDevTools(const RequestOpenDevToolsParams& params) {}
 #endif // ARKWEB_DEVTOOLS
+
+  /*--cef()--*/
+  virtual void OnReportNewNavigationInfo(
+      CefRefPtr<CefWebNavigationInfo> navigation_info) {}
 
   CefRefPtr<CefRequestHandlerExt> AsCefRequestHandlerExt() override {
     return this;
