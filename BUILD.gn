@@ -472,6 +472,7 @@ test("libcef_static_unittests") {
       "ohos_cef_ext/libcef/browser/predictors/loading_predictor_unittest.cc",
       "ohos_cef_ext/libcef/browser/arkweb_frame_host_impl_ext_unittest.cc",
       "ohos_cef_ext/libcef/common/resource_util_for_include_unittest.cc",
+      "ohos_cef_ext/libcef/browser/arkweb_browser_host_ext_unittest.cc",
     ]
     deps += [
       ":libcef_static",
