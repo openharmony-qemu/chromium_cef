@@ -12,13 +12,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
+#include "arkweb/ohos_nweb/src/capi/nweb_devtools_message_handler.h"
+
 #ifndef OHOS_CEF_EXT_LIBCEF_COMMON_CEF_OPEN_DEVTOOLS_EXT_OPT_H_
 #define OHOS_CEF_EXT_LIBCEF_COMMON_CEF_OPEN_DEVTOOLS_EXT_OPT_H_
  
 struct CefOpenDevToolsExtOpt {
   bool canDock = false;
   bool showToolbox = false;
+  std::optional<RequestOpenDevToolsParams> event;
 };
  
 #endif // OHOS_CEF_EXT_LIBCEF_COMMON_CEF_OPEN_DEVTOOLS_EXT_OPT_H_
