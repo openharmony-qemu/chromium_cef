@@ -948,7 +948,8 @@ bool ArkWebTouchSelectionControllerClientOSRExt::IsCommandIdEnabled(
   bool has_selection = !rwhv_->GetSelectedText().empty();
 #if BUILDFLAG(ARKWEB_CLIPBOARD)
   bool has_text =
-      !rwhv_->AsArkWebRenderWidgetHostViewOSRExt()->GetText().empty();
+      !rwhv_->AsArkWebRenderWidgetHostViewOSRExt()->GetText().empty() &&
+      !rwhv_->AsArkWebRenderWidgetHostViewOSRExt()->GetInputText().empty();
 #endif
 #if BUILDFLAG(ARKWEB_EXT_FREE_COPY)
   if (base::CommandLine::ForCurrentProcess()->HasSwitch(

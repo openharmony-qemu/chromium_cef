@@ -1168,6 +1168,13 @@ std::u16string ArkWebRenderWidgetHostViewOSRExt::GetText() {
   return std::u16string();
 }
 
+std::u16string ArkWebRenderWidgetHostViewOSRExt::GetInputText() {
+  if (text_input_manager_ && text_input_manager_->GetTextInputState()) {
+    return text_input_manager_->GetTextInputState()->value.value_or(std::u16string());
+  }
+  return std::u16string();
+}
+
 void ArkWebRenderWidgetHostViewOSRExt::ResetGestureDetection(
     bool is_lost_focus) {
   const ui::MotionEvent* current_down_event =

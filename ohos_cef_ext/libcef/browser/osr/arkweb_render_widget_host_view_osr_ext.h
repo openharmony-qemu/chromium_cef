@@ -151,6 +151,7 @@ class ArkWebRenderWidgetHostViewOSRExt : public CefRenderWidgetHostViewOSR {
   bool NeedPopupInsertTouchHandleQuickMenu();
   std::u16string GetSelectedText() override;
   std::u16string GetText();
+  std::u16string GetInputText();
   void ResetGestureDetection(bool is_lost_focus) override;
   void OnTextSelectionChanged(content::TextInputManager* text_input_manager,
                               RenderWidgetHostViewBase* updated_view) override;
