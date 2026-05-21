@@ -134,6 +134,8 @@ void SbClient::ShowBlockingPage() {
   std::string lang = base::i18n::GetConfiguredLocale();
 
   bool is_unprocessed = false;
+  int onceprocessed_code = -1;
+  int onceprocessed_policy = -1;
   for (auto& url : redirect_chain) {
     const auto& blocking_cached = blocking_page_info_cache.Peek(url);
     if (blocking_cached != blocking_page_info_cache.end()) {
@@ -185,12 +187,18 @@ void SbClient::ShowBlockingPage() {
       if (block_type == OHSBThreatType::THREAT_UNPROCESSED) {
         is_unprocessed = true;
       }
+      onceprocessed_code = code;
+      onceprocessed_policy = policy;
     }
   }
   if (is_unprocessed) {
     NotifySafeBrowsingCheckFinish(OHSBThreatType::THREAT_UNPROCESSED);
+    NotifySafeBrowsingCheckDetail(onceprocessed_code, onceprocessed_policy,
+      OHSBThreatType::THREAT_UNPROCESSED);
   } else {
     NotifySafeBrowsingCheckFinish(OHSBThreatType::THREAT_NONE);
+    NotifySafeBrowsingCheckDetail(onceprocessed_code, onceprocessed_policy, 
+        OHSBThreatType::THREAT_NONE);
   }
 }
 

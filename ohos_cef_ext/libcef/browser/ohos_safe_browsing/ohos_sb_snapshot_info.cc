@@ -31,7 +31,7 @@ void SafeBrowsingSnapshotManager::SetFMP(std::string fmpUrl, uint32_t nwebId) {
     pending_fmp_.nwebId = nwebId;
 }
 
-bool SafeBrowsingSnapshotManager::IsAllowSnapshot() {
+bool SafeBrowsingSnapshotManager::IsAllowRequestSnapshot() {
     std::shared_lock<std::shared_mutex> lock(data_mutex_);
     
     if (pending_safe_browsing_check_map_.empty()) {
@@ -54,7 +54,6 @@ bool SafeBrowsingSnapshotManager::IsAllowSnapshot() {
     
     antifraud_detecting_url_.first = pending_fmp_.url;
     antifraud_detecting_url_.second = cacheIt->second;
-    
     return true;
 }
 

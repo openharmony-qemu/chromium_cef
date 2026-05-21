@@ -50,7 +50,7 @@ void SetNewUrl(std::string newUrl,
 
 void SetFMP(std::string fmpUrl, uint32_t nwebId);
 
-bool IsAllowSnapshot();
+bool IsAllowRequestSnapshot();
 
 std::optional<std::pair<std::string, SafeBrowsingDetectionResult>> 
     GetAntiFraudDetectingUrlInfo() const;

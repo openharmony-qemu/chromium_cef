@@ -3808,7 +3808,8 @@ void ArkWebBrowserHostExtImpl::OnSafeBrowsingDetectionResult(
     const SafeBrowsingDetectionResult& safeBrowsingDetectionResult) {
   LOG(INFO) << "code is " << safeBrowsingDetectionResult.code
             << ",policy is " << safeBrowsingDetectionResult.policy
-            << ",mapping type is " << safeBrowsingDetectionResult.mapping_type ;
+            << ",mapping type is " << safeBrowsingDetectionResult.mapping_type
+            << ",is_content_check is " << safeBrowsingDetectionResult.is_content_check;
 
   if (!CEF_CURRENTLY_ON_UIT()) {
     CEF_POST_TASK(CEF_UIT, base::BindOnce(
@@ -3828,18 +3829,27 @@ void ArkWebBrowserHostExtImpl::OnSafeBrowsingDetectionResult(
         SetNewUrl(safeBrowsingDetectionResult.access_url,
         safeBrowsingDetectionResult, web_contents->GetNWebId());
     LOG(INFO) << "safeBrowsingDetectionResult isContentCheck is true";
+    auto browser = GetBrowser();
+    if (!ohos_safe_browsing::SafeBrowsingSnapshotManager::GetInstance().IsAllowRequestSnapshot() ||
+        browser == nullptr || browser->GetMainFrame() == nullptr ||
+        browser->GetMainFrame()->AsArkWebFrame() == nullptr) {
+      return;
+    }
+ 
+    browser->GetMainFrame()->AsArkWebFrame()->RequestSnapshotOnce();
+    if (safeBrowsingDetectionResult.is_from_af_detect) {
+      ohos_safe_browsing::SafeBrowsingTabHelper* safe_browsing_tab_helper =
+          ohos_safe_browsing::SafeBrowsingTabHelper::FromWebContents(web_contents);
+      if (safe_browsing_tab_helper) {
+          auto* metrics_collector = safe_browsing_tab_helper->GetMetricsCollector();
+          if (metrics_collector) {
+              metrics_collector->RecordAfStartTime();
+          }
+      }
+    }
     return;
   }
-  if (safeBrowsingDetectionResult.is_from_af_detect) {
-    ohos_safe_browsing::SafeBrowsingTabHelper* safe_browsing_tab_helper =
-        ohos_safe_browsing::SafeBrowsingTabHelper::FromWebContents(web_contents);
-    if (safe_browsing_tab_helper) {
-        auto* metrics_collector = safe_browsing_tab_helper->GetMetricsCollector();
-        if (metrics_collector) {
-            metrics_collector->RecordAfStartTime();
-        }
-    }
-  }
+
   
   ohos_safe_browsing::SafeBrowsingTabHelper* safe_browsing_tab_helper =
       ohos_safe_browsing::SafeBrowsingTabHelper::FromWebContents(web_contents);

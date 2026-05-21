@@ -98,5 +98,9 @@ class ArkwebFrameExt : public virtual CefBaseRefCounted {
                                              uint64_t frame_sink_id,
                                              int64_t pref_hash) = 0;
 #endif
+
+#if BUILDFLAG(ARKWEB_SAFEBROWSING)
+  virtual void RequestSnapshotOnce() = 0;
+#endif
 };
 #endif  // CEF_INCLUDE_CEF_FRAME_H_

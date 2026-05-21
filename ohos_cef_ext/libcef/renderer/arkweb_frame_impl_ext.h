@@ -124,6 +124,10 @@ std::string OverrideErrorPage(const CefString& url,
                                              int64_t pref_hash) override;
 #endif
 
+#if BUILDFLAG(ARKWEB_SAFEBROWSING)
+  void RequestSnapshotOnce() override;
+#endif
+
  private:
 #if BUILDFLAG(ARKWEB_NETWORK_CONNINFO)
   void SetJsOnlineProperty(bool network_up) override;
