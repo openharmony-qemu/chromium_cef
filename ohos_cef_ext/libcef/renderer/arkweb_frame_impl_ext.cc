@@ -15,6 +15,10 @@
 
 #include <signal.h>
 
+#include <algorithm>
+#include <string_view>
+#include <vector>
+
 #include "arkweb/build/features/features.h"
 #include "arkweb/ohos_nweb/include/nweb_errors.h"
 #include "build/build_config.h"
@@ -33,6 +37,7 @@
 #endif
 
 #include "base/strings/stringprintf.h"
+#include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 #if BUILDFLAG(ARKWEB_TERMINATE_RENDER)
 #include "arkweb/chromium_ext/base/ohos/sys_info_utils_ext.h"
@@ -63,11 +68,15 @@
 #include "third_party/blink/public/web/blink.h"
 #include "third_party/blink/public/web/web_document.h"
 #include "third_party/blink/public/web/web_document_loader.h"
+#include "third_party/blink/public/web/web_element.h"
 #include "third_party/blink/public/web/web_frame_content_dumper.h"
 #include "third_party/blink/public/web/web_local_frame.h"
+#include "third_party/blink/public/web/web_node.h"
 #include "third_party/blink/public/web/web_navigation_control.h"
 #include "third_party/blink/public/web/web_script_source.h"
 #include "third_party/blink/public/web/web_view.h"
+#include "ui/gfx/geometry/rect.h"
+#include "ui/gfx/geometry/size.h"
 #if BUILDFLAG(IS_ARKWEB)
 #include "libcef/common/arkweb_request_impl_ext.h"
 #include "third_party/blink/public/web/web_element_collection.h"
@@ -79,6 +88,7 @@
 #include "skia/ext/image_operations.h"
 #include "third_party/skia/include/core/SkBitmap.h"
 #endif  // BUILDFLAG(ARKWEB_CLIPBOARD)
+#include "cef/ohos_cef_ext/libcef/renderer/ai_page_dom_capture_controller.h"
 #include "cef/ohos_cef_ext/libcef/renderer/arkweb_frame_impl_ext.h"
 #include "third_party/blink/renderer/platform/runtime_enabled_features.h"
 
@@ -427,6 +437,108 @@ void ArkwebFrameExtImpl::GetImagesWithResponse(
           std::move(callback)));
 }
 #endif  // BUILDFLAG(ARKWEB_MEDIA)
+
+#if BUILDFLAG(IS_OHOS)
+void ArkwebFrameExtImpl::GetFullDom(
+    const CefString& params,
+    CefRefPtr<CefAIPageCommandCallback> callback) {
+  ExecuteOnLocalFrame(
+      __FUNCTION__,
+      base::BindOnce(
+          [](const std::string& params,
+             CefRefPtr<CefAIPageCommandCallback> callback,
+             blink::WebLocalFrame* frame) {
+            using CaptureController =
+                arkweb::ai_page::AIPageDomCaptureController;
+            CaptureController::Capture(
+                frame, CaptureController::Method::kFullDom,
+                params,
+                base::BindOnce(
+                    [](CefRefPtr<CefAIPageCommandCallback> callback,
+                       std::string result) {
+                      if (callback) {
+                        callback->OnResult(result);
+                      }
+                    },
+                    callback));
+          },
+          params.ToString(), callback));
+}
+
+void ArkwebFrameExtImpl::GetLiteDom(
+    const CefString& params,
+    CefRefPtr<CefAIPageCommandCallback> callback) {
+  ExecuteOnLocalFrame(
+      __FUNCTION__,
+      base::BindOnce(
+          [](const std::string& params,
+             CefRefPtr<CefAIPageCommandCallback> callback,
+             blink::WebLocalFrame* frame) {
+            using CaptureController =
+                arkweb::ai_page::AIPageDomCaptureController;
+            CaptureController::Capture(
+                frame, CaptureController::Method::kLiteDom,
+                params,
+                base::BindOnce(
+                    [](CefRefPtr<CefAIPageCommandCallback> callback,
+                       std::string result) {
+                      if (callback) {
+                        callback->OnResult(result);
+                      }
+                    },
+                    callback));
+          },
+          params.ToString(), callback));
+}
+
+void ArkwebFrameExtImpl::GetFullDom(
+    const std::string& params,
+    cef::mojom::RenderFrame::GetFullDomCallback callback) {
+  ExecuteOnLocalFrame(
+      __FUNCTION__,
+      base::BindOnce(
+          [](const std::string& params,
+             cef::mojom::RenderFrame::GetFullDomCallback callback,
+             blink::WebLocalFrame* frame) {
+            using CaptureController =
+                arkweb::ai_page::AIPageDomCaptureController;
+            CaptureController::Capture(
+                frame, CaptureController::Method::kFullDom,
+                params,
+                base::BindOnce(
+                    [](cef::mojom::RenderFrame::GetFullDomCallback callback,
+                       std::string result) {
+                      std::move(callback).Run(result);
+                    },
+                    std::move(callback)));
+          },
+          params, std::move(callback)));
+}
+
+void ArkwebFrameExtImpl::GetLiteDom(
+    const std::string& params,
+    cef::mojom::RenderFrame::GetLiteDomCallback callback) {
+  ExecuteOnLocalFrame(
+      __FUNCTION__,
+      base::BindOnce(
+          [](const std::string& params,
+             cef::mojom::RenderFrame::GetLiteDomCallback callback,
+             blink::WebLocalFrame* frame) {
+            using CaptureController =
+                arkweb::ai_page::AIPageDomCaptureController;
+            CaptureController::Capture(
+                frame, CaptureController::Method::kLiteDom,
+                params,
+                base::BindOnce(
+                    [](cef::mojom::RenderFrame::GetLiteDomCallback callback,
+                       std::string result) {
+                      std::move(callback).Run(result);
+                    },
+                    std::move(callback)));
+          },
+          params, std::move(callback)));
+}
+#endif  // BUILDFLAG(IS_OHOS)
 
 #if BUILDFLAG(ARKWEB_INPUT_EVENTS)
 void ArkwebFrameExtImpl::ScrollByWithAnime(float delta_x,

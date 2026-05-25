@@ -44,6 +44,21 @@ class CefGetImagesCallback : public virtual CefBaseRefCounted {
   /*--cef()--*/
   virtual void GetImages(bool response) = 0;
 };
+
+///
+/// Interface to implement to be notified of asynchronous completion via
+/// ArkwebFrameExt::GetFullDom or ArkwebFrameExt::GetLiteDom.
+///
+/*--cef(source=client)--*/
+class CefAIPageCommandCallback : public virtual CefBaseRefCounted {
+ public:
+  ///
+  /// Method that will be called upon completion. Empty |result| means the
+  /// command failed or had no return value.
+  ///
+  /*--cef()--*/
+  virtual void OnResult(const CefString& result) = 0;
+};
 #endif  // BUILDFLAG(IS_OHOS)
 
 class ArkwebFrameExt : public virtual CefBaseRefCounted {
@@ -102,5 +117,21 @@ class ArkwebFrameExt : public virtual CefBaseRefCounted {
 #if BUILDFLAG(ARKWEB_SAFEBROWSING)
   virtual void RequestSnapshotOnce() = 0;
 #endif
+
+#if BUILDFLAG(IS_OHOS)
+  ///
+  /// Gets the full DOM tree using JSON-formatted |params|.
+  ///
+  /*--cef(optional_param=params)--*/
+  virtual void GetFullDom(const CefString& params,
+                          CefRefPtr<CefAIPageCommandCallback> callback) = 0;
+
+  ///
+  /// Gets the LiteDOM element list using JSON-formatted |params|.
+  ///
+  /*--cef(optional_param=params)--*/
+  virtual void GetLiteDom(const CefString& params,
+                          CefRefPtr<CefAIPageCommandCallback> callback) = 0;
+#endif  // BUILDFLAG(IS_OHOS)
 };
 #endif  // CEF_INCLUDE_CEF_FRAME_H_
