@@ -864,6 +864,9 @@ typedef struct _cef_browser_settings_t {
 #if BUILDFLAG(ARKWEB_CLIPBOARD)
   std::optional<bool> clipboard_site_permission_enabled;
 #endif  // BUILDFLAG(ARKWEB_CLIPBOARD)
+#if BUILDFLAG(ARKWEB_INPUT_EVENTS)
+  bool is_compatible_converting_enabled;
+#endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
 
 #if BUILDFLAG(ARKWEB_FONT_SETTINGS)
   bool has_web_set_default_font_size;

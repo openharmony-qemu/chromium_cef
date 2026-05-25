@@ -759,6 +759,9 @@ void ArkWebBrowserHostExtImpl::UpdateBrowserSettings(
 #if BUILDFLAG(ARKWEB_DRAG_DROP)
   settings_.is_drag_enabled = browser_settings.is_drag_enabled;
 #endif  // BUILDFLAG(ARKWEB_DRAG_DROP)
+#if BUILDFLAG(ARKWEB_INPUT_EVENTS)
+  settings_.is_compatible_converting_enabled = browser_settings.is_compatible_converting_enabled;
+#endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
 #if BUILDFLAG(ARKWEB_MENU)
   settings_.touch_handle_exist = browser_settings.touch_handle_exist;
   settings_.viewport_scale = browser_settings.viewport_scale;

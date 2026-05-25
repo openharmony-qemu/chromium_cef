@@ -213,6 +213,9 @@ void SetCefPrefsSetStateExt(const CefBrowserSettings& cef,
 #if BUILDFLAG(ARKWEB_MENU)
   web.smart_edge_state = cef.smart_edge_state;
 #endif  // BUILDFLAG(ARKWEB_MENU)
+#if BUILDFLAG(ARKWEB_INPUT_EVENTS)
+  web.is_compatible_converting_enabled = cef.is_compatible_converting_enabled;
+#endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
 }
 
 #if BUILDFLAG(ARKWEB_EXT_EXCEPTION_LIST)
