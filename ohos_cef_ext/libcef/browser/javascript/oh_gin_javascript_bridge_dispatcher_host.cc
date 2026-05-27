@@ -1521,10 +1521,19 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodCallback(content::mojom:
 void OhGinJavascriptBridgeDispatcherHost::InvokeMethodAsync(const std::string& method_name,
                                                             const std::string& document_url,
                                                             base::Value::List arguments) {
-  LOG(INFO) << "adrainlyz0130 OhGinJavascriptBridgeDispatcherHost::InvokeMethodAsync document_url: " << document_url;
-  OnInvokeMethodAsync(object_receivers_.current_context().first.frame_routing_id,
-                 object_receivers_.current_context().second, document_url, method_name,
-                 arguments);
+  if (object_receivers_.current_context().second >=
+    OhGinJavascriptBridgeDispatcherHost::MIN_NATIVE_OBJ_ID) {
+    async_task_runner_->PostTask(
+        FROM_HERE, base::BindOnce(&OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodAsync,
+                                  base::WrapRefCounted(this),
+                                  object_receivers_.current_context().first.frame_routing_id,
+                                  object_receivers_.current_context().second, document_url, method_name,
+                                  std::move(arguments)));
+  } else {
+    OnInvokeMethodAsync(object_receivers_.current_context().first.frame_routing_id,
+        object_receivers_.current_context().second, document_url, method_name,
+        arguments);
+  }
 }
 
 void OhGinJavascriptBridgeDispatcherHost::InvokeMethodFlowbuf(const std::string& method_name,
