@@ -211,17 +211,18 @@ void MaybeOverrideUserAgentOnRedirectNavigation(content::NavigationHandle* navig
     std::string current_domain = GetDomainAndRegistry(current_url);
     for (int i = chain_size - kLeastLengthForRedirectChain; i >= 0; i--) {
       if (IsIllegalUrl(redirect_chain[i]) ||
-          current_domain != GetDomainAndRegistry(redirect_chain[i])) {{
+          current_domain != GetDomainAndRegistry(redirect_chain[i])) {
         continue;
       }
       match_type =
-         MatchUserAgent(navigation, std::string(redirect_chain[i].host()), final_ua);
+          MatchUserAgent(navigation, redirect_chain[i].GetHost(), final_ua);
       if (match_type < UserAgentOverridePolicy::APP_DEFAULT) {
         override_by_same_domain = true;
         break;
       }
     }
   }
+
   LOG_FEEDBACK(INFO, kNavigation)
       << "MatchUserAgentForRedirectNav matchType:" << match_type
       << " override:" << override_by_same_domain
@@ -230,8 +231,8 @@ void MaybeOverrideUserAgentOnRedirectNavigation(content::NavigationHandle* navig
       << " mainFrame:" << navigation->IsInMainFrame()
       << " fromBFCache:" << navigation->IsServedFromBackForwardCache()
       << " url:" << url::LogUtils::ConvertUrlWithMask(current_url.spec());
+
   UpdateUserAgentForNavigation(navigation, final_ua, match_type, true);
-  }
 }
 
 std::string GetUAStringForHost(content::WebContents* web_contents, const std::string& host) {
