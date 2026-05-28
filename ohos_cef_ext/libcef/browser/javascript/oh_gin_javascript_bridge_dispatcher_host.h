@@ -290,6 +290,7 @@ class OhGinJavascriptBridgeDispatcherHost
   std::map<content::GlobalRenderFrameHostId,
            mojo::AssociatedRemote<content::mojom::OhGinJavascriptBridge>>
       remotes_;
+  base::WeakPtrFactory<OhGinJavascriptBridgeDispatcherHost> weak_ptr_factory_;
 };
 }  // namespace NWEB
 #endif
