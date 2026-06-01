@@ -351,7 +351,7 @@ void GetSettingOfNetHelper(const GURL& url, struct NetHelperSetting& setting) ov
   void RedirectSavedCookieDone(int32_t request_id,
 #if BUILDFLAG(ARKWEB_NETWORK_LOAD)
                                bool current_request_uses_header_client,
-                               const std::optional<std::string>& new_method,
+                               const std::optional<net::RedirectInfo>& redirect_info,
 #endif
                                OnRequestResponseResultCallback callback,
                                const GURL& new_url) {
@@ -369,7 +369,7 @@ void GetSettingOfNetHelper(const GURL& url, struct NetHelperSetting& setting) ov
 
     MaybeLoadCookies(request_id, state, new_url,
 #if BUILDFLAG(ARKWEB_NETWORK_LOAD)
-                     new_method,
+                     redirect_info,
                      current_request_uses_header_client,
 #endif
                      std::move(exec_callback));

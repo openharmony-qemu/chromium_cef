@@ -739,7 +739,7 @@ class InterceptedRequestHandlerWrapper : public InterceptedRequestHandler {
                         RequestState* state,
 #if BUILDFLAG(ARKWEB_NETWORK_LOAD)
                         const std::optional<GURL>& new_url,
-                        const std::optional<std::string>& new_method,
+                        const std::optional<net::RedirectInfo>& redirect_info,
                         bool current_request_uses_header_client,
 #endif
                         base::OnceClosure callback) {
@@ -777,7 +777,7 @@ class InterceptedRequestHandlerWrapper : public InterceptedRequestHandler {
     cookie_helper::LoadCookies(
         init_state_->browser_context_getter_, *(state->request_),
 #if BUILDFLAG(ARKWEB_NETWORK_LOAD)
-        new_url, new_method, init_state_->is_off_the_record_,
+        new_url, redirect_info, init_state_->is_off_the_record_,
         GetIsolationInfo(*(state->request_)),
 #endif
         allow_cookie_callback, std::move(done_cookie_callback));
@@ -1131,23 +1131,13 @@ class InterceptedRequestHandlerWrapper : public InterceptedRequestHandler {
     }
     state->pending_request_->SetReadOnly(true);
 
-#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
-    std::optional<std::string> new_method = {};
-    if (base::FeatureList::IsEnabled(kEnableSyncMethodOnRedirect)) {
-      LOG(DEBUG) << "Update new_method to " << redirect_info.new_method;
-      new_method = redirect_info.new_method;
-    }
-#endif
-
 #if BUILDFLAG(ARKWEB_NETWORK_BASE)
-    state->request_->site_for_cookies = redirect_info.new_site_for_cookies;
-    state->request_->method = redirect_info.new_method;
     auto exec_callback = base::BindOnce(
         &InterceptedRequestHandlerWrapper::RedirectSavedCookieDone,
         weak_ptr_factory_.GetWeakPtr(), request_id,
 #if BUILDFLAG(ARKWEB_NETWORK_LOAD)
         current_request_uses_header_client,
-        new_method,
+        std::optional<net::RedirectInfo>(redirect_info),
 #endif
         std::move(callback), new_url);
 #else
