@@ -77,6 +77,8 @@ public:
   virtual void CreateToPDF(const CefPdfPrintSettings& settings,
                            CefRefPtr<CefPdfValueCallback> callback) = 0;
 #endif
+
+#if BUILDFLAG(ARKWEB_VIDEO_ASSISTANT)
   ///
   /// set video assistant enable.
   ///
@@ -84,10 +86,17 @@ public:
   virtual void EnableVideoAssistant(bool enable) = 0;
 
   ///
+  /// set video assistant avcast enable.
+  ///
+  /*--cef()--*/
+  virtual void EnableVideoAssistantAVCast(bool enable) = 0;
+
+  ///
   /// execute video assistant function.
   ///
   /*--cef()--*/
   virtual void ExecuteVideoAssistantFunction(const CefString& cmdId) = 0;
+#endif  // ARKWEB_VIDEO_ASSISTANT
 
 #if BUILDFLAG(ARKWEB_EX_REFRESH_IFRAME)
   ///
@@ -153,10 +162,12 @@ public:
   virtual void GetOverScrollOffsetValue(float* offset_x, float* offset_y) = 0;
 #endif
 
+#if BUILDFLAG(ARKWEB_VIDEO_ASSISTANT)
   /// set custom web media player enable.
   ///
   /*--cef()--*/
   virtual void CustomWebMediaPlayer(bool enable) = 0;
+#endif // ARKWEB_VIDEO_ASSISTANT
 
   ///
   /// set media resumes playback when the page is restored from BFCache.
