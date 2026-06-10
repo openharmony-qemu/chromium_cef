@@ -1,285 +1,3 @@
-From 720fb6341848e993f948a594f12f72dd2bb95721 Mon Sep 17 00:00:00 2001
-From: laixiaohai <xiaohai.lai@haitaichina.com>
-Date: Mon, 18 May 2026 11:12:51 +0800
-Subject: [PATCH] add cef_patch_src.patch
-
-Signed-off-by: laixiaohai <xiaohai.lai@haitaichina.com>
-Change-Id: Iaab1326fc7e9d1a2e85e6c7a551b3a2b207facda
----
- .gn                                           |   2 +
- BUILD.gn                                      |   5 +
- DEPS                                          |   6 +-
- .../src/partition_alloc/BUILD.gn              |   2 +-
- base/command_line.cc                          |   3 +-
- base/message_loop/message_pump_apple.mm       |   6 +-
- base/message_loop/message_pump_win.cc         |  13 ++-
- base/process/set_process_title.cc             |   3 -
- base/task/current_thread.cc                   |   2 +
- base/task/current_thread.h                    |  13 +++
- base/task/thread_pool/thread_pool_impl.cc     |   4 +
- base/test/BUILD.gn                            |  36 +-----
- base/test/test_trace_processor_export.h       |   5 +
- base/trace_event/builtin_categories.h         |   2 +
- base/win/dark_mode_support.cc                 |  10 ++
- build/config/linux/atk/BUILD.gn               |   2 +-
- build/config/linux/atspi2/BUILD.gn            |   2 +-
- build/config/win/visual_studio_version.gni    |  14 +--
- build/toolchain/win/setup_toolchain.py        |  14 ++-
- build/vs_toolchain.py                         |  11 ++
- .../constrained_window_views.cc               |  98 ++++++++--------
- ...web_contents_modal_dialog_manager_views.cc |  17 ++-
- .../renderer/content_settings_agent_impl.cc   |   2 +-
- .../crash/core/app/crash_reporter_client.cc   |  17 +++
- .../crash/core/app/crash_reporter_client.h    |  16 +++
- components/crash/core/app/crashpad.cc         |   3 +-
- components/crash/core/app/crashpad_linux.cc   |  33 ++++--
- components/crash/core/app/crashpad_mac.mm     |  54 ++++++---
- components/crash/core/app/crashpad_win.cc     |  26 +++--
- .../internal/common/download_file_impl.cc     |   9 ++
- .../embedder_support/user_agent_utils.cc      |  12 ++
- components/input/fling_scheduler_base.h       |  12 ++
- components/input/render_input_router.h        |   1 +
- .../language/core/browser/locale_util.cc      |   4 +-
- .../metrics/persistent_system_profile.cc      |   4 +
- .../metrics/persistent_system_profile.h       |   4 +
- components/policy/BUILD.gn                    |   1 +
- .../policy/tools/generate_policy_source.py    |  11 +-
- components/prefs/pref_service.h               |   6 +
- .../context_menu_delegate.h                   |   2 +
- .../render_view_context_menu_base.cc          |  11 ++
- .../render_view_context_menu_base.h           |   8 ++
- .../render_view_context_menu_observer.cc      |   5 +
- .../render_view_context_menu_observer.h       |   6 +
- .../views/toolkit_delegate_views.cc           |   4 +
- .../views/toolkit_delegate_views.h            |   1 +
- .../sessions/core/session_service_commands.cc |   8 +-
- .../sessions/core/tab_restore_service_impl.cc |   1 +
- components/variations/BUILD.gn                |   1 +
- ...nthetic_trials_active_group_id_provider.cc |   6 +-
- ...ynthetic_trials_active_group_id_provider.h |   5 +-
- components/version_ui_strings.grdp            |   8 ++
- components/viz/host/host_display_client.cc    |  10 +-
- components/viz/host/host_display_client.h     |   5 +-
- .../viz/host/layered_window_updater_impl.cc   |   2 +-
- .../viz/host/layered_window_updater_impl.h    |   2 +-
- components/viz/service/BUILD.gn               |   2 +
- .../output_surface_provider_impl.cc           |  16 +++
- .../software_output_device_win.cc             |   5 +-
- components/web_modal/modal_dialog_host.h      |   6 +
- components/webui/version/BUILD.gn             |   6 +
- .../webui/version/resources/about_version.css |   4 +
- .../version/resources/about_version.html      |  35 +++++-
- .../webui/version/resources/about_version.ts  |  14 ++-
- .../webui/version/version_ui_constants.cc     |  12 ++
- .../webui/version/version_ui_constants.h      |  12 ++
- content/app/content_main.cc                   |  56 +++++++---
- content/app/content_main_runner_impl.cc       |   6 +
- content/app/content_main_runner_impl.h        |   4 +-
- .../render_widget_host_view_cocoa.mm          |  16 +++
- .../browser_plugin/browser_plugin_embedder.h  |   3 +-
- .../browser_plugin/browser_plugin_guest.cc    |   2 +
- .../browser_plugin/browser_plugin_guest.h     |   4 +
- .../child_process_launcher_helper_linux.cc    |   2 +-
- .../child_process_security_policy_impl.cc     |  10 ++
- .../viz_process_transport_factory.cc          |   9 +-
- .../browser/devtools/devtools_http_handler.cc |   2 +-
- .../devtools/devtools_instrumentation.h       |   2 +-
- .../loader/navigation_url_loader_impl.cc      |  17 ++-
- .../renderer_host/input/fling_scheduler.cc    |   3 +
- .../input/fling_scheduler_mac.mm              |   4 +
- .../input/mouse_wheel_phase_handler.h         |   3 +-
- .../input/synthetic_gesture_target_base.h     |   4 +-
- .../navigation_policy_container_builder.cc    |   1 -
- .../renderer_host/navigation_request.cc       |  28 ++++-
- .../renderer_host/navigation_request.h        |   3 +-
- .../navigation_throttle_runner.cc             |  14 ++-
- .../navigation_throttle_runner.h              |   6 +-
- .../renderer_host/render_frame_host_impl.cc   |  11 ++
- .../renderer_host/render_view_host_impl.cc    |   2 +
- .../renderer_host/render_widget_host_impl.cc  |   5 +
- .../renderer_host/render_widget_host_impl.h   |   1 +
- .../render_widget_host_view_aura.cc           |  21 ++++
- .../render_widget_host_view_aura.h            |   8 ++
- .../render_widget_host_view_base.cc           |   8 ++
- .../render_widget_host_view_base.h            |  22 +++-
- .../render_widget_host_view_event_handler.cc  |  23 ++++
- .../scheduler/browser_task_executor.cc        |   3 +-
- .../native_event_observer_mac.mm              |   6 +-
- content/browser/storage_partition_impl.cc     |   7 +-
- .../browser/web_contents/web_contents_impl.cc |  32 ++++++
- .../web_contents/web_contents_impl_mac.mm     |  11 ++
- .../browser/web_contents/web_contents_view.h  |   2 +-
- content/public/app/content_main.h             |  12 ++
- .../public/browser/content_browser_client.cc  |   3 +-
- .../public/browser/content_browser_client.h   |  28 ++++-
- .../browser/navigation_throttle_registry.h    |   6 +-
- .../public/browser/render_widget_host_view.h  |   8 ++
- content/public/browser/web_contents.h         |   6 +
- .../public/browser/web_contents_delegate.h    |  10 ++
- .../public/browser/web_contents_observer.h    |   7 ++
- .../public/renderer/content_renderer_client.h |   7 ++
- content/renderer/render_thread_impl.cc        |   2 +
- .../renderer/renderer_blink_platform_impl.cc  |   9 ++
- .../renderer/renderer_blink_platform_impl.h   |   3 +
- content/shell/BUILD.gn                        |   1 -
- .../browser/shell_content_browser_client.cc   |   3 +-
- .../browser/shell_content_browser_client.h    |   2 +-
- .../mime_handler_view_guest.cc                |   2 +
- .../mime_handler_view_guest_delegate.h        |   6 +
- .../service/gpu_memory_buffer_factory_dxgi.cc |   7 +-
- .../headless_content_browser_client.cc        |   3 +-
- .../browser/headless_content_browser_client.h |   2 +-
- ipc/ipc_mojo_bootstrap.cc                     |   3 +-
- ...able_gpu_memory_buffer_video_frame_pool.cc |  21 +++-
- .../public/cpp/bindings/associated_receiver.h |   3 +
- mojo/public/cpp/bindings/associated_remote.h  |   5 +
- .../cpp/bindings/connection_error_callback.h  |   9 ++
- mojo/public/cpp/bindings/connector.h          |   6 +
- .../cpp/bindings/interface_endpoint_client.h  |  15 ++-
- .../cpp/bindings/lib/associated_receiver.cc   |   7 ++
- mojo/public/cpp/bindings/lib/binding_state.h  |   7 ++
- mojo/public/cpp/bindings/lib/connector.cc     |   2 +
- .../bindings/lib/interface_endpoint_client.cc |  14 ++-
- .../cpp/bindings/lib/interface_ptr_state.h    |   9 ++
- .../cpp/bindings/lib/multiplex_router.cc      |  11 +-
- mojo/public/cpp/bindings/receiver.h           |   6 +
- mojo/public/cpp/bindings/receiver_set.cc      |  21 +++-
- mojo/public/cpp/bindings/receiver_set.h       |  22 ++--
- mojo/public/cpp/bindings/remote.h             |   5 +
- .../cpp/bindings/sync_call_restrictions.h     |   3 +
- net/base/directory_lister.cc                  |   2 +-
- net/base/directory_lister.h                   |   2 +-
- net/base/load_flags_list.h                    |   3 +
- net/cookies/cookie_monster.cc                 |  45 ++++++++
- net/cookies/cookie_monster.h                  |   4 +
- net/cookies/cookie_store.h                    |  11 ++
- .../embedded_test_server.cc                   |   4 +-
- net/url_request/url_request_http_job.cc       |   3 +-
- net/url_request/url_request_job.cc            |  14 ++-
- ohos/adapter/web_entry/BUILD.gn               |   4 +
- ohos/adapter/web_entry/cef/cef_loader.cc      | 105 ++++++++++++++++++
- ohos/adapter/web_entry/cef/cef_loader.h       |  19 ++++
- ohos/adapter/web_entry/web_entry.cc           |  16 ++-
- ohos/adapter/web_entry/web_loader.cc          |   3 +
- ohos/adapter/web_entry/web_loader.h           |   7 +-
- ohos/adapter/web_entry/web_loader_factory.cc  |  17 ++-
- ohos/app/ohos_hap/AppScope/app.json5          |   2 +-
- .../resources/base/element/string.json        |   2 +-
- .../main/resources/base/element/string.json   |   2 +-
- .../main/resources/en_US/element/string.json  |   2 +-
- .../main/resources/zh_CN/element/string.json  |   2 +-
- ohos/app/ohos_hap/oh-package.json5            |   2 +-
- .../src/main/ets/ability/WebBaseAbility.ets   |   3 +-
- .../src/main/ets/adapter/AppWindowAdapter.ets |   2 +-
- .../main/ets/components/WebEmbeddedWindow.ets |   2 +-
- .../ets/components/WebNodeHandleWindow.ets    |   2 +-
- .../src/main/ets/components/WebWindow.ets     |   2 +-
- .../web_engine/src/main/ets/utils/KVStore.ets |   2 +-
- ohos/build/build.sh                           |  13 ++-
- printing/printing_context.h                   |  11 ++
- printing/printing_context_linux.cc            |  12 +-
- .../linux/suid/client/setuid_sandbox_host.cc  |   2 +-
- sandbox/policy/win/sandbox_win.cc             |  19 +++-
- services/network/cookie_manager.cc            |  10 +-
- services/network/network_context.cc           |  36 +++---
- .../network/public/cpp/resource_request.cc    |   3 +-
- .../public/mojom/network_context.mojom        |   3 +
- .../mojom/compositing/display_private.mojom   |   4 +-
- .../compositing/layered_window_updater.mojom  |   2 +-
- tools/grit/grit_args.gni                      |   5 +
- tools/gritsettings/resource_ids.spec          |   9 +-
- ui/accessibility/platform/BUILD.gn            |   4 +
- .../native_window_occlusion_tracker_win.cc    |   7 ++
- ui/base/l10n/l10n_util.cc                     |  29 +----
- ui/base/models/menu_model.h                   |  24 ++++
- ui/base/mojom/window_show_state.mojom         |   3 +-
- ui/base/resource/resource_bundle.cc           |  11 ++
- ui/base/resource/resource_bundle.h            |   5 +
- ui/base/x/x11_os_exchange_data_provider.cc    |   3 +-
- ui/base/x/x11_util.h                          |   5 +-
- ui/color/color_provider_manager.cc            |  19 ++++
- ui/color/color_provider_manager.h             |  24 ++++
- ui/compositor/compositor.h                    |  15 +++
- ui/display/screen.cc                          |   4 +-
- ui/display/win/screen_win.cc                  |   4 +-
- ui/events/keycodes/BUILD.gn                   |   2 +
- .../keycodes/keyboard_code_conversion_mac.mm  |   2 +-
- .../keycodes/keyboard_code_conversion_xkb.h   |   3 +-
- ui/gfx/render_text.cc                         |  20 ++++
- ui/gfx/render_text.h                          |   6 +
- ui/gtk/BUILD.gn                               |   4 +
- ui/gtk/gtk_ui.cc                              |   6 +
- ui/gtk/native_theme_gtk.cc                    |   8 +-
- ui/linux/BUILD.gn                             |   6 +
- ui/linux/linux_ui.cc                          |  18 +++
- ui/linux/linux_ui.h                           |  32 ++++--
- ui/menus/simple_menu_model.cc                 |   3 +
- ui/native_theme/native_theme.cc               |   8 ++
- ui/native_theme/native_theme.h                |   3 +
- ui/native_theme/native_theme_mac.mm           |   8 +-
- ui/native_theme/native_theme_win.cc           |  14 ++-
- ui/ozone/common/egl_util.cc                   |   2 +-
- ui/ozone/platform/x11/ozone_platform_x11.cc   |  16 ++-
- ui/ozone/platform/x11/ozone_platform_x11.h    |   5 +
- ui/ozone/platform/x11/x11_window.cc           |   3 +-
- ui/shell_dialogs/base_shell_dialog_win.cc     |   6 +
- ui/shell_dialogs/select_file_dialog.cc        |   6 +-
- ui/shell_dialogs/select_file_dialog.h         |  27 ++++-
- ui/shell_dialogs/select_file_dialog_factory.h |   2 +
- ui/shell_dialogs/select_file_dialog_mac.mm    |   4 +
- ui/shell_dialogs/select_file_dialog_win.cc    |   2 +
- ui/views/animation/ink_drop_host.h            |   2 +
- ui/views/controls/button/label_button.cc      |   6 +
- ui/views/controls/button/label_button.h       |   3 +
- ui/views/controls/label.cc                    |  36 ++++++
- ui/views/controls/label.h                     |   5 +
- ui/views/controls/menu/menu_controller.cc     |  12 +-
- ui/views/controls/menu/menu_controller.h      |   5 +-
- ui/views/controls/menu/menu_delegate.h        |  21 ++++
- ui/views/controls/menu/menu_host.cc           |   5 +-
- ui/views/controls/menu/menu_host.h            |   2 +
- ui/views/controls/menu/menu_item_view.cc      |  16 +++
- ui/views/controls/menu/menu_model_adapter.cc  |  66 +++++++++++
- ui/views/controls/menu/menu_model_adapter.h   |  14 +++
- ui/views/controls/menu/menu_runner.cc         |   3 +-
- ui/views/controls/menu/menu_runner.h          |   2 +
- ui/views/controls/menu/menu_runner_impl.cc    |   3 +-
- ui/views/controls/menu/menu_runner_impl.h     |   1 +
- .../controls/menu/menu_runner_impl_adapter.cc |   3 +-
- .../controls/menu/menu_runner_impl_adapter.h  |   1 +
- .../controls/menu/menu_runner_impl_cocoa.h    |   1 +
- .../controls/menu/menu_runner_impl_cocoa.mm   |   1 +
- .../menu/menu_runner_impl_interface.h         |   5 +-
- ui/views/controls/menu/menu_runner_impl_mac.h |   1 +
- .../controls/menu/menu_runner_impl_mac.mm     |   4 +-
- .../menu/menu_runner_impl_remote_cocoa.h      |   1 +
- .../menu/menu_runner_impl_remote_cocoa.mm     |   1 +
- .../menu/menu_scroll_view_container.cc        |   5 +
- ui/views/controls/textfield/textfield.cc      |   4 +
- ui/views/controls/webview/webview.cc          |   4 +
- ui/views/controls/webview/webview.h           |   4 +
- ui/views/style/platform_style.h               |   2 +-
- .../test/desktop_test_views_delegate_aura.cc  |   3 +-
- .../ui_controls_factory_desktop_aura_ozone.cc |   3 +
- ui/views/view.h                               |   6 +-
- .../widget/desktop_aura/desktop_screen_win.cc |   2 +
- .../desktop_window_tree_host_linux.cc         |  16 +++
- .../desktop_window_tree_host_linux.h          |   7 ++
- .../desktop_window_tree_host_platform.cc      |   4 +-
- .../desktop_window_tree_host_win.cc           |  68 ++++++++++--
- .../desktop_window_tree_host_win.h            |   8 ++
- ui/views/widget/native_widget_mac.mm          |   1 +
- ui/views/widget/widget.cc                     |  28 ++++-
- ui/views/widget/widget.h                      |   4 +-
- ui/views/widget/widget_delegate.h             |  14 ++-
- ui/views/widget/widget_hwnd_utils.cc          |   3 +-
- ui/views/win/hwnd_message_handler.cc          |  17 ++-
- ui/views/window/dialog_delegate.cc            |  22 ++--
- ui/views/window/dialog_delegate.h             |  15 ++-
- 272 files changed, 2170 insertions(+), 415 deletions(-)
- create mode 100644 ohos/adapter/web_entry/cef/cef_loader.cc
- create mode 100644 ohos/adapter/web_entry/cef/cef_loader.h
-
 diff --git a/src/.gn b/src/.gn
 index ae58a0b0a6..35e01ee64e 100644
 --- a/src/.gn
@@ -374,6 +92,21 @@ index 4c70d7c0ed..899ab3fefc 100644
          shim_sources += [
            "shim/allocator_shim_default_dispatch_to_linker_wrapped_symbols.cc",
          ]
+diff --git a/src/base/base_paths_ohos.cc b/src/base/base_paths_ohos.cc
+index c8d58d17be..c0312e73cf 100644
+--- a/src/base/base_paths_ohos.cc
++++ b/src/base/base_paths_ohos.cc
+@@ -67,6 +67,10 @@ bool PathProviderOHOS(int key, FilePath* result) {
+     case base::DIR_OHOS_APP_DATA:
+       *result = FilePath(::ohos::adapter::ContextPathAdapter::GetFilesDir());
+       return !result->empty();
++    case base::DIR_SRC_TEST_DATA_ROOT:
++    case base::DIR_TEST_DATA:
++    case base::DIR_GEN_TEST_DATA_ROOT:
++      return ParseAssetsOHOS(result);
+     default:
+       return false;
+   }
 diff --git a/src/base/command_line.cc b/src/base/command_line.cc
 index 7491285cd1..90044eb1dd 100644
 --- a/src/base/command_line.cc
@@ -2571,10 +2304,10 @@ index a7212c57cc..85d0bf052b 100644
      // Guard against wrong tokens being passed accidentally.
      return nullptr;
 diff --git a/src/content/browser/renderer_host/navigation_request.cc b/src/content/browser/renderer_host/navigation_request.cc
-index cecca9c12c..a13c0654f5 100644
+index 1e80edea4d..ef90f513b2 100644
 --- a/src/content/browser/renderer_host/navigation_request.cc
 +++ b/src/content/browser/renderer_host/navigation_request.cc
-@@ -8640,7 +8640,8 @@ std::optional<url::Origin> NavigationRequest::GetOriginToCommit() {
+@@ -8657,7 +8657,8 @@ std::optional<url::Origin> NavigationRequest::GetOriginToCommit() {
  }
  
  url::Origin NavigationRequest::GetOriginForURLLoaderFactoryBeforeResponse(
@@ -2584,7 +2317,7 @@ index cecca9c12c..a13c0654f5 100644
    // Calculate an approximation of the origin. The sandbox/csp are ignored.
    url::Origin origin = GetOriginForURLLoaderFactoryUnchecked();
  
-@@ -8657,6 +8658,17 @@ url::Origin NavigationRequest::GetOriginForURLLoaderFactoryBeforeResponse(
+@@ -8674,6 +8675,17 @@ url::Origin NavigationRequest::GetOriginForURLLoaderFactoryBeforeResponse(
    bool use_opaque_origin =
        (sandbox_flags & network::mojom::WebSandboxFlags::kOrigin) ==
        network::mojom::WebSandboxFlags::kOrigin;
@@ -2602,7 +2335,7 @@ index cecca9c12c..a13c0654f5 100644
    if (use_opaque_origin) {
      origin = origin.DeriveNewOpaqueOrigin();
    }
-@@ -8716,8 +8728,9 @@ NavigationRequest::GetOriginForURLLoaderFactoryAfterResponse() {
+@@ -8733,8 +8745,9 @@ NavigationRequest::GetOriginForURLLoaderFactoryAfterResponse() {
      return GetRenderFrameHost()->GetLastCommittedOrigin();
    }
  
@@ -2614,7 +2347,7 @@ index cecca9c12c..a13c0654f5 100644
  
    SCOPED_CRASH_KEY_BOOL("Bug1454273", "is_in_main_frame", IsInMainFrame());
    SCOPED_CRASH_KEY_STRING256(
-@@ -8752,10 +8765,17 @@ NavigationRequest::GetOriginForURLLoaderFactoryAfterResponse() {
+@@ -8769,10 +8782,17 @@ NavigationRequest::GetOriginForURLLoaderFactoryAfterResponse() {
        DetermineInitiatorRelationship(initiator_rfh,
                                       frame_tree_node_->current_frame_host()));
  
@@ -2698,10 +2431,10 @@ index 21f7fb2b6c..6f369d7e32 100644
    // Will call the appropriate NavigationThrottle function based on |event| on
    // all NavigationThrottles owned by this NavigationThrottleRunner.
 diff --git a/src/content/browser/renderer_host/render_frame_host_impl.cc b/src/content/browser/renderer_host/render_frame_host_impl.cc
-index 3d431c4b33..ec43e93ee5 100644
+index 584ed4c8b2..d0e43c1cce 100644
 --- a/src/content/browser/renderer_host/render_frame_host_impl.cc
 +++ b/src/content/browser/renderer_host/render_frame_host_impl.cc
-@@ -9739,6 +9739,16 @@ void RenderFrameHostImpl::CreateNewWindow(
+@@ -9747,6 +9747,16 @@ void RenderFrameHostImpl::CreateNewWindow(
      return;
    }
  
@@ -2718,7 +2451,7 @@ index 3d431c4b33..ec43e93ee5 100644
    // Otherwise, consume user activation before we proceed. In particular, it is
    // important to do this before we return from the |opener_suppressed| case
    // below.
-@@ -12181,6 +12191,7 @@ void RenderFrameHostImpl::CommitNavigation(
+@@ -12189,6 +12199,7 @@ void RenderFrameHostImpl::CommitNavigation(
        ProcessLock::FromSiteInfo(GetSiteInstance()->GetSiteInfo());
    auto browser_calc_origin_to_commit = navigation_request->GetOriginToCommit();
    if (!process_lock.is_error_page() && !is_mhtml_subframe &&
@@ -3027,10 +2760,10 @@ index d7f32cb53e..2bab5de596 100644
        static_cast<id<NativeEventProcessor>>(NSApp);
    [processor removeNativeEventProcessorObserver:this];
 diff --git a/src/content/browser/storage_partition_impl.cc b/src/content/browser/storage_partition_impl.cc
-index f5b5193d82..ab27bd6c8f 100644
+index 7ca0065467..a3fabf867c 100644
 --- a/src/content/browser/storage_partition_impl.cc
 +++ b/src/content/browser/storage_partition_impl.cc
-@@ -3594,9 +3594,12 @@ void StoragePartitionImpl::InitNetworkContext() {
+@@ -3601,9 +3601,12 @@ void StoragePartitionImpl::InitNetworkContext() {
      network_context->InitPRParallelPreloadMgr(cachePath);
    }
  #endif
@@ -3046,10 +2779,10 @@ index f5b5193d82..ab27bd6c8f 100644
    DCHECK(context_params->cors_origin_access_list.empty())
        << "NetworkContextParams::cors_origin_access_list should be populated "
 diff --git a/src/content/browser/web_contents/web_contents_impl.cc b/src/content/browser/web_contents/web_contents_impl.cc
-index 7814e5921e..0e69ebc574 100644
+index 83702dae24..97e70c1f94 100644
 --- a/src/content/browser/web_contents/web_contents_impl.cc
 +++ b/src/content/browser/web_contents/web_contents_impl.cc
-@@ -4093,6 +4093,12 @@ void WebContentsImpl::Init(const WebContents::CreateParams& params,
+@@ -4088,6 +4088,12 @@ void WebContentsImpl::Init(const WebContents::CreateParams& params,
        params.main_frame_name, GetOpener(), primary_main_frame_policy,
        base::UnguessableToken::Create());
  
@@ -3062,7 +2795,7 @@ index 7814e5921e..0e69ebc574 100644
    std::unique_ptr<WebContentsViewDelegate> delegate =
        GetContentClient()->browser()->GetWebContentsViewDelegate(this);
  
-@@ -4103,6 +4109,7 @@ void WebContentsImpl::Init(const WebContents::CreateParams& params,
+@@ -4098,6 +4104,7 @@ void WebContentsImpl::Init(const WebContents::CreateParams& params,
      view_ = CreateWebContentsView(this, std::move(delegate),
                                    &render_view_host_delegate_view_);
    }
@@ -3070,7 +2803,7 @@ index 7814e5921e..0e69ebc574 100644
    CHECK(render_view_host_delegate_view_);
    CHECK(view_.get());
  
-@@ -4315,6 +4322,9 @@ void WebContentsImpl::RenderWidgetCreated(
+@@ -4310,6 +4317,9 @@ void WebContentsImpl::RenderWidgetCreated(
                          "render_widget_host", render_widget_host);
    CHECK(!created_widgets_.contains(render_widget_host->GetFrameSinkId()));
    created_widgets_[render_widget_host->GetFrameSinkId()] = render_widget_host;
@@ -3080,7 +2813,7 @@ index 7814e5921e..0e69ebc574 100644
  }
  
  void WebContentsImpl::RenderWidgetDeleted(
-@@ -5264,6 +5274,15 @@ FrameTree* WebContentsImpl::CreateNewWindow(
+@@ -5259,6 +5269,15 @@ FrameTree* WebContentsImpl::CreateNewWindow(
      create_params.picture_in_picture_options = *(params.pip_options);
    }
  
@@ -3096,7 +2829,7 @@ index 7814e5921e..0e69ebc574 100644
    // Check whether there is an available prerendered page for this navigation if
    // this is not for guest. If it exists, take WebContents pre-created for
    // hosting the prerendered page instead of creating new WebContents.
-@@ -10030,6 +10049,9 @@ void WebContentsImpl::SetFocusedFrame(FrameTreeNode* node,
+@@ -10012,6 +10031,9 @@ void WebContentsImpl::SetFocusedFrame(FrameTreeNode* node,
    }
  
    CloseListenerManager::DidChangeFocusedFrame(this);
@@ -3106,7 +2839,7 @@ index 7814e5921e..0e69ebc574 100644
  }
  
  FrameTree* WebContentsImpl::GetOwnedPictureInPictureFrameTree() {
-@@ -10680,6 +10702,11 @@ void WebContentsImpl::Resize(const gfx::Rect& new_bounds) {
+@@ -10662,6 +10684,11 @@ void WebContentsImpl::Resize(const gfx::Rect& new_bounds) {
    OPTIONAL_TRACE_EVENT0("content", "WebContentsImpl::Resize");
  #if defined(USE_AURA)
    aura::Window* window = GetNativeView();
@@ -3118,7 +2851,7 @@ index 7814e5921e..0e69ebc574 100644
    window->SetBounds(gfx::Rect(window->bounds().origin(), new_bounds.size()));
  #elif BUILDFLAG(IS_ANDROID)
    content::RenderWidgetHostView* view = GetRenderWidgetHostView();
-@@ -10692,6 +10719,11 @@ void WebContentsImpl::Resize(const gfx::Rect& new_bounds) {
+@@ -10674,6 +10701,11 @@ void WebContentsImpl::Resize(const gfx::Rect& new_bounds) {
  gfx::Size WebContentsImpl::GetSize() {
  #if defined(USE_AURA)
    aura::Window* window = GetNativeView();
@@ -4189,6 +3922,50 @@ index aeb79b46f5..bd57e874c1 100644
 +
 +// This load will not send any cookies. For CEF usage.
 +LOAD_FLAG(DO_NOT_SEND_COOKIES, 1 << 20)
+diff --git a/src/net/cert/cert_verify_proc_ohos.cc b/src/net/cert/cert_verify_proc_ohos.cc
+old mode 100755
+new mode 100644
+index 69155e3ec2..49be7b92b9
+--- a/src/net/cert/cert_verify_proc_ohos.cc
++++ b/src/net/cert/cert_verify_proc_ohos.cc
+@@ -13,6 +13,8 @@
+ #include "base/files/file_util.h"
+ #include "base/logging.h"
+ #include "base/notreached.h"
++#include "base/path_service.h"
++#include "base/threading/thread_restrictions.h"
+ #include "crypto/hash.h"
+ #include "crypto/sha2.h"
+ #include "net/cert/asn1_util.h"
+@@ -36,6 +38,9 @@
+ #include "third_party/boringssl/src/pki/parsed_certificate.h"
+ #include "url/gurl.h"
+ 
++#include <filesystem>
++namespace fs = std::filesystem;
++
+ using ohos::adapter::CertManagerAdapter;
+ #define ROOT_CERT "/etc/ssl/certs/cacert.pem"
+ #define USER_CACERT_PREFIX "/data/certificates/user_cacerts/"
+@@ -318,7 +323,17 @@ class VerifyProcOHOSInner {
+     }
+ 
+     // Parse the root certificate file
+-    if (X509_load_cert_crl_file(look_up, ROOT_CERT, X509_FILETYPE_PEM) == 0) {
++    base::FilePath src_root;
++    {
++      base::ScopedAllowBlockingForTesting allow_blocking;
++      base::PathService::Get(base::DIR_SRC_TEST_DATA_ROOT, &src_root);
++    }
++    src_root = src_root.Append(FILE_PATH_LITERAL("root_certs/cacert.pem"));
++    std::string cert_path = ROOT_CERT;
++    if (fs::exists(src_root.AsUTF8Unsafe())) {
++      cert_path = src_root.AsUTF8Unsafe();
++    }
++    if (X509_load_cert_crl_file(look_up, cert_path.c_str(), X509_FILETYPE_PEM) == 0) {
+       LOG(ERROR) << "CertVerify() failed, Root certificate number is 0";
+       return X509_V_ERR_UNSPECIFIED;
+     }
 diff --git a/src/net/cookies/cookie_monster.cc b/src/net/cookies/cookie_monster.cc
 index e1090c36a6..5e98eee4d7 100644
 --- a/src/net/cookies/cookie_monster.cc
@@ -4364,6 +4141,33 @@ index 6754bacdf6..92388852b9 100644
  
    switch (policy) {
      case ReferrerPolicy::CLEAR_ON_TRANSITION_FROM_SECURE_TO_INSECURE:
+diff --git a/src/ohos/adapter/screen/screen_adapter.cc b/src/ohos/adapter/screen/screen_adapter.cc
+index 4919e26dde..c2329e6bb4 100644
+--- a/src/ohos/adapter/screen/screen_adapter.cc
++++ b/src/ohos/adapter/screen/screen_adapter.cc
+@@ -210,6 +210,10 @@ void ScreenAdapter::SetFontSizeZoom(float zoom) {
+   font_size_zoom_ = zoom;
+ }
+ 
++float ScreenAdapter::GetFontSizeZoom() {
++  return font_size_zoom_;
++}
++
+ void ScreenAdapter::OnAvoidAreaChangeCallback(int32_t status_bar_height) {
+   if (status_bar_height_ == status_bar_height) {
+     return;
+diff --git a/src/ohos/adapter/screen/screen_adapter.h b/src/ohos/adapter/screen/screen_adapter.h
+index 5f90d56a6a..a6ee480515 100644
+--- a/src/ohos/adapter/screen/screen_adapter.h
++++ b/src/ohos/adapter/screen/screen_adapter.h
+@@ -130,6 +130,7 @@ class ADAPTER_EXPORT_API ScreenAdapter {
+   void RegisterAvailableAreaCallback(AvailableAreaChangeCallback callback);
+   void RegisterAvoidAreaCallback(AvoidAreaChangeCallback callback);
+   void SetFontSizeZoom(float zoom);
++  float GetFontSizeZoom();
+   void OnAvoidAreaChangeCallback(int32_t status_bar_height);
+   DisplayChangeCallback GetCallback();
+   AvailableAreaChangeCallback GetAvailableAreaCallback();
 diff --git a/src/ohos/adapter/web_entry/BUILD.gn b/src/ohos/adapter/web_entry/BUILD.gn
 index 176523d86f..550a7adfbe 100644
 --- a/src/ohos/adapter/web_entry/BUILD.gn
@@ -4388,10 +4192,10 @@ index 176523d86f..550a7adfbe 100644
      }
 diff --git a/src/ohos/adapter/web_entry/cef/cef_loader.cc b/src/ohos/adapter/web_entry/cef/cef_loader.cc
 new file mode 100644
-index 0000000000..79c017dc06
+index 0000000000..30b4b813dd
 --- /dev/null
 +++ b/src/ohos/adapter/web_entry/cef/cef_loader.cc
-@@ -0,0 +1,105 @@
+@@ -0,0 +1,102 @@
 +// Copyright (c) 2024 Huawei Device Co., Ltd. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -4471,9 +4275,6 @@ index 0000000000..79c017dc06
 +      "--no-zygote",
 +      "--user-data-dir=/data/storage/el2/base/files/",
 +      "--disable-gpu-watchdog",
-+      "--force-renderer-accessibility=basic",
-+      "--enable-media-stream=true",
-+      "--enable-speech-input=true",
 +      "--enable-print-preview",
 +      "--lang=zh-CN",
 +  };
@@ -4557,7 +4358,7 @@ index cf6a2b7b16..7c28909f2c 100644
      if (commands[i].find("--type") != std::string::npos) {
        auto pos = commands[i].find_last_of("=");
 diff --git a/src/ohos/adapter/web_entry/web_loader.cc b/src/ohos/adapter/web_entry/web_loader.cc
-index 9087bc3678..2c44023260 100644
+index 9087bc3678..8429af6c53 100644
 --- a/src/ohos/adapter/web_entry/web_loader.cc
 +++ b/src/ohos/adapter/web_entry/web_loader.cc
 @@ -10,6 +10,9 @@ namespace ohos::adapter::web_entry {
@@ -4570,6 +4371,16 @@ index 9087bc3678..2c44023260 100644
  bool BasicLoader::Initialize() { return true; }
  
  __attribute__((no_sanitize("cfi", "cfi-icall")))
+@@ -32,6 +35,9 @@ int BasicLoader::StartMainProcess(const std::vector<std::string>& args) {
+       argv_cstr.push_back(const_cast<char*>(arg.c_str()));
+     }
+     for (const auto& arg : args) {
++      if (arg.empty()) {
++        continue;
++      }
+       argv_cstr.push_back(const_cast<char*>(arg.c_str()));
+     }
+     return fn(argv_cstr.size(), argv_cstr.data());
 diff --git a/src/ohos/adapter/web_entry/web_loader.h b/src/ohos/adapter/web_entry/web_loader.h
 index d7b8b7409b..63e7a6e404 100644
 --- a/src/ohos/adapter/web_entry/web_loader.h
@@ -4650,6 +4461,58 @@ index 8208769f58..1f4dd98f01 100644
    }
    return current_default_loader.get();
  }
+diff --git a/src/ohos/adapter/window/app_window_adapter.cc b/src/ohos/adapter/window/app_window_adapter.cc
+index ce875c8c42..e8437fab71 100644
+--- a/src/ohos/adapter/window/app_window_adapter.cc
++++ b/src/ohos/adapter/window/app_window_adapter.cc
+@@ -32,6 +32,13 @@ void AppWindowAdapter::Close(int32_t id) {
+   }
+ }
+ 
++void AppWindowAdapter::CloseUIAbilityWindow() {
++  auto jsFunc = ohos::adapter::GetJSFunction("AppWindow.CloseUIAbilityWindow");
++  if (jsFunc) {
++    jsFunc->Invoke<void>();
++  }
++}
++
+ void AppWindowAdapter::Show(int32_t id) {
+   LOGI("[ohoswindow] AppWindowAdapter::Show, id:%{public}d.",
+        id);
+diff --git a/src/ohos/adapter/window/app_window_adapter.h b/src/ohos/adapter/window/app_window_adapter.h
+index 3ff64d555c..ff92be05aa 100644
+--- a/src/ohos/adapter/window/app_window_adapter.h
++++ b/src/ohos/adapter/window/app_window_adapter.h
+@@ -21,6 +21,7 @@ class ADAPTER_EXPORT_API AppWindowAdapter {
+ 
+   void Create(const NewWindowParam& param);
+   void Close(int32_t id);
++  void CloseUIAbilityWindow();
+   void Show(int32_t id);
+   void Hide(int32_t id);
+   void Activate(int32_t id);
+diff --git a/src/ohos/adapter/xcomponent/event/node_handle_gesture_event_common.h b/src/ohos/adapter/xcomponent/event/node_handle_gesture_event_common.h
+index 95d3bb7ba3..ec4d7cedce 100644
+--- a/src/ohos/adapter/xcomponent/event/node_handle_gesture_event_common.h
++++ b/src/ohos/adapter/xcomponent/event/node_handle_gesture_event_common.h
+@@ -47,7 +47,7 @@ class NodeHandleBaseGestureEvent {
+       : gesture_type_(gesture_type),
+         tool_type_(tool_type),
+         offset_x_(offset_x),
+-        offset_y_(offset_y) {};
++        offset_y_(offset_y) {}
+   virtual ~NodeHandleBaseGestureEvent() = default;
+ 
+   ArkUI_GestureRecognizerType gesture_type() const { return gesture_type_; }
+@@ -103,7 +103,7 @@ class NodeHandlePinchEvent : public NodeHandleBaseGestureEvent {
+                        float offset_y,
+                        float scale)
+       : NodeHandleBaseGestureEvent(gesture_type, tool_type, offset_x, offset_y),
+-        scale_(scale) {};
++        scale_(scale) {}
+ 
+   float scale() const { return scale_; }
+ 
 diff --git a/src/ohos/app/ohos_hap/AppScope/app.json5 b/src/ohos/app/ohos_hap/AppScope/app.json5
 index 0618d07d48..42705f6173 100644
 --- a/src/ohos/app/ohos_hap/AppScope/app.json5
@@ -4675,46 +4538,202 @@ index ed6d17651a..1d48845df4 100644
      }
    ]
  }
-
 diff --git a/src/ohos/app/ohos_hap/chromium/src/main/resources/base/element/string.json b/src/ohos/app/ohos_hap/chromium/src/main/resources/base/element/string.json
-index e401617523..3c94d3e6eb 100644
+index e401617523..f97ea8029b 100644
 --- a/src/ohos/app/ohos_hap/chromium/src/main/resources/base/element/string.json
 +++ b/src/ohos/app/ohos_hap/chromium/src/main/resources/base/element/string.json
-@@ -10,7 +10,7 @@
-     },
-     {
-       "name": "EntryAbility_label",
+@@ -1,44 +1,44 @@
+-{
+-  "string": [
+-    {
+-      "name": "module_desc",
+-      "value": "module description"
+-    },
+-    {
+-      "name": "EntryAbility_desc",
+-      "value": "description"
+-    },
+-    {
+-      "name": "EntryAbility_label",
 -      "value": "Chromium"
+-    },
+-    {
+-      "name": "BrowserAbility_desc",
+-      "value": "description"
+-    },
+-    {
+-      "name": "BrowserAbility_label",
+-      "value": "BrowserAbility"
+-    },
+-    {
+-      "name": "StatelessAbility_desc",
+-      "value": "description"
+-    },
+-    {
+-      "name": "StatelessAbility_label",
+-      "value": "StatelessAbility"
+-    },
+-    {
+-      "name": "TaskManagerAbility_desc",
+-      "value": "TaskManagerAbility"
+-    },
+-    {
+-      "name": "TaskManagerAbility_label",
+-      "value": "TaskManagerAbility"
+-    },
+-    {
+-      "name": "OpenNewWindow_label",
+-      "value": "OpenNewWindow"
+-    }
+-  ]
++{
++  "string": [
++    {
++      "name": "module_desc",
++      "value": "module description"
++    },
++    {
++      "name": "EntryAbility_desc",
++      "value": "description"
++    },
++    {
++      "name": "EntryAbility_label",
 +      "value": "CEF"
-     },
-     {
-       "name": "BrowserAbility_desc",
++    },
++    {
++      "name": "BrowserAbility_desc",
++      "value": "description"
++    },
++    {
++      "name": "BrowserAbility_label",
++      "value": "BrowserAbility"
++    },
++    {
++      "name": "StatelessAbility_desc",
++      "value": "description"
++    },
++    {
++      "name": "StatelessAbility_label",
++      "value": "StatelessAbility"
++    },
++    {
++      "name": "TaskManagerAbility_desc",
++      "value": "TaskManagerAbility"
++    },
++    {
++      "name": "TaskManagerAbility_label",
++      "value": "TaskManagerAbility"
++    },
++    {
++      "name": "OpenNewWindow_label",
++      "value": "OpenNewWindow"
++    }
++  ]
+ }
+\ No newline at end of file
+diff --git a/src/ohos/app/ohos_hap/chromium/src/main/resources/base/profile/shortcuts_config.json b/src/ohos/app/ohos_hap/chromium/src/main/resources/base/profile/shortcuts_config.json
+index 63b0293bd5..80c784a7ed 100644
+--- a/src/ohos/app/ohos_hap/chromium/src/main/resources/base/profile/shortcuts_config.json
++++ b/src/ohos/app/ohos_hap/chromium/src/main/resources/base/profile/shortcuts_config.json
+@@ -5,7 +5,7 @@
+       "label": "$string:OpenNewWindow_label",
+       "wants": [
+         {
+-          "bundleName": "com.huawei.ohos_chromium",
++          "bundleName": "com.huawei.ohos_cef",
+           "moduleName": "chromium",
+           "abilityName": "EntryAbility",
+           "parameters": {
 diff --git a/src/ohos/app/ohos_hap/chromium/src/main/resources/en_US/element/string.json b/src/ohos/app/ohos_hap/chromium/src/main/resources/en_US/element/string.json
-index c62f2dfdd4..19453ed121 100644
+index c62f2dfdd4..6b37ab8d8a 100644
 --- a/src/ohos/app/ohos_hap/chromium/src/main/resources/en_US/element/string.json
 +++ b/src/ohos/app/ohos_hap/chromium/src/main/resources/en_US/element/string.json
-@@ -10,7 +10,7 @@
-     },
-     {
-       "name": "EntryAbility_label",
+@@ -1,20 +1,20 @@
+-{
+-  "string": [
+-    {
+-      "name": "module_desc",
+-      "value": "module description"
+-    },
+-    {
+-      "name": "EntryAbility_desc",
+-      "value": "description"
+-    },
+-    {
+-      "name": "EntryAbility_label",
 -      "value": "Chromium"
+-    },
+-    {
+-      "name": "OpenNewWindow_label",
+-      "value": "OpenNewWindow"
+-    }
+-  ]
++{
++  "string": [
++    {
++      "name": "module_desc",
++      "value": "module description"
++    },
++    {
++      "name": "EntryAbility_desc",
++      "value": "description"
++    },
++    {
++      "name": "EntryAbility_label",
 +      "value": "CEF"
-     },
-     {
-       "name": "OpenNewWindow_label",
++    },
++    {
++      "name": "OpenNewWindow_label",
++      "value": "OpenNewWindow"
++    }
++  ]
+ }
+\ No newline at end of file
 diff --git a/src/ohos/app/ohos_hap/chromium/src/main/resources/zh_CN/element/string.json b/src/ohos/app/ohos_hap/chromium/src/main/resources/zh_CN/element/string.json
-index bc3615452d..8d4da7c323 100644
+index bc3615452d..c14a66f21e 100644
 --- a/src/ohos/app/ohos_hap/chromium/src/main/resources/zh_CN/element/string.json
 +++ b/src/ohos/app/ohos_hap/chromium/src/main/resources/zh_CN/element/string.json
-@@ -10,7 +10,7 @@
-     },
-     {
-       "name": "EntryAbility_label",
+@@ -1,20 +1,20 @@
+-{
+-  "string": [
+-    {
+-      "name": "module_desc",
+-      "value": "模块描述"
+-    },
+-    {
+-      "name": "EntryAbility_desc",
+-      "value": "description"
+-    },
+-    {
+-      "name": "EntryAbility_label",
 -      "value": "Chromium"
+-    },
+-    {
+-      "name": "OpenNewWindow_label",
+-      "value": "打开新的窗口"
+-    }
+-  ]
++{
++  "string": [
++    {
++      "name": "module_desc",
++      "value": "模块描述"
++    },
++    {
++      "name": "EntryAbility_desc",
++      "value": "description"
++    },
++    {
++      "name": "EntryAbility_label",
 +      "value": "CEF"
-     },
-     {
-       "name": "OpenNewWindow_label",
++    },
++    {
++      "name": "OpenNewWindow_label",
++      "value": "打开新的窗口"
++    }
++  ]
+ }
+\ No newline at end of file
 diff --git a/src/ohos/app/ohos_hap/oh-package.json5 b/src/ohos/app/ohos_hap/oh-package.json5
 index f131d9efab..f75e44ac53 100644
 --- a/src/ohos/app/ohos_hap/oh-package.json5
@@ -4728,22 +4747,387 @@ index f131d9efab..f75e44ac53 100644
    "description": "Please describe the basic information.",
    "main": "",
    "version": "1.0.0",
+diff --git a/src/ohos/app/ohos_hap/web_engine/.gitignore b/src/ohos/app/ohos_hap/web_engine/.gitignore
+index e2713a2779..8008dc9058 100644
+--- a/src/ohos/app/ohos_hap/web_engine/.gitignore
++++ b/src/ohos/app/ohos_hap/web_engine/.gitignore
+@@ -3,4 +3,5 @@
+ /.preview
+ /build
+ /.cxx
+-/.test
+\ No newline at end of file
++/.test
++/src/main/resources/resfile
+\ No newline at end of file
 diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/ability/WebBaseAbility.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/ability/WebBaseAbility.ets
-index 4f1fd1591a..5fa49502e9 100644
+index 4f1fd1591a..a38b2b4867 100644
 --- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/ability/WebBaseAbility.ets
 +++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/ability/WebBaseAbility.ets
-@@ -24,7 +24,8 @@ export class WebBaseAbility extends UIAbility implements WebProxy {
-   protected windowStage: window.WindowStage | undefined = undefined;
-   protected nativeContext: NativeContext =
-     JsBindingUtils.getNativeContext(ContextType.kMainProcess);
+@@ -1,180 +1,181 @@
+-// Copyright (c) 2024 Huawei Device Co., Ltd. All rights reserved.
+-// Use of this source code is governed by a BSD-style license that can be
+-// found in the LICENSE file.
+-
+-import UIAbility from '@ohos.app.ability.UIAbility';
+-import LogUtil from '../utils/LogUtil';
+-import window from '@ohos.window';
+-import Want from '@ohos.app.ability.Want';
+-import AbilityConstant from '@ohos.app.ability.AbilityConstant';
+-import JsBindingUtils from '../utils/JsBindingUtils';
+-import { ChangeEventType, NativeContext, WindowStatus } from '../interface/CommonInterface';
+-import { CommandType, ConfigData, ContextType } from '../common/Constants';
+-import CheckEmptyUtils from '../utils/CheckEmptyUtils';
+-import { WebProxy } from '../interface/WebProxy';
+-import { common } from '@kit.AbilityKit';
+-import { BusinessError } from '@kit.BasicServicesKit';
+-import { WebAbilityStage } from '../application/WebAbilityStage';
+-
+-const TAG: string = 'WebBaseAbility';
+-
+-export class WebBaseAbility extends UIAbility implements WebProxy {
+-  protected xcomponentId: string = '';
+-  protected startUri: string = '';
+-  protected windowStage: window.WindowStage | undefined = undefined;
+-  protected nativeContext: NativeContext =
+-    JsBindingUtils.getNativeContext(ContextType.kMainProcess);
 -  protected hideTitleBar: boolean = true;
+-  protected originWindowId: number = -1;
+-  protected useDarkMode: boolean = false;
+-  protected isStateless: boolean = false;
+-  protected titleButtonVisible: boolean = true;
+-  protected appId: string = '';
+-  protected deviceModeChangeEvent: ChangeEventType | undefined = undefined;
+-  protected initStatus: WindowStatus = WindowStatus.FLOATING;
+-
+-  private initParameters(want: Want) {
+-    if (want && want.parameters) {
+-      if (want.parameters['xcomponentId'] !== undefined) {
+-        this.xcomponentId = want.parameters['xcomponentId'] as string;
+-      }
+-      if (want.parameters["hideTitleBar"] !== undefined) {
+-        this.hideTitleBar = want.parameters['hideTitleBar'] as boolean;
+-      }
+-      if (want.parameters["useDarkMode"] !== undefined) {
+-        this.useDarkMode = want.parameters['useDarkMode'] as boolean;
+-      }
+-      if (want.parameters["titleButtonVisible"] !== undefined) {
+-        this.titleButtonVisible = want.parameters['titleButtonVisible'] as boolean;
+-      }
+-      if (want.parameters["appId"] !== undefined) {
+-        this.appId = want.parameters['appId'] as string;
+-      }
+-      if (want.parameters["webappWindow"] !== undefined && want.parameters["webappWindow"] !== '') {
+-        this.appId = "--app-id=" + want.parameters['webappWindow'] as string;
+-      }
+-      if (want.parameters["initStatus"] !== undefined) {
+-        this.initStatus = want.parameters['initStatus'] as WindowStatus;
+-      }
+-    }
+-
+-    if (want["uri"]) {
+-      let storePath = want['uri'] as string;
+-      // convert storage path to uri
+-      this.startUri = storePath.replace("file://docs/", "file:///");
+-    }
+-  }
+-
+-  protected getContentPath(): string {
+-    if (this.nativeContext.IsSupportNodeHandleFeature()) {
+-      return 'pages/NodeHandleWindow';
+-    } else {
+-      return 'pages/Index';
+-    }
+-  }
+-
+-  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam) {
+-    this.initParameters(want);
+-
+-    if (CheckEmptyUtils.isEmpty(this.xcomponentId)) {
+-      LogUtil.info(TAG, 'onCreate, Allocate xcomponent id');
+-      if (want.parameters?.openInNewWindow) {
+-        this.xcomponentId = WebAbilityStage.X_COMPONENT_ID;
+-        return;
+-      }
+-      let widgetId = this.nativeContext.ExecuteCommand(CommandType.kGetWidget, {}).widget_Id;
+-      this.xcomponentId = ConfigData.WINDOW_PREFIX + widgetId;
+-    }
+-  }
+-
+-  onWindowStageCreate(windowStage: window.WindowStage) {
+-    this.windowStage = windowStage;
+-    this.originWindowId = windowStage?.getMainWindowSync().getWindowProperties().id;
+-  }
+-
+-  // implements WebProxy interface
+-  getWindowStage(): window.WindowStage | undefined {
+-    return this.windowStage;
+-  }
+-
+-  getWindow(): window.Window | undefined {
+-    return this.windowStage?.getMainWindowSync();
+-  }
+-
+-  getWindowContext(): common.Context {
+-    return this.context;
+-  }
+-
+-  getWindowId(): string {
+-    return this.xcomponentId;
+-  }
+-
+-  closeWindow() {
+-    this.context.terminateSelf()
+-      .then(() => {
+-        LogUtil.info(TAG, 'terminate Self id: ' + this.getWindowId());
+-      })
+-      .catch((err: BusinessError) => {
+-        LogUtil.error(TAG, 'Failed to terminate Self: ' + JSON.stringify(err));
+-      });
+-  }
+-
+-  setWindowTitle(title:string) {
+-    this.context.setMissionLabel(title)
+-      .catch((err: BusinessError) => {
+-        LogUtil.error(TAG, 'Failed to set title: ' + JSON.stringify(err));
+-      });
+-  }
+-
+-  createSubWindow(name: string): Promise<window.Window> {
+-    return new Promise<window.Window>((resolve, reject) => {
+-      if (!this.windowStage) {
+-        reject('Failed to get windowStage');
+-        return;
+-      }
+-      this.windowStage.createSubWindow(name)
+-        .then((data: window.Window) => {
+-          resolve(data);
+-        }).catch((error: BusinessError) => {
+-        reject(error);
+-      })
+-    });
+-  }
+-
+-  getOriginWindowId(): number {
+-    return this.originWindowId;
+-  }
+-
+-  isUIAbility(): boolean {
+-    return true;
+-  }
+-
+-  public updateAvoidAreaStatus(isFullScreen: boolean) {
+-    let windowClass = this.getWindow();
+- 
+-    // Set window to full screen.
+-    windowClass?.setWindowLayoutFullScreen(true).then(() => {
+-      LogUtil.info(TAG, 'Succeeded in setting the window layout to full-screen mode.');
+-    }).catch((err: BusinessError) => {
+-      LogUtil.error(TAG, 'Failed to set the window layout to full-screen mode. Cause:' + JSON.stringify(err));
+-    });
+- 
+-    // Hide the navigation bar here.
+-    windowClass?.setSpecificSystemBarEnabled('navigationIndicator', false).then(() => {
+-      LogUtil.info(TAG, 'Succeeded in setting the navigation indicator to be invisible.');
+-    }).catch((err: BusinessError) => {
+-      LogUtil.error(TAG, `Failed to set the navigation indicator to be invisible. Code is ${err.code}, message is ${err.message}`);
+-    });
+- 
+-    // The top status bar is set up to be hidden when in full-screen mode and displayed when maximized.
+-    windowClass?.setSpecificSystemBarEnabled('status', !isFullScreen).then(() => {
+-      LogUtil.info(TAG, 'Succeeded in setting the status bar to be invisible.');
+-    }).catch((err: BusinessError) => {
+-      LogUtil.error(TAG, `Failed to set the status bar to be invisible. Code is ${err.code}, message is ${err.message}`);
+-    });
+-  }
+-
+-  public setDeviceModeChangeEvent(deviceModeChangeEvent: ChangeEventType | undefined) {
+-    this.deviceModeChangeEvent = deviceModeChangeEvent;
+-  }
+-};
++// Copyright (c) 2024 Huawei Device Co., Ltd. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++import UIAbility from '@ohos.app.ability.UIAbility';
++import LogUtil from '../utils/LogUtil';
++import window from '@ohos.window';
++import Want from '@ohos.app.ability.Want';
++import AbilityConstant from '@ohos.app.ability.AbilityConstant';
++import JsBindingUtils from '../utils/JsBindingUtils';
++import { ChangeEventType, NativeContext, WindowStatus } from '../interface/CommonInterface';
++import { CommandType, ConfigData, ContextType } from '../common/Constants';
++import CheckEmptyUtils from '../utils/CheckEmptyUtils';
++import { WebProxy } from '../interface/WebProxy';
++import { common } from '@kit.AbilityKit';
++import { BusinessError } from '@kit.BasicServicesKit';
++import { WebAbilityStage } from '../application/WebAbilityStage';
++
++const TAG: string = 'WebBaseAbility';
++
++export class WebBaseAbility extends UIAbility implements WebProxy {
++  protected xcomponentId: string = '';
++  protected startUri: string = '';
++  protected windowStage: window.WindowStage | undefined = undefined;
++  protected nativeContext: NativeContext =
++    JsBindingUtils.getNativeContext(ContextType.kMainProcess);
 +  // cef: Need to display title bar
 +  protected hideTitleBar: boolean = false;
-   protected originWindowId: number = -1;
-   protected useDarkMode: boolean = false;
-   protected isStateless: boolean = false;
++  protected originWindowId: number = -1;
++  protected useDarkMode: boolean = false;
++  protected isStateless: boolean = false;
++  protected titleButtonVisible: boolean = true;
++  protected appId: string = '';
++  protected deviceModeChangeEvent: ChangeEventType | undefined = undefined;
++  protected initStatus: WindowStatus = WindowStatus.FLOATING;
++
++  private initParameters(want: Want) {
++    if (want && want.parameters) {
++      if (want.parameters['xcomponentId'] !== undefined) {
++        this.xcomponentId = want.parameters['xcomponentId'] as string;
++      }
++      if (want.parameters["hideTitleBar"] !== undefined) {
++        this.hideTitleBar = want.parameters['hideTitleBar'] as boolean;
++      }
++      if (want.parameters["useDarkMode"] !== undefined) {
++        this.useDarkMode = want.parameters['useDarkMode'] as boolean;
++      }
++      if (want.parameters["titleButtonVisible"] !== undefined) {
++        this.titleButtonVisible = want.parameters['titleButtonVisible'] as boolean;
++      }
++      if (want.parameters["appId"] !== undefined) {
++        this.appId = want.parameters['appId'] as string;
++      }
++      if (want.parameters["webappWindow"] !== undefined && want.parameters["webappWindow"] !== '') {
++        this.appId = "--app-id=" + want.parameters['webappWindow'] as string;
++      }
++      if (want.parameters["initStatus"] !== undefined) {
++        this.initStatus = want.parameters['initStatus'] as WindowStatus;
++      }
++    }
++
++    if (want["uri"]) {
++      let storePath = want['uri'] as string;
++      // convert storage path to uri
++      this.startUri = storePath.replace("file://docs/", "file:///");
++    }
++  }
++
++  protected getContentPath(): string {
++    if (this.nativeContext.IsSupportNodeHandleFeature()) {
++      return 'pages/NodeHandleWindow';
++    } else {
++      return 'pages/Index';
++    }
++  }
++
++  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam) {
++    this.initParameters(want);
++
++    if (CheckEmptyUtils.isEmpty(this.xcomponentId)) {
++      LogUtil.info(TAG, 'onCreate, Allocate xcomponent id');
++      if (want.parameters?.openInNewWindow) {
++        this.xcomponentId = WebAbilityStage.X_COMPONENT_ID;
++        return;
++      }
++      let widgetId = this.nativeContext.ExecuteCommand(CommandType.kGetWidget, {}).widget_Id;
++      this.xcomponentId = ConfigData.WINDOW_PREFIX + widgetId;
++    }
++  }
++
++  onWindowStageCreate(windowStage: window.WindowStage) {
++    this.windowStage = windowStage;
++    this.originWindowId = windowStage?.getMainWindowSync().getWindowProperties().id;
++  }
++
++  // implements WebProxy interface
++  getWindowStage(): window.WindowStage | undefined {
++    return this.windowStage;
++  }
++
++  getWindow(): window.Window | undefined {
++    return this.windowStage?.getMainWindowSync();
++  }
++
++  getWindowContext(): common.Context {
++    return this.context;
++  }
++
++  getWindowId(): string {
++    return this.xcomponentId;
++  }
++
++  closeWindow() {
++    this.context.terminateSelf()
++      .then(() => {
++        LogUtil.info(TAG, 'terminate Self id: ' + this.getWindowId());
++      })
++      .catch((err: BusinessError) => {
++        LogUtil.error(TAG, 'Failed to terminate Self: ' + JSON.stringify(err));
++      });
++  }
++
++  setWindowTitle(title:string) {
++    this.context.setMissionLabel(title)
++      .catch((err: BusinessError) => {
++        LogUtil.error(TAG, 'Failed to set title: ' + JSON.stringify(err));
++      });
++  }
++
++  createSubWindow(name: string): Promise<window.Window> {
++    return new Promise<window.Window>((resolve, reject) => {
++      if (!this.windowStage) {
++        reject('Failed to get windowStage');
++        return;
++      }
++      this.windowStage.createSubWindow(name)
++        .then((data: window.Window) => {
++          resolve(data);
++        }).catch((error: BusinessError) => {
++        reject(error);
++      })
++    });
++  }
++
++  getOriginWindowId(): number {
++    return this.originWindowId;
++  }
++
++  isUIAbility(): boolean {
++    return true;
++  }
++
++  public updateAvoidAreaStatus(isFullScreen: boolean) {
++    let windowClass = this.getWindow();
++ 
++    // Set window to full screen.
++    windowClass?.setWindowLayoutFullScreen(true).then(() => {
++      LogUtil.info(TAG, 'Succeeded in setting the window layout to full-screen mode.');
++    }).catch((err: BusinessError) => {
++      LogUtil.error(TAG, 'Failed to set the window layout to full-screen mode. Cause:' + JSON.stringify(err));
++    });
++ 
++    // Hide the navigation bar here.
++    windowClass?.setSpecificSystemBarEnabled('navigationIndicator', false).then(() => {
++      LogUtil.info(TAG, 'Succeeded in setting the navigation indicator to be invisible.');
++    }).catch((err: BusinessError) => {
++      LogUtil.error(TAG, `Failed to set the navigation indicator to be invisible. Code is ${err.code}, message is ${err.message}`);
++    });
++ 
++    // The top status bar is set up to be hidden when in full-screen mode and displayed when maximized.
++    windowClass?.setSpecificSystemBarEnabled('status', !isFullScreen).then(() => {
++      LogUtil.info(TAG, 'Succeeded in setting the status bar to be invisible.');
++    }).catch((err: BusinessError) => {
++      LogUtil.error(TAG, `Failed to set the status bar to be invisible. Code is ${err.code}, message is ${err.message}`);
++    });
++  }
++
++  public setDeviceModeChangeEvent(deviceModeChangeEvent: ChangeEventType | undefined) {
++    this.deviceModeChangeEvent = deviceModeChangeEvent;
++  }
++};
 diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/AppWindowAdapter.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/AppWindowAdapter.ets
-index 68d09d4867..0f8da97066 100644
+index 68d09d4867..daee82a47b 100644
 --- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/AppWindowAdapter.ets
 +++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/AppWindowAdapter.ets
 @@ -28,7 +28,7 @@ const TAG: string = 'AppWindow';
@@ -4755,24 +5139,372 @@ index 68d09d4867..0f8da97066 100644
    private bundleFlags = bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION |
                          bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_METADATA;
    private queryWindowNum: number = 10;                      
-diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebEmbeddedWindow.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebEmbeddedWindow.ets
-index d74caeb6ae..4ef34aa169 100644
---- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebEmbeddedWindow.ets
-+++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebEmbeddedWindow.ets
-@@ -152,7 +152,7 @@ export struct WebEmbeddedWindow {
+@@ -133,6 +133,16 @@ export class AppWindowAdapter extends BaseAdapter {
+     proxy?.closeWindow();
    }
  
-   private buildArgs(): string[] {
--    let default_uri = '';
-+    let default_uri = '--url=https://ams.haitaibrowser.com:8000/ohcef/ohindex.html';
-     if (this.startUri.length !== 0) {
-       default_uri = this.startUri;
++  @LogMethod
++  closeUIAbilityWindow() {
++    if (this.abilityManager.getProxyCount() > 0) {
++      let proxy_list = this.abilityManager.getProxyList();
++      for (let i = 0; i < proxy_list?.length; i++) {
++        proxy_list[i]?.closeWindow();
++      }
++    }
++  }
++
+   @LogMethod
+   showWindow(id: number) {
+     LogUtil.info(TAG, `[ohoswindow] in AppWindowAdapter showWindow, id is ${id}`);
+diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/WebAppAdapter.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/WebAppAdapter.ets
+index 4c01dc1b22..590e39fbf6 100644
+--- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/WebAppAdapter.ets
++++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/WebAppAdapter.ets
+@@ -62,7 +62,7 @@ export class WebAppAdapter extends BaseAdapter {
+       LogUtil.error(TAG, 'getBundleInfoForSelfSync failed. Cause: ' + JSON.stringify(exception));
      }
+     const want: Want = {
+-      bundleName: "com.huawei.ohos_chromium",
++      bundleName: "com.huawei.ohos_cef",
+       moduleName: this.moduleName,
+       abilityName: "EntryAbility",
+       parameters: {
+diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebEmbeddedWindow.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebEmbeddedWindow.ets
+index d74caeb6ae..a52c2bd748 100644
+--- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebEmbeddedWindow.ets
++++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebEmbeddedWindow.ets
+@@ -1,163 +1,163 @@
+-// Copyright (c) 2024 Huawei Device Co., Ltd. All rights reserved.
+-// Use of this source code is governed by a BSD-style license that can be
+-// found in the LICENSE file.
+-
+-import { NativeContext, WindowBound } from '../interface/CommonInterface';
+-import lazy { DragDropAdapter } from '../adapter/DragDropAdapter';
+-import LogUtil from '../utils/LogUtil';
+-import { CommandType, ConfigData, ContextType, PanAction } from '../common/Constants';
+-import Inject from '../common/InjectModule';
+-import JsBindingUtils from '../utils/JsBindingUtils';
+-import { MultiInputAdapter } from '../adapter/MultiInputAdapter';
+-import { DragParamManager } from '../common/DragParamManager';
+-import { UIExtensionContentSession } from '@kit.AbilityKit';
+-import { window } from '@kit.ArkUI';
+-
+-@Component
+-export struct WebEmbeddedWindow {
+-  private static TAG: string = 'WebEmbeddedWindow';
+-  @LocalStorageLink('xcomponentId') xComponentId: string = '';
+-  @LocalStorageLink('startUri') startUri: string = '';
+-  @LocalStorageLink('session') session: UIExtensionContentSession | undefined = undefined;
+-  @LocalStorageLink('userData') userData: string = '';
+-  @LocalStorageLink('window') embeddedWindow: window.Window | undefined = undefined;
+-  private LIBRARY_NAME: string = 'adapter';
+-  private XCOMPONENT_NAME: string = 'xcomponent';
+-  private MODULE_NAME: string = this.xComponentId + ':' + this.XCOMPONENT_NAME;
+-  private dragDropAdapter: DragDropAdapter = Inject.get(DragDropAdapter);
+-  private nativeContext: NativeContext = JsBindingUtils.getNativeContext(ContextType.kMainProcess);
+-  private multiInputAdapter: MultiInputAdapter = Inject.get(MultiInputAdapter);
+-  private dragParamManager = Inject.get(DragParamManager);
+-
+-  aboutToAppear(): void {
+-    this.dragParamManager.addDragContextData({
+-      id: this.xComponentId,
+-      uiContext: this.getUIContext(),
+-    });
+-  }
+-
+-  aboutToDisappear(): void {
+-    this.dragParamManager.removeDragContextData(this.xComponentId);
+-  }
+-
+-  build() {
+-    XComponent({
+-      id: this.MODULE_NAME,
+-      type: XComponentType.SURFACE,
+-      libraryname: this.LIBRARY_NAME
+-    })
+-      .focusable(true)
+-      .defaultFocus(true)
+-      .backgroundColor(Color.White)
+-      .gesture(
+-        PanGesture({ direction: PanDirection.Vertical | PanDirection.Horizontal })
+-          .onActionStart((event: GestureEvent) => {
+-            this.multiInputAdapter.OnPanEvent(PanAction.kStart, this.xComponentId, event);
+-          })
+-          .onActionUpdate((event: GestureEvent) => {
+-            this.multiInputAdapter.OnPanEvent(PanAction.kUpdate, this.xComponentId, event);
+-          })
+-          .onActionEnd((event: GestureEvent) => {
+-            this.multiInputAdapter.OnPanEvent(PanAction.kEnd, this.xComponentId, event);
+-          })
+-          .onActionCancel(() => {
+-            this.multiInputAdapter.OnPanEvent(PanAction.kCancel, this.xComponentId, undefined);
+-          })
+-      )
+-      .gesture(
+-        PinchGesture()
+-          .onActionStart((event: GestureEvent) => {
+-            this.multiInputAdapter.OnPinchEvent("start", this.xComponentId, event);
+-          })
+-          .onActionUpdate((event: GestureEvent) => {
+-            this.multiInputAdapter.OnPinchEvent("update", this.xComponentId, event);
+-          })
+-          .onActionEnd((event: GestureEvent) => {
+-            this.multiInputAdapter.OnPinchEvent("end", this.xComponentId, event);
+-          })
+-      )
+-      .onDragEnter((event?: DragEvent) => {
+-        this.dragDropAdapter.dragEnterData(this.xComponentId, (event as DragEvent).getSummary());
+-      })
+-      .onDragMove((event?: DragEvent) => {
+-        let windowX = event?.getWindowX();
+-        let windowY = event?.getWindowY();
+-        windowX = vp2px(windowX);
+-        windowY = vp2px(windowY);
+-        this.dragDropAdapter.dragMove(this.xComponentId, windowX, windowY);
+-      })
+-      .onDragLeave(() => {
+-        this.dragDropAdapter.dragLeave(this.xComponentId);
+-      })
+-      .onDrop((event?: DragEvent) => {
+-        if (!event) {
+-          LogUtil.error(WebEmbeddedWindow.TAG, 'OhosDrag WebWindow DragDrop onDrop event is null');
+-          return;
+-        }
+-        let dragData: UnifiedData = (event as DragEvent).getData() as UnifiedData;
+-        this.dragDropAdapter.dropData(this.xComponentId, dragData);
+-      })
+-      .onLoad(() => {
+-        LogUtil.info(WebEmbeddedWindow.TAG, 'onLoad xComponentId:' + this.xComponentId);
+-        if (this.xComponentId === ConfigData.DEFAULT_WINDOW_ID) {
+-          this.setDefaultBounds();
+-          let vec_args = this.buildArgs();
+-          this.nativeContext.runBrowser(vec_args);
+-        } else {
+-          this.nativeContext.ExecuteCommand(
+-            CommandType.kNewWidget,
+-            {
+-              url: this.startUri,
+-              user_data: this.userData,
+-            });
+-        }
+-      })
+-      .id(this.XCOMPONENT_NAME)
+-      .renderFit(RenderFit.TOP_LEFT)
+-  }
+-
+-  private setDefaultBounds() {
+-    if (this.xComponentId !== ConfigData.DEFAULT_WINDOW_ID) {
+-      return;
+-    }
+-
+-    let windowProxy = this.session?.getUIExtensionWindowProxy();
+-    let prop = windowProxy?.properties;
+-    if (prop) {
+-      let windowRect: WindowBound = {
+-        left: prop.uiExtensionHostWindowProxyRect.left,
+-        top: prop.uiExtensionHostWindowProxyRect.top,
+-        width: prop.uiExtensionHostWindowProxyRect.width,
+-        height: prop.uiExtensionHostWindowProxyRect.height
+-      }
+-
+-      let drawableRect: WindowBound = {
+-        left: 0,
+-        top: 0,
+-        width: prop.uiExtensionHostWindowProxyRect.width,
+-        height: prop.uiExtensionHostWindowProxyRect.height
+-      }
+-
+-      let displayId = ConfigData.INVALID_DISPLAY_ID;
+-      try {
+-        let windowProp = this.embeddedWindow?.getWindowProperties();
+-        if (windowProp && windowProp.displayId) {
+-          displayId = windowProp.displayId;
+-        }
+-        this.nativeContext.OnWindowInitSize(windowRect, drawableRect, displayId);
+-      } catch (error) {
+-        LogUtil.error(WebEmbeddedWindow.TAG, 'get display fail, error:' + JSON.stringify(error));
+-      }
+-    }
+-  }
+-
+-  private buildArgs(): string[] {
+-    let default_uri = '';
+-    if (this.startUri.length !== 0) {
+-      default_uri = this.startUri;
+-    }
+-    let resDir = '--bundle-installation-dir=' + getContext().resourceDir;
+-    let vec_args = [resDir, default_uri];
+-    return vec_args;
+-  }
+-}
++// Copyright (c) 2024 Huawei Device Co., Ltd. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++import { NativeContext, WindowBound } from '../interface/CommonInterface';
++import lazy { DragDropAdapter } from '../adapter/DragDropAdapter';
++import LogUtil from '../utils/LogUtil';
++import { CommandType, ConfigData, ContextType, PanAction } from '../common/Constants';
++import Inject from '../common/InjectModule';
++import JsBindingUtils from '../utils/JsBindingUtils';
++import { MultiInputAdapter } from '../adapter/MultiInputAdapter';
++import { DragParamManager } from '../common/DragParamManager';
++import { UIExtensionContentSession } from '@kit.AbilityKit';
++import { window } from '@kit.ArkUI';
++
++@Component
++export struct WebEmbeddedWindow {
++  private static TAG: string = 'WebEmbeddedWindow';
++  @LocalStorageLink('xcomponentId') xComponentId: string = '';
++  @LocalStorageLink('startUri') startUri: string = '';
++  @LocalStorageLink('session') session: UIExtensionContentSession | undefined = undefined;
++  @LocalStorageLink('userData') userData: string = '';
++  @LocalStorageLink('window') embeddedWindow: window.Window | undefined = undefined;
++  private LIBRARY_NAME: string = 'adapter';
++  private XCOMPONENT_NAME: string = 'xcomponent';
++  private MODULE_NAME: string = this.xComponentId + ':' + this.XCOMPONENT_NAME;
++  private dragDropAdapter: DragDropAdapter = Inject.get(DragDropAdapter);
++  private nativeContext: NativeContext = JsBindingUtils.getNativeContext(ContextType.kMainProcess);
++  private multiInputAdapter: MultiInputAdapter = Inject.get(MultiInputAdapter);
++  private dragParamManager = Inject.get(DragParamManager);
++
++  aboutToAppear(): void {
++    this.dragParamManager.addDragContextData({
++      id: this.xComponentId,
++      uiContext: this.getUIContext(),
++    });
++  }
++
++  aboutToDisappear(): void {
++    this.dragParamManager.removeDragContextData(this.xComponentId);
++  }
++
++  build() {
++    XComponent({
++      id: this.MODULE_NAME,
++      type: XComponentType.SURFACE,
++      libraryname: this.LIBRARY_NAME
++    })
++      .focusable(true)
++      .defaultFocus(true)
++      .backgroundColor(Color.White)
++      .gesture(
++        PanGesture({ direction: PanDirection.Vertical | PanDirection.Horizontal })
++          .onActionStart((event: GestureEvent) => {
++            this.multiInputAdapter.OnPanEvent(PanAction.kStart, this.xComponentId, event);
++          })
++          .onActionUpdate((event: GestureEvent) => {
++            this.multiInputAdapter.OnPanEvent(PanAction.kUpdate, this.xComponentId, event);
++          })
++          .onActionEnd((event: GestureEvent) => {
++            this.multiInputAdapter.OnPanEvent(PanAction.kEnd, this.xComponentId, event);
++          })
++          .onActionCancel(() => {
++            this.multiInputAdapter.OnPanEvent(PanAction.kCancel, this.xComponentId, undefined);
++          })
++      )
++      .gesture(
++        PinchGesture()
++          .onActionStart((event: GestureEvent) => {
++            this.multiInputAdapter.OnPinchEvent("start", this.xComponentId, event);
++          })
++          .onActionUpdate((event: GestureEvent) => {
++            this.multiInputAdapter.OnPinchEvent("update", this.xComponentId, event);
++          })
++          .onActionEnd((event: GestureEvent) => {
++            this.multiInputAdapter.OnPinchEvent("end", this.xComponentId, event);
++          })
++      )
++      .onDragEnter((event?: DragEvent) => {
++        this.dragDropAdapter.dragEnterData(this.xComponentId, (event as DragEvent).getSummary());
++      })
++      .onDragMove((event?: DragEvent) => {
++        let windowX = event?.getWindowX();
++        let windowY = event?.getWindowY();
++        windowX = vp2px(windowX);
++        windowY = vp2px(windowY);
++        this.dragDropAdapter.dragMove(this.xComponentId, windowX, windowY);
++      })
++      .onDragLeave(() => {
++        this.dragDropAdapter.dragLeave(this.xComponentId);
++      })
++      .onDrop((event?: DragEvent) => {
++        if (!event) {
++          LogUtil.error(WebEmbeddedWindow.TAG, 'OhosDrag WebWindow DragDrop onDrop event is null');
++          return;
++        }
++        let dragData: UnifiedData = (event as DragEvent).getData() as UnifiedData;
++        this.dragDropAdapter.dropData(this.xComponentId, dragData);
++      })
++      .onLoad(() => {
++        LogUtil.info(WebEmbeddedWindow.TAG, 'onLoad xComponentId:' + this.xComponentId);
++        if (this.xComponentId === ConfigData.DEFAULT_WINDOW_ID) {
++          this.setDefaultBounds();
++          let vec_args = this.buildArgs();
++          this.nativeContext.runBrowser(vec_args);
++        } else {
++          this.nativeContext.ExecuteCommand(
++            CommandType.kNewWidget,
++            {
++              url: this.startUri,
++              user_data: this.userData,
++            });
++        }
++      })
++      .id(this.XCOMPONENT_NAME)
++      .renderFit(RenderFit.TOP_LEFT)
++  }
++
++  private setDefaultBounds() {
++    if (this.xComponentId !== ConfigData.DEFAULT_WINDOW_ID) {
++      return;
++    }
++
++    let windowProxy = this.session?.getUIExtensionWindowProxy();
++    let prop = windowProxy?.properties;
++    if (prop) {
++      let windowRect: WindowBound = {
++        left: prop.uiExtensionHostWindowProxyRect.left,
++        top: prop.uiExtensionHostWindowProxyRect.top,
++        width: prop.uiExtensionHostWindowProxyRect.width,
++        height: prop.uiExtensionHostWindowProxyRect.height
++      }
++
++      let drawableRect: WindowBound = {
++        left: 0,
++        top: 0,
++        width: prop.uiExtensionHostWindowProxyRect.width,
++        height: prop.uiExtensionHostWindowProxyRect.height
++      }
++
++      let displayId = ConfigData.INVALID_DISPLAY_ID;
++      try {
++        let windowProp = this.embeddedWindow?.getWindowProperties();
++        if (windowProp && windowProp.displayId) {
++          displayId = windowProp.displayId;
++        }
++        this.nativeContext.OnWindowInitSize(windowRect, drawableRect, displayId);
++      } catch (error) {
++        LogUtil.error(WebEmbeddedWindow.TAG, 'get display fail, error:' + JSON.stringify(error));
++      }
++    }
++  }
++
++  private buildArgs(): string[] {
++    let default_uri = '--url=https://ams.haitaibrowser.com:8000/ohcef/ohindex.html';
++    if (this.startUri.length !== 0) {
++      default_uri = this.startUri;
++    }
++    let resDir = '--bundle-installation-dir=' + getContext().resourceDir;
++    let vec_args = [resDir, default_uri];
++    return vec_args;
++  }
++}
 diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebNodeHandleWindow.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebNodeHandleWindow.ets
-index d908f9fe3f..1e2dac28f9 100644
+index d908f9fe3f..9a097d9f8a 100644
 --- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebNodeHandleWindow.ets
 +++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebNodeHandleWindow.ets
-@@ -99,7 +99,7 @@ export struct WebNodeHandleWindow {
+@@ -99,12 +99,31 @@ export struct WebNodeHandleWindow {
    }
   
    private buildArgs(): string[] {
@@ -4781,11 +5513,36 @@ index d908f9fe3f..1e2dac28f9 100644
      if (this.startUri.length !== 0) {
        default_uri = this.startUri;
      }
+     let resDir = '--bundle-installation-dir=' + getContext().resourceDir;
+     let vec_args = [resDir, default_uri, this.appId];
++
++    let ut = true;
++    ut = false;
++    if (ut) {
++      // Add for ceftests used.
++      vec_args.push("--use-views");
++      vec_args.push("--use-alloy-style");
++      // vec_args.push("--gtest_filter=AudioOutputTest.*");
++      // 保存结果
++      let out_file = "--gtest_output=json:/data/storage/el2/base/temp/result.json";
++      vec_args.push(out_file);
++    } else {
++      // Add for cefsimple used.
++      // vec_args.push("--use-alloy-style");
++      vec_args.push("--force-renderer-accessibility=complete");
++      vec_args.push("--enable-media-stream=true");
++      vec_args.push("--enable-speech-input=true");
++    }
++
+     return vec_args;
+   }
+ }
+\ No newline at end of file
 diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebWindow.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebWindow.ets
-index 676d36168d..b11a5c24d6 100644
+index 676d36168d..1d2df49872 100644
 --- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebWindow.ets
 +++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebWindow.ets
-@@ -161,7 +161,7 @@ export struct WebWindow {
+@@ -161,12 +161,31 @@ export struct WebWindow {
    }
  
    private buildArgs(): string[] {
@@ -4794,6 +5551,53 @@ index 676d36168d..b11a5c24d6 100644
      if (this.startUri.length !== 0) {
        default_uri = this.startUri;
      }
+     let resDir = '--bundle-installation-dir=' + getContext().resourceDir;
+     let vec_args = [resDir, default_uri, this.appId];
++
++    let ut = true;
++    ut = false;
++    if (ut) {
++      // Add for ceftests used.
++      vec_args.push("--use-views");
++      vec_args.push("--use-alloy-style");
++      // vec_args.push("--gtest_filter=AudioOutputTest.*");
++      // 保存结果
++      let out_file = "--gtest_output=json:/data/storage/el2/base/temp/result.json";
++      vec_args.push(out_file);
++    } else {
++      // Add for cefsimple used.
++      // vec_args.push("--use-alloy-style");
++      vec_args.push("--force-renderer-accessibility=complete");
++      vec_args.push("--enable-media-stream=true");
++      vec_args.push("--enable-speech-input=true");
++    }
++
+     return vec_args;
+   }
+ }
+diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/jsbindings/AppWindowAdapterBind.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/jsbindings/AppWindowAdapterBind.ets
+index 171f4aaa55..f971acbed1 100644
+--- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/jsbindings/AppWindowAdapterBind.ets
++++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/jsbindings/AppWindowAdapterBind.ets
+@@ -20,6 +20,10 @@ function closeWindow(id: number) {
+   implAppWindowAdapter().closeWindow(id);
+ }
+ 
++function closeUIAbilityWindow() {
++  implAppWindowAdapter().closeUIAbilityWindow();
++}
++
+ function showWindow(id: number) {
+   implAppWindowAdapter().showWindow(id);
+ }
+@@ -111,6 +115,7 @@ export class AppWindowAdapterBind {
+   static bind() {
+     JsBindingUtils.bindFunction("AppWindow.CreateWindow", createWindow);
+     JsBindingUtils.bindFunction("AppWindow.CloseWindow", closeWindow);
++    JsBindingUtils.bindFunction("AppWindow.CloseUIAbilityWindow", closeUIAbilityWindow);
+     JsBindingUtils.bindFunction("AppWindow.SetFullscreen", setFullscreen);
+     JsBindingUtils.bindFunction("AppWindow.SetBounds", setBounds);
+     JsBindingUtils.bindFunction("AppWindow.SetEnabled", setEnabled);
 diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/KVStore.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/KVStore.ets
 index 5a2fbb1921..83bc01b87f 100644
 --- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/KVStore.ets
@@ -4808,7 +5612,7 @@ index 5a2fbb1921..83bc01b87f 100644
        this.kvManager = distributedKVStore.createKVManager(kvManagerConfig);
        if (this.kvManager == undefined) {
 diff --git a/src/ohos/build/build.sh b/src/ohos/build/build.sh
-index 75017131b2..b9dc2dd86f 100755
+index 75017131b2..0036a119c8 100755
 --- a/src/ohos/build/build.sh
 +++ b/src/ohos/build/build.sh
 @@ -20,6 +20,7 @@ ROOT_DIR="${CUR_DIR%/src*}""/src"
@@ -4819,7 +5623,7 @@ index 75017131b2..b9dc2dd86f 100755
  TEXT_BOLD="\033[1m"
  TEXT_NORMAL="\033[0m"
  
-@@ -59,6 +60,10 @@ buildargs="
+@@ -59,6 +60,11 @@ buildargs="
    llvm_ohos_mainline=true
    rustc_version=\"4a0969e06dbeaaa43914d2d00b2e843d49aa3886-1-llvmorg-21-init-11777-gfd3fecfc\"
    rust_sysroot_absolute=\"//ohos_sdk/rust-toolchain\"
@@ -4827,10 +5631,11 @@ index 75017131b2..b9dc2dd86f 100755
 +# cef args
 +  use_partition_alloc_as_malloc=false
 +  enable_backup_ref_ptr_support=false
++  v8_enable_sandbox=false
    "
  #Add build args end
  
-@@ -76,7 +81,7 @@ buildarg_cpu="target_cpu=\"arm64\""
+@@ -76,7 +82,7 @@ buildarg_cpu="target_cpu=\"arm64\""
  buildarg_musl="use_musl=true"
  build_dir="out/musl_64/"
  build_product_name="product_name=\"all\""
@@ -4839,7 +5644,7 @@ index 75017131b2..b9dc2dd86f 100755
  build_output=""
  build_asan=0
  build_isolated_level=0
-@@ -166,6 +171,12 @@ case "${build_target}" in
+@@ -166,6 +172,12 @@ case "${build_target}" in
      ohos_build_target=\"chromium\"
      "
      ;;
@@ -5980,6 +6785,208 @@ index 100aa81f3e..e6b0f86968 100644
        return false;
  #endif
  
+diff --git a/src/ui/ozone/platform/ohos/test/ohos_ozone_ui_controls_test_helper.cc b/src/ui/ozone/platform/ohos/test/ohos_ozone_ui_controls_test_helper.cc
+index 08c97a36ac..7230aad7e8 100644
+--- a/src/ui/ozone/platform/ohos/test/ohos_ozone_ui_controls_test_helper.cc
++++ b/src/ui/ozone/platform/ohos/test/ohos_ozone_ui_controls_test_helper.cc
+@@ -4,23 +4,27 @@
+ 
+ #include "ui/ozone/platform/ohos/test/ohos_ozone_ui_controls_test_helper.h"
+ 
++#include "ohos/adapter/xcomponent/adapter/window_adapter.h"
++#include "ohos/adapter/xcomponent/xcomponent_manager.h"
+ #include "ui/aura/window_tree_host.h"
++#include "ui/display/screen.h"
+ #include "ui/events/base_event_utils.h"
+ #include "ui/events/event.h"
+ #include "ui/events/event_constants.h"
+ #include "ui/events/keycodes/dom/keycode_converter.h"
++#include "ui/events/keycodes/keyboard_code_conversion.h"
+ #include "ui/events/keycodes/keyboard_codes_posix.h"
+ #include "ui/events/ozone/layout/keyboard_layout_engine.h"
+ #include "ui/events/ozone/layout/keyboard_layout_engine_manager.h"
+ #include "ui/events/platform/platform_event_source.h"
+ #include "ui/events/pointer_details.h"
+ #include "ui/events/types/event_type.h"
+-#include "ui/ozone/platform/ohos/host/ohos_event_source_base.h"
++#include "ui/ozone/platform/ohos/host/ohos_event_source.h"
+ 
+ namespace ui {
+ // Mask of the buttons currently down.
+ // just set it to 1 for test on the ohos platform
+-constexpr unsigned kButtonDownMask = 1;
++unsigned button_down_mask = 0;
+ 
+ OhosOzoneUIControlsTestHelper::OhosOzoneUIControlsTestHelper() = default;
+ OhosOzoneUIControlsTestHelper::~OhosOzoneUIControlsTestHelper() = default;
+@@ -32,7 +36,7 @@ bool OhosOzoneUIControlsTestHelper::SupportsScreenCoordinates() const {
+ }
+ 
+ unsigned OhosOzoneUIControlsTestHelper::ButtonDownMask() const {
+-  return kButtonDownMask;
++  return button_down_mask;
+ }
+ 
+ void OhosOzoneUIControlsTestHelper::SendKeyEvents(gfx::AcceleratedWidget widget,
+@@ -40,8 +44,13 @@ void OhosOzoneUIControlsTestHelper::SendKeyEvents(gfx::AcceleratedWidget widget,
+                                                   int key_event_types,
+                                                   int accelerator_state,
+                                                   base::OnceClosure closure) {
+-  DomCode dom_code = KeycodeConverter::NativeKeycodeToDomCode(key);
+-  DomKey dom_key;
++  bool has_press = key_event_types & ui_controls::kKeyPress;
++  bool has_release = key_event_types & ui_controls::kKeyRelease;
++  bool has_control = accelerator_state & ui_controls::kControl;
++  bool has_shift = accelerator_state & ui_controls::kShift;
++  bool has_alt = accelerator_state & ui_controls::kAlt;
++  DomCode dom_code = ui::UsLayoutKeyboardCodeToDomCode(key);
++  DomKey dom_key = DomKey::NONE;
+   KeyboardCode key_code = VKEY_UNKNOWN;
+   auto* layout_engine = KeyboardLayoutEngineManager::GetKeyboardLayoutEngine();
+   if (layout_engine == nullptr ||
+@@ -50,15 +59,55 @@ void OhosOzoneUIControlsTestHelper::SendKeyEvents(gfx::AcceleratedWidget widget,
+     return;
+   }
+   auto* event_source =
+-      reinterpret_cast<OhosEventSourceBase*>(PlatformEventSource::GetInstance());
+-
+-  KeyEvent event(EventType::kKeyPressed, ui::VKEY_MENU, dom_code, key_event_types,
+-                 dom_key, ui::EventTimeForNow());
+-  event_source->OnKeyEvent(widget, event);
++      reinterpret_cast<OhosEventSource*>(PlatformEventSource::GetInstance());
++  int flags = button_down_mask;
++  if (has_press) {
++    if (has_shift) {
++      flags |= ui::EF_SHIFT_DOWN;
++      ui::KeyEvent event(EventType::kKeyPressed, ui::VKEY_SHIFT, ui::EF_SHIFT_DOWN,
++                         ui::EventTimeForNow());
++      event_source->OnKeyEvent(widget, event);
++    }
++    if (has_control) {
++      flags |= ui::EF_CONTROL_DOWN;
++      ui::KeyEvent event(EventType::kKeyPressed, ui::VKEY_CONTROL,
++                         ui::EF_CONTROL_DOWN, ui::EventTimeForNow());
++      event_source->OnKeyEvent(widget, event);
++    }
++    if (has_alt) {
++      flags |= ui::EF_ALT_DOWN;
++      ui::KeyEvent event(EventType::kKeyPressed, ui::VKEY_MENU, ui::EF_ALT_DOWN,
++                         ui::EventTimeForNow());
++      event_source->OnKeyEvent(widget, event);
++    }
++    ui::KeyEvent event_key(EventType::kKeyPressed, key_code, dom_code, flags,
++                           dom_key, ui::EventTimeForNow());
++    event_source->OnKeyEvent(widget, event_key);
++  }
+ 
+-  KeyEvent event_key(EventType::kKeyPressed, key_code, dom_code, key_event_types,
+-                     dom_key, ui::EventTimeForNow());
+-  event_source->OnKeyEvent(widget, event_key);
++  if (has_release) {
++    ui::KeyEvent event_key(EventType::kKeyReleased, key_code, dom_code, flags,
++                           dom_key, ui::EventTimeForNow());
++    event_source->OnKeyEvent(widget, event_key);
++    if (has_shift) {
++      flags &= ~ui::EF_SHIFT_DOWN;
++      ui::KeyEvent event(EventType::kKeyReleased, ui::VKEY_SHIFT, ui::EF_SHIFT_DOWN,
++                         ui::EventTimeForNow());
++      event_source->OnKeyEvent(widget, event);
++    }
++    if (has_control) {
++      flags &= ~ui::EF_CONTROL_DOWN;
++      ui::KeyEvent event(EventType::kKeyReleased, ui::VKEY_CONTROL,
++                         ui::EF_CONTROL_DOWN, ui::EventTimeForNow());
++      event_source->OnKeyEvent(widget, event);
++    }
++    if (has_alt) {
++      flags &= ~ui::EF_ALT_DOWN;
++      ui::KeyEvent event(EventType::kKeyReleased, ui::VKEY_MENU, ui::EF_ALT_DOWN,
++                         ui::EventTimeForNow());
++      event_source->OnKeyEvent(widget, event);
++    }
++  }
+ }
+ 
+ void OhosOzoneUIControlsTestHelper::SendMouseMotionNotifyEvent(
+@@ -70,6 +119,21 @@ void OhosOzoneUIControlsTestHelper::SendMouseMotionNotifyEvent(
+   gfx::Point mouse_loc_in_screen_px = mouse_loc_in_screen;
+   // TODO(crbug.com/1430805): fix this conversion.
+   host->ConvertDIPToPixels(&mouse_loc_in_screen_px);
++
++  OH_NativeXComponent_MouseEvent mouse_event;
++  mouse_event.x = mouse_loc.x();
++  mouse_event.y = mouse_loc.y();
++  mouse_event.screenX = mouse_loc_in_screen_px.x();
++  mouse_event.screenY = mouse_loc_in_screen_px.y();
++  mouse_event.action = button_down_mask ? OH_NATIVEXCOMPONENT_MOUSE_PRESS
++                                        : OH_NATIVEXCOMPONENT_MOUSE_RELEASE;
++  auto* event_source =
++      reinterpret_cast<OhosEventSource*>(PlatformEventSource::GetInstance());
++  int64_t default_display_id =
++      display::Screen::GetScreen()->GetPrimaryDisplay().id();
++  EventFlags key_flags = event_source->GetKeyFlags();
++  event_source->OnMouseEvent(widget, mouse_event, default_display_id,
++                             key_flags);
+ }
+ 
+ void OhosOzoneUIControlsTestHelper::SendMouseEvent(
+@@ -84,6 +148,56 @@ void OhosOzoneUIControlsTestHelper::SendMouseEvent(
+   gfx::Point mouse_loc_in_screen_px = mouse_loc_in_screen;
+   // TODO(crbug.com/1430805): fix this conversion.
+   host->ConvertDIPToPixels(&mouse_loc_in_screen_px);
++
++  OH_NativeXComponent_MouseEvent mouse_event;
++  mouse_event.x = mouse_loc.x();
++  mouse_event.y = mouse_loc.y();
++  mouse_event.screenX = mouse_loc_in_screen_px.x();
++  mouse_event.screenY = mouse_loc_in_screen_px.y();
++
++  int flags = 0;
++  if (accelerator_state & ui_controls::kShift) {
++    flags |= ui::EF_SHIFT_DOWN;
++  }
++  if (accelerator_state & ui_controls::kControl) {
++    flags |= ui::EF_CONTROL_DOWN;
++  }
++  if (accelerator_state & ui_controls::kAlt) {
++    flags |= ui::EF_ALT_DOWN;
++  }
++
++  switch (type) {
++    case ui_controls::MouseButton::LEFT:
++      mouse_event.button = OH_NATIVEXCOMPONENT_LEFT_BUTTON;
++      break;
++    case ui_controls::MouseButton::MIDDLE:
++      mouse_event.button = OH_NATIVEXCOMPONENT_MIDDLE_BUTTON;
++      break;
++    case ui_controls::MouseButton::RIGHT:
++      mouse_event.button = OH_NATIVEXCOMPONENT_RIGHT_BUTTON;
++      break;
++  }
++
++  int64_t default_display_id =
++      display::Screen::GetScreen()->GetPrimaryDisplay().id();
++  EventFlags key_flags = static_cast<EventFlags>(flags);
++  if (button_state & ui_controls::DOWN) {
++    mouse_event.action = OH_NATIVEXCOMPONENT_MOUSE_PRESS;
++    auto* event_source =
++        reinterpret_cast<OhosEventSource*>(PlatformEventSource::GetInstance());
++    event_source->OnMouseEvent(widget, mouse_event, default_display_id,
++                               key_flags);
++    button_down_mask |= flags;
++  }
++
++  if (button_state & ui_controls::UP) {
++    mouse_event.action = OH_NATIVEXCOMPONENT_MOUSE_RELEASE;
++    auto* event_source =
++        reinterpret_cast<OhosEventSource*>(PlatformEventSource::GetInstance());
++    event_source->OnMouseEvent(widget, mouse_event, default_display_id,
++                               key_flags);
++    button_down_mask &= ~flags;
++  }
+ }
+ 
+ void OhosOzoneUIControlsTestHelper::RunClosureAfterAllPendingUIEvents(
 diff --git a/src/ui/ozone/platform/x11/ozone_platform_x11.cc b/src/ui/ozone/platform/x11/ozone_platform_x11.cc
 index 4f00f63066..0c04088388 100644
 --- a/src/ui/ozone/platform/x11/ozone_platform_x11.cc
@@ -6254,7 +7261,7 @@ index 8efaccff40..e420e2f4e8 100644
    LabelButtonImageContainer* image_container() {
      return image_container_.get();
 diff --git a/src/ui/views/controls/label.cc b/src/ui/views/controls/label.cc
-index a4982c41f9..2301912c69 100644
+index 8d76ae35cd..8fa2047b3a 100644
 --- a/src/ui/views/controls/label.cc
 +++ b/src/ui/views/controls/label.cc
 @@ -56,12 +56,29 @@ enum LabelPropertyKey {
@@ -7563,6 +8570,3 @@ index df267c8c3d..ee4856c998 100644
  
    // Returns a mask specifying which of the available DialogButtons are visible
    // for the dialog.
--- 
-2.34.1
-

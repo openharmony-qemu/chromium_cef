@@ -1,138 +1,3 @@
-From aba8bb6418ba6ba3bba9092ded7a1b07c83842c4 Mon Sep 17 00:00:00 2001
-From: laixiaohai <xiaohai.lai@haitaichina.com>
-Date: Wed, 3 Dec 2025 09:48:41 +0800
-Subject: [PATCH] add cef_patch_chrome.patch
-
-Signed-off-by: laixiaohai <xiaohai.lai@haitaichina.com>
-Change-Id: I45e080ee8ae222311ae7668ba647cda72ff47f85
----
- app/chrome_main_delegate.cc                   |  31 +++-
- app/chrome_main_delegate.h                    |   9 +-
- app_shim/BUILD.gn                             |   1 +
- app_shim/chrome_main_app_mode_mac.mm          |   3 +
- browser/BUILD.gn                              |   6 +
- browser/browser_about_handler.cc              |   3 +
- browser/chrome_browser_main.cc                |  29 ++-
- browser/chrome_browser_main_mac.mm            |   5 +
- browser/chrome_content_browser_client.cc      |  23 ++-
- browser/chrome_content_browser_client.h       |   6 +-
- browser/chrome_resource_bundle_helper.cc      |  23 +--
- browser/chrome_resource_bundle_helper.h       |   3 +
- .../chrome_devtools_manager_delegate.cc       |  11 ++
- browser/devtools/devtools_window.cc           |  38 +++-
- .../chrome_download_manager_delegate.cc       |  26 ++-
- .../chrome_download_manager_delegate.h        |  11 ++
- .../api/chrome_extensions_api_client.cc       |   9 +
- .../extensions/api/sessions/sessions_api.cc   |   1 +
- browser/extensions/api/tabs/tabs_api.cc       |  11 +-
- browser/extensions/extension_tab_util.cc      |  13 ++
- browser/file_select_helper.cc                 |  62 ++++++-
- browser/file_select_helper.h                  |   6 +-
- .../policy/browser_dm_token_storage_linux.cc  |   9 +-
- .../policy/browser_dm_token_storage_mac.mm    |  28 ++-
- .../policy/chrome_browser_policy_connector.cc |  98 ++++++++--
- .../policy/chrome_browser_policy_connector.h  |  23 +++
- browser/policy/policy_path_parser_mac.mm      |  13 +-
- browser/policy/policy_path_parser_win.cc      |   9 +-
- browser/prefs/browser_prefs.cc                |  14 ++
- .../printing/print_backend_service_manager.cc |  10 +-
- browser/printing/printer_query.cc             |   1 +
- .../profiles/off_the_record_profile_impl.cc   |   4 +-
- browser/profiles/profile.cc                   |  13 ++
- browser/profiles/profile.h                    |   8 +-
- browser/profiles/profile_impl.cc              |   4 +-
- .../render_view_context_menu.cc               |  50 +++++
- .../render_view_context_menu.h                |  17 ++
- browser/safe_browsing/BUILD.gn                |   2 +
- browser/taskbar/taskbar_decorator_win.cc      |  17 ++
- browser/ui/BUILD.gn                           |  14 ++
- browser/ui/bookmarks/bookmark_stats.cc        |   4 +-
- browser/ui/browser.cc                         | 174 +++++++++++++++++-
- browser/ui/browser.h                          |  42 +++++
- browser/ui/browser_command_controller.cc      |  14 +-
- browser/ui/browser_navigator.cc               |  16 +-
- browser/ui/browser_tabstrip.cc                |  16 +-
- .../browser_window/browser_window_features.cc |  19 +-
- .../public/browser_window_features.h          |   2 +
- .../public/browser_window_interface.h         |   4 +
- browser/ui/chrome_select_file_policy.h        |   2 +
- .../render_view_context_menu_mac_cocoa.h      |   1 +
- .../render_view_context_menu_mac_cocoa.mm     |   8 +
- ...ender_view_context_menu_mac_remote_cocoa.h |   1 +
- ...nder_view_context_menu_mac_remote_cocoa.mm |   4 +
- ...b_modal_dialog_manager_delegate_desktop.cc |  26 ++-
- .../ui/permission_bubble/permission_prompt.h  |   7 +
- browser/ui/startup/startup_browser_creator.cc |  18 ++
- browser/ui/startup/startup_browser_creator.h  |   8 +
- browser/ui/tab_helpers.h                      |   9 +
- browser/ui/toolbar/app_menu_model.cc          |  86 ++++++++-
- browser/ui/toolbar/app_menu_model.h           |   3 +
- .../chrome_native_app_window_views_aura.cc    |   1 +
- ...me_browser_main_extra_parts_views_linux.cc |   5 +-
- ...javascript_app_modal_view_factory_views.cc |   2 +-
- .../ui/views/chrome_views_delegate_linux.cc   |   2 +
- browser/ui/views/find_bar_host.cc             |   8 +
- browser/ui/views/frame/browser_frame.cc       |  48 ++++-
- browser/ui/views/frame/browser_frame.h        |  17 +-
- browser/ui/views/frame/browser_frame_mac.h    |  16 ++
- browser/ui/views/frame/browser_frame_mac.mm   |  33 +++-
- browser/ui/views/frame/browser_view.cc        | 142 +++++++++++---
- browser/ui/views/frame/browser_view.h         |  11 ++
- browser/ui/views/frame/browser_view_layout.cc |  29 ++-
- browser/ui/views/frame/browser_view_layout.h  |   4 +-
- .../frame/browser_view_layout_delegate.h      |   1 +
- .../browser_window_property_manager_win.cc    |  11 ++
- browser/ui/views/frame/contents_web_view.cc   |   6 +
- .../picture_in_picture_browser_frame_view.cc  |  51 ++++-
- .../ui/views/frame/tab_strip_region_view.cc   |   3 +-
- .../incognito_clear_browsing_data_dialog.cc   |   4 +-
- ..._clear_browsing_data_dialog_coordinator.cc |   4 +
- .../javascript_tab_modal_dialog_view_views.cc |  19 +-
- .../ui/views/omnibox/omnibox_popup_closer.cc  |   3 +-
- .../page_action_icon_controller.cc            |   8 +
- .../permissions/permission_prompt_factory.cc  |  17 ++
- .../ui/views/profiles/incognito_menu_view.cc  |   4 +-
- .../profiles/profile_menu_coordinator.cc      |   4 +-
- .../views/profiles/profile_menu_view_base.cc  |   4 +-
- .../render_view_context_menu_views.cc         |  12 ++
- .../render_view_context_menu_views.h          |   1 +
- browser/ui/views/sad_tab_view.cc              |   5 +
- browser/ui/views/sad_tab_view.h               |   2 +
- ...chrome_web_contents_view_delegate_views.cc |   4 +
- .../chrome_web_contents_view_delegate_views.h |   1 +
- ...ome_web_contents_view_delegate_views_mac.h |   1 +
- ...me_web_contents_view_delegate_views_mac.mm |   4 +
- .../tabs/browser_tab_strip_controller.cc      |  12 ++
- browser/ui/views/toolbar/app_menu.cc          |   4 +-
- browser/ui/views/toolbar/toolbar_view.cc      |  30 ++-
- browser/ui/views/toolbar/toolbar_view.h       |   3 +-
- browser/ui/webui/about/about_ui.cc            |  19 ++
- browser/ui/webui/about/about_ui.h             |   8 +
- browser/ui/webui/chrome_web_ui_configs.cc     |   4 +
- browser/ui/webui/version/version_handler.cc   |  55 +++++-
- browser/ui/webui/version/version_handler.h    |   8 +-
- browser/ui/webui/version/version_ui.cc        |  17 ++
- browser/win/app_icon.cc                       |  45 +++--
- browser/win/app_icon.h                        |   2 +
- chrome_elf/BUILD.gn                           |  16 +-
- chrome_elf/crash/crash_helper.cc              |   9 +
- chrome_paks.gni                               |   6 +
- chrome_repack_locales.gni                     |   5 +
- common/chrome_constants.cc                    |   8 +-
- common/chrome_paths.cc                        |   3 +-
- common/chrome_paths.h                         |   3 +-
- common/crash_keys.cc                          |  10 +-
- common/crash_keys.h                           |   5 +
- common/features.gni                           |   5 +-
- .../component_widevine_cdm_hint_file_linux.cc |  24 ++-
- common/webui_url_constants.cc                 |   3 +
- common/webui_url_constants.h                  |   5 +
- installer/mini_installer/BUILD.gn             |   5 +-
- renderer/BUILD.gn                             |   6 +
- ...rome_print_render_frame_helper_delegate.cc |  27 ++-
- ...hrome_print_render_frame_helper_delegate.h |  10 +-
- 125 files changed, 1760 insertions(+), 212 deletions(-)
-
 diff --git a/src/chrome/app/chrome_main_delegate.cc b/src/chrome/app/chrome_main_delegate.cc
 index b1f8fa9d1..8f91d568d 100644
 --- a/src/chrome/app/chrome_main_delegate.cc
@@ -367,7 +232,7 @@ index 72eb09607..d3866aae8 100644
  
      base::PathService::OverrideAndCreateIfNeeded(
 diff --git a/src/chrome/browser/BUILD.gn b/src/chrome/browser/BUILD.gn
-index b162ca27d..c308645fe 100644
+index 7f82cd5ab..c33088589 100644
 --- a/src/chrome/browser/BUILD.gn
 +++ b/src/chrome/browser/BUILD.gn
 @@ -11,6 +11,7 @@ import("//build/config/compiler/pgo/pgo.gni")
@@ -378,7 +243,7 @@ index b162ca27d..c308645fe 100644
  import("//chrome/browser/buildflags.gni")
  import("//chrome/browser/downgrade/buildflags.gni")
  import("//chrome/common/features.gni")
-@@ -1911,6 +1912,7 @@ static_library("browser") {
+@@ -1913,6 +1914,7 @@ static_library("browser") {
      "//build/config/compiler:compiler_buildflags",
      "//build/config/linux/dbus:buildflags",
      "//cc",
@@ -386,7 +251,7 @@ index b162ca27d..c308645fe 100644
      "//chrome:extra_resources",
      "//chrome:resources",
      "//chrome:strings",
-@@ -2656,6 +2658,10 @@ static_library("browser") {
+@@ -2658,6 +2660,10 @@ static_library("browser") {
      sources += [ "net/net_error_diagnostics_dialog_stub.cc" ]
    }
  
@@ -604,7 +469,7 @@ index e26e3625c..c0d4a9560 100644
 +#endif
  }
 diff --git a/src/chrome/browser/chrome_content_browser_client.cc b/src/chrome/browser/chrome_content_browser_client.cc
-index 5dfe88658..eba37c955 100644
+index 9f3bbdd83..4d75aa2d0 100644
 --- a/src/chrome/browser/chrome_content_browser_client.cc
 +++ b/src/chrome/browser/chrome_content_browser_client.cc
 @@ -48,6 +48,7 @@
@@ -615,7 +480,7 @@ index 5dfe88658..eba37c955 100644
  #include "chrome/browser/after_startup_task_utils.h"
  #include "chrome/browser/ai/ai_manager.h"
  #include "chrome/browser/app_mode/app_mode_utils.h"
-@@ -1358,6 +1359,8 @@ ChromeContentBrowserClient::GetPopupNavigationDelegateFactoryForTesting() {
+@@ -1362,6 +1363,8 @@ ChromeContentBrowserClient::GetPopupNavigationDelegateFactoryForTesting() {
  }
  
  ChromeContentBrowserClient::ChromeContentBrowserClient() {
@@ -624,7 +489,7 @@ index 5dfe88658..eba37c955 100644
  #if BUILDFLAG(ENABLE_PLUGINS)
    extra_parts_.push_back(
        std::make_unique<ChromeContentBrowserClientPluginsPart>());
-@@ -1395,6 +1398,11 @@ ChromeContentBrowserClient::~ChromeContentBrowserClient() {
+@@ -1399,6 +1402,11 @@ ChromeContentBrowserClient::~ChromeContentBrowserClient() {
    }
  }
  
@@ -636,7 +501,7 @@ index 5dfe88658..eba37c955 100644
  // static
  void ChromeContentBrowserClient::RegisterLocalStatePrefs(
      PrefRegistrySimple* registry) {
-@@ -4793,9 +4801,11 @@ void ChromeContentBrowserClient::BrowserURLHandlerCreated(
+@@ -4803,9 +4811,11 @@ void ChromeContentBrowserClient::BrowserURLHandlerCreated(
                            &search::HandleNewTabURLReverseRewrite);
  #endif  // BUILDFLAG(IS_ANDROID)
  
@@ -648,7 +513,7 @@ index 5dfe88658..eba37c955 100644
  }
  
  base::FilePath ChromeContentBrowserClient::GetDefaultDownloadDirectory() {
-@@ -6505,7 +6515,7 @@ void ChromeContentBrowserClient::OnNetworkServiceCreated(
+@@ -6515,7 +6525,7 @@ void ChromeContentBrowserClient::OnNetworkServiceCreated(
    }
  }
  
@@ -657,7 +522,7 @@ index 5dfe88658..eba37c955 100644
      content::BrowserContext* context,
      bool in_memory,
      const base::FilePath& relative_partition_path,
-@@ -6523,6 +6533,8 @@ void ChromeContentBrowserClient::ConfigureNetworkContextParams(
+@@ -6533,6 +6543,8 @@ void ChromeContentBrowserClient::ConfigureNetworkContextParams(
      network_context_params->user_agent = GetUserAgentBasedOnPolicy(context);
      network_context_params->accept_language = GetApplicationLocale();
    }
@@ -666,7 +531,7 @@ index 5dfe88658..eba37c955 100644
  }
  
  std::vector<base::FilePath>
-@@ -7676,11 +7688,11 @@ void ChromeContentBrowserClient::OnKeepaliveRequestStarted(
+@@ -7686,11 +7698,11 @@ void ChromeContentBrowserClient::OnKeepaliveRequestStarted(
    const auto now = base::TimeTicks::Now();
    const auto timeout = GetKeepaliveTimerTimeout(context);
    keepalive_deadline_ = std::max(keepalive_deadline_, now + timeout);
@@ -680,7 +545,7 @@ index 5dfe88658..eba37c955 100644
            FROM_HERE, keepalive_deadline_ - now,
            base::BindOnce(
                &ChromeContentBrowserClient::OnKeepaliveTimerFired,
-@@ -7702,7 +7714,8 @@ void ChromeContentBrowserClient::OnKeepaliveRequestFinished() {
+@@ -7712,7 +7724,8 @@ void ChromeContentBrowserClient::OnKeepaliveRequestFinished() {
    --num_keepalive_requests_;
    if (num_keepalive_requests_ == 0) {
      DVLOG(1) << "Stopping the keepalive timer";
@@ -690,7 +555,7 @@ index 5dfe88658..eba37c955 100644
      // This deletes the keep alive handle attached to the timer function and
      // unblock the shutdown sequence.
    }
-@@ -7880,7 +7893,7 @@ void ChromeContentBrowserClient::OnKeepaliveTimerFired(
+@@ -7890,7 +7903,7 @@ void ChromeContentBrowserClient::OnKeepaliveTimerFired(
    const auto now = base::TimeTicks::Now();
    const auto then = keepalive_deadline_;
    if (now < then) {
@@ -1123,7 +988,7 @@ index ad1f4b4c3..55657d976 100644
                               current_url, updated_url, js_callstack());
    }
 diff --git a/src/chrome/browser/extensions/extension_tab_util.cc b/src/chrome/browser/extensions/extension_tab_util.cc
-index 959e848a6..5f73667a5 100644
+index 02e74e3d9..b05896c92 100644
 --- a/src/chrome/browser/extensions/extension_tab_util.cc
 +++ b/src/chrome/browser/extensions/extension_tab_util.cc
 @@ -39,6 +39,7 @@
@@ -1670,7 +1535,7 @@ index 8dbf958c1..6eaccc668 100644
      *dir = base::FilePath(policy::path_parser::ExpandPathVariables(value));
      return true;
 diff --git a/src/chrome/browser/prefs/browser_prefs.cc b/src/chrome/browser/prefs/browser_prefs.cc
-index edb21fc48..55fc0341d 100644
+index 311eabda5..da1357986 100644
 --- a/src/chrome/browser/prefs/browser_prefs.cc
 +++ b/src/chrome/browser/prefs/browser_prefs.cc
 @@ -15,6 +15,7 @@
@@ -2036,7 +1901,7 @@ index 2612e0be4..0e9f3105d 100644
    // window's relaunch details, we draw over it because the user may have
    // pinned the badge-less Chrome shortcut which will cause Windows to ignore
 diff --git a/src/chrome/browser/ui/BUILD.gn b/src/chrome/browser/ui/BUILD.gn
-index 0d2264f9a..1e21e60e7 100644
+index 00cd8fb3c..7cc57e484 100644
 --- a/src/chrome/browser/ui/BUILD.gn
 +++ b/src/chrome/browser/ui/BUILD.gn
 @@ -7,6 +7,7 @@ import("//build/config/compiler/compiler.gni")
@@ -2080,7 +1945,7 @@ index 0d2264f9a..1e21e60e7 100644
    # TODO(crbug.com/41437292): Remove this circular dependency.
    # Any circular includes must depend on the target "//chrome/browser:browser_public_dependencies".
    # These are all-platform circular includes.
-@@ -5602,6 +5615,7 @@ static_library("ui") {
+@@ -5606,6 +5619,7 @@ static_library("ui") {
    if (enable_printing) {
      deps += [
        "//components/printing/browser",
@@ -4520,10 +4385,10 @@ index 60ad9ebfa..112f76a4a 100644
  }
  
 diff --git a/src/chrome/browser/ui/views/toolbar/app_menu.cc b/src/chrome/browser/ui/views/toolbar/app_menu.cc
-index bc911ad76..7a927bfed 100644
+index f9f587834..7b463831c 100644
 --- a/src/chrome/browser/ui/views/toolbar/app_menu.cc
 +++ b/src/chrome/browser/ui/views/toolbar/app_menu.cc
-@@ -1042,7 +1042,9 @@ void AppMenu::RunMenu(views::MenuButtonController* host) {
+@@ -1079,7 +1079,9 @@ void AppMenu::RunMenu(views::MenuButtonController* host) {
        host->button()->GetWidget(), host,
        host->button()->GetAnchorBoundsInScreen(),
        views::MenuAnchorPosition::kTopRight, ui::mojom::MenuSourceType::kNone,
@@ -5251,7 +5116,7 @@ index a274b3e36..3d995cf64 100644
  // on the given `command_line`. For non-browser processes, allocates crash keys
  // from the switch value set by AppendStringAnnotationsCommandLineSwitch().
 diff --git a/src/chrome/common/features.gni b/src/chrome/common/features.gni
-index e8ed1e248..84c2a3117 100644
+index 2f6772908..e6969fb56 100644
 --- a/src/chrome/common/features.gni
 +++ b/src/chrome/common/features.gni
 @@ -6,6 +6,7 @@ import("//build/config/chrome_build.gni")
@@ -5517,6 +5382,3 @@ index ab12b010c..48850a94a 100644
  };
  
  #endif  // CHROME_RENDERER_PRINTING_CHROME_PRINT_RENDER_FRAME_HELPER_DELEGATE_H_
--- 
-2.34.1
-

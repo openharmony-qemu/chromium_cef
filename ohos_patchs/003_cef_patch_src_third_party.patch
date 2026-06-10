@@ -1,52 +1,3 @@
-From 328d2871980b403d36a064441896de77374d2255 Mon Sep 17 00:00:00 2001
-From: laixiaohai <xiaohai.lai@haitaichina.com>
-Date: Mon, 18 May 2026 11:16:28 +0800
-Subject: [PATCH] add cef_patch_third_party
-
-Signed-off-by: laixiaohai <xiaohai.lai@haitaichina.com>
-Change-Id: I9693c7842386f9265a519947c6b02d1fa63d1544
----
- blink/public/platform/platform.h              |  5 ++
- blink/public/web/web_element.h                |  3 +
- blink/public/web/web_view.h                   |  6 ++
- blink/renderer/controller/BUILD.gn            | 10 ++++
- blink/renderer/core/exported/web_element.cc   | 18 ++++++
- blink/renderer/core/exported/web_view_impl.cc | 10 +++-
- blink/renderer/core/exported/web_view_impl.h  | 14 ++++-
- blink/renderer/core/frame/local_dom_window.cc | 20 +++++--
- blink/renderer/core/frame/local_dom_window.h  |  7 +++
- .../core/inspector/devtools_session.cc        |  3 +
- .../renderer/core/page/chrome_client_impl.cc  |  2 +-
- blink/renderer/platform/heap/thread_local.h   |  2 +-
- .../crashpad/client/prune_crash_reports.cc    | 12 +++-
- .../crashpad/client/prune_crash_reports.h     |  3 +-
- crashpad/crashpad/client/settings.cc          | 58 ++++++++++++++++++-
- crashpad/crashpad/client/settings.h           |  5 ++
- crashpad/crashpad/handler/BUILD.gn            | 13 +++++
- .../handler/crash_report_upload_thread.cc     |  2 +
- .../handler/crash_report_upload_thread.h      | 12 +++-
- crashpad/crashpad/handler/handler_main.cc     | 47 ++++++++++++++-
- .../lib/libgtk-3.so.0.2409.32                 |  0
- .../lib/libharfbuzz-subset.so.0.60830.0       |  0
- .../lib/systemd/libsystemd-shared-255.so      |  0
- .../lib/libgtk-3.so.0.2409.32                 |  0
- libxml/BUILD.gn                               |  1 +
- rust-toolchain/bin/cargo                      |  0
- rust-toolchain/bin/cargo-vet                  |  0
- rust-toolchain/bin/clippy-driver              |  0
- rust-toolchain/bin/rust-analyzer              |  0
- sentencepiece/src/src/util.cc                 | 15 ++++-
- widevine/cdm/widevine.gni                     |  3 +-
- 31 files changed, 250 insertions(+), 21 deletions(-)
- mode change 100755 => 100644 instrumented_libs/binaries/msan-chained-origins-noble-lib/lib/libgtk-3.so.0.2409.32
- mode change 100755 => 100644 instrumented_libs/binaries/msan-chained-origins-noble-lib/lib/libharfbuzz-subset.so.0.60830.0
- mode change 100755 => 100644 instrumented_libs/binaries/msan-chained-origins-noble-lib/lib/systemd/libsystemd-shared-255.so
- mode change 100755 => 100644 instrumented_libs/binaries/msan-no-origins-noble-lib/lib/libgtk-3.so.0.2409.32
- mode change 100755 => 100644 rust-toolchain/bin/cargo
- mode change 100755 => 100644 rust-toolchain/bin/cargo-vet
- mode change 100755 => 100644 rust-toolchain/bin/clippy-driver
- mode change 100755 => 100644 rust-toolchain/bin/rust-analyzer
-
 diff --git a/src/third_party/blink/public/platform/platform.h b/src/third_party/blink/public/platform/platform.h
 index 54e25fb12f..d3bcea5b34 100644
 --- a/src/third_party/blink/public/platform/platform.h
@@ -374,15 +325,15 @@ index a778f5e79b..c84f2aee3f 100644
    }
  
 diff --git a/src/third_party/blink/renderer/platform/heap/thread_local.h b/src/third_party/blink/renderer/platform/heap/thread_local.h
-index a672ba785a..13d794dc15 100644
+index 19aea8ea94..6b598e6f0e 100644
 --- a/src/third_party/blink/renderer/platform/heap/thread_local.h
 +++ b/src/third_party/blink/renderer/platform/heap/thread_local.h
-@@ -37,7 +37,7 @@
- #if BLINK_HEAP_HIDE_THREAD_LOCAL_IN_LIBRARY
- #define BLINK_HEAP_THREAD_LOCAL_MODEL "local-dynamic"
+@@ -39,7 +39,7 @@
  #else
--#if BUILDFLAG(IS_WIN)
-+#if BUILDFLAG(IS_WIN) || (BUILDFLAG(IS_POSIX) && !BUILDFLAG(IS_MAC))
+ #if defined(HWADDRESS_SANITIZER)
+ #define BLINK_HEAP_THREAD_LOCAL_MODEL "local-dynamic"
+-#elif BUILDFLAG(IS_WIN)
++#elif BUILDFLAG(IS_WIN) || (BUILDFLAG(IS_POSIX) && !BUILDFLAG(IS_MAC))
  #define BLINK_HEAP_THREAD_LOCAL_MODEL "initial-exec"
  #elif BUILDFLAG(IS_ANDROID)
  #define BLINK_HEAP_THREAD_LOCAL_MODEL "local-dynamic"
@@ -835,6 +786,3 @@ index e31de0a552..0de5688bbf 100644
  }
  
  # Disable Widevine when running linux-chromeos.
--- 
-2.34.1
-
