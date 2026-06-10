@@ -145,23 +145,6 @@ bool ArkwebBrowserInfoManagerUtils::IsExtensionsBackgroundFrame(
 }
 #endif  // BUILDFLAG(ARKWEB_ARKWEB_EXTENSIONS)
 
-#if BUILDFLAG(ARKWEB_READER_MODE)
-bool ArkwebBrowserInfoManagerUtils::IsDistillerPageWebContents(content::WebContents* web_contents) {
-  if (!nweb_ex::AlloyBrowserReaderModeConfig::GetInstance()->IsReaderModeEnabled()) {
-    return false;
-  }
-  if (!web_contents) {
-    LOG(ERROR) << "web_contents is nullptr";
-    return false;
-  }
-  content::WebContentsImpl* web_contents_impl = static_cast<content::WebContentsImpl*>(web_contents);
-  if (!web_contents_impl || !web_contents_impl->AsWebContentsImplExt()) {
-    LOG(ERROR) << "get web_contents_impl_ext failed";
-    return false;
-  }
-  return web_contents_impl->AsWebContentsImplExt()->IsDistillerPageWebContents();
-}
-#endif // ARKWEB_READER_MODE
 
 #if BUILDFLAG(ARKWEB_NO_STATE_PREFETCH)
 bool ArkwebBrowserInfoManagerUtils::IsPrerendering(content::WebContents* web_contents) {
@@ -204,7 +187,9 @@ bool ArkwebBrowserInfoManagerUtils::ShouldCancel(
 #endif
 
 #if BUILDFLAG(ARKWEB_READER_MODE)
-  should_cancel = should_cancel || IsDistillerPageWebContents(web_contents);
+  if (web_contents->GetDelegate()) {
+    should_cancel = should_cancel || web_contents->GetDelegate()->IsForDistillerPage();
+  }
 #endif
 
   return should_cancel;
