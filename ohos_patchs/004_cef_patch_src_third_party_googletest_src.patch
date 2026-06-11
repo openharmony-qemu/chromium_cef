@@ -1,13 +1,3 @@
-From 2a638648511f7125c45868905600e3944d2c694f Mon Sep 17 00:00:00 2001
-From: laixiaohai <xiaohai.lai@haitaichina.com>
-Date: Thu, 14 May 2026 15:52:07 +0800
-Subject: [PATCH] 002_cef_patch_ut_gtest.patch
-
-Change-Id: I82d22308176814bb688dd0eddf1eb00838480808
----
- googletest/src/gtest.cc | 465 ++++++++++++++++++++++++++++++++++++++--
- 1 file changed, 450 insertions(+), 15 deletions(-)
-
 diff --git a/src/third_party/googletest/src/googletest/src/gtest.cc b/src/third_party/googletest/src/googletest/src/gtest.cc
 index c08ab41..80c8026 100644
 --- a/src/third_party/googletest/src/googletest/src/gtest.cc
@@ -729,6 +719,3 @@ index c08ab41..80c8026 100644
        } else if (Test::HasFatalFailure()) {
          // If there was a fatal failure during the global setup then we know we
          // aren't going to run any tests. Explicitly mark all of the tests as
--- 
-2.34.1
-

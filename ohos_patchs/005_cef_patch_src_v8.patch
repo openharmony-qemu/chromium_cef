@@ -1,14 +1,3 @@
-From 360d10770df505cf4aec271370fb662c88450c50 Mon Sep 17 00:00:00 2001
-From: laixiaohai <xiaohai.lai@haitaichina.com>
-Date: Thu, 14 May 2026 12:52:07 +0800
-Subject: [PATCH] 001_cef_patch_v8.patch
-
-Change-Id: I1a481d274c96035edd67c95cb70d09852015d36f
-Signed-off-by: laixiaohai <xiaohai.lai@haitaichina.com>
----
- BUILD.gn | 8 ++++++++
- 1 file changed, 8 insertions(+)
-
 diff --git a/src/v8/BUILD.gn b/src/v8/BUILD.gn
 index 37db725c3..d13fee743 100644
 --- a/src/v8/BUILD.gn
@@ -42,6 +31,3 @@ index 37db725c3..d13fee743 100644
    if (v8_current_cpu == "riscv64" || v8_current_cpu == "riscv32") {
      if (!is_clang) {
        libs = [ "atomic" ]
--- 
-2.34.1
-
