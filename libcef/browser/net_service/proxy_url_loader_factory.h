@@ -206,6 +206,9 @@ class ProxyURLLoaderFactory
       network::URLLoaderFactoryBuilder& factory_builder,
       mojo::PendingRemote<network::mojom::TrustedURLLoaderHeaderClient>*
           header_client,
+#if BUILDFLAG(ARKWEB_EXT_EXTENSIONS_HEADER_CLIENT)
+      mojo::PendingRemote<network::mojom::TrustedURLLoaderHeaderClient> extensions_url_loader_header_client_remote,
+#endif
       std::unique_ptr<InterceptedRequestHandler> request_handler,
       network::mojom::URLLoaderFactoryOverridePtr* factory_override);
 #else
@@ -269,6 +272,9 @@ class ProxyURLLoaderFactory
           target_factory_remote,
       mojo::PendingReceiver<network::mojom::TrustedURLLoaderHeaderClient>
           header_client_receiver,
+#if BUILDFLAG(ARKWEB_EXT_EXTENSIONS_HEADER_CLIENT)
+      mojo::PendingRemote<network::mojom::TrustedURLLoaderHeaderClient> extensions_url_loader_header_client_remote,
+#endif
       std::unique_ptr<InterceptedRequestHandler> request_handler);
 
   static void CreateOnIOThread(
@@ -277,6 +283,9 @@ class ProxyURLLoaderFactory
           target_factory_remote,
       mojo::PendingReceiver<network::mojom::TrustedURLLoaderHeaderClient>
           header_client_receiver,
+#if BUILDFLAG(ARKWEB_EXT_EXTENSIONS_HEADER_CLIENT)
+      mojo::PendingRemote<network::mojom::TrustedURLLoaderHeaderClient> extensions_url_loader_header_client_remote,
+#endif
       ContextId context_id,
       std::unique_ptr<InterceptedRequestHandler> request_handler);
 
@@ -298,6 +307,11 @@ class ProxyURLLoaderFactory
   mojo::Remote<network::mojom::URLLoaderFactory> target_factory_;
   mojo::Receiver<network::mojom::TrustedURLLoaderHeaderClient>
       url_loader_header_client_receiver_{this};
+
+#if BUILDFLAG(ARKWEB_EXT_EXTENSIONS_HEADER_CLIENT)
+  mojo::Remote<network::mojom::TrustedURLLoaderHeaderClient>
+      extensions_url_loader_header_client_;
+#endif // ARKWEB_EXT_EXTENSIONS_HEADER_CLIENT
 
   std::unique_ptr<InterceptedRequestHandler> request_handler_;
 
