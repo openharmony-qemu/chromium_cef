@@ -229,6 +229,11 @@ class ArkWebRenderWidgetHostViewOSRExt : public CefRenderWidgetHostViewOSR {
   void EvictFrameBackBuffers() override;
 #endif
 
+#if BUILDFLAG(ARKWEB_DELEGATE_COMPOSITING)
+void DiscardCompositingResources() override;
+void UpdateFocusAndScreenStatus(bool is_focused, bool is_single_screen) override;
+#endif
+
 #if BUILDFLAG(ARKWEB_CLEAN_BUFFERS_WHEN_INVISIBLE)
   void SetIfNeedCleanBuffers(bool need_clean_buffers) override;
 #endif

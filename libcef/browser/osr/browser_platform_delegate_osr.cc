@@ -297,6 +297,12 @@ void CefBrowserPlatformDelegateOsr::SetIsOfflineWebComponent() {
 }
 #endif
 
+#if BUILDFLAG(ARKWEB_DELEGATE_COMPOSITING)
+void CefBrowserPlatformDelegateOsr::DiscardCompositingResources() {
+  cef_browser_platform_delegate_osr_utils_->DiscardCompositingResources();
+}
+#endif
+
 void CefBrowserPlatformDelegateOsr::NotifyScreenInfoChanged() {
   CefRenderWidgetHostViewOSR* view = GetOSRHostView();
   if (view) {

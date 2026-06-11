@@ -327,6 +327,10 @@ class CefBrowserPlatformDelegate {
   virtual void SetIsOfflineWebComponent() {}
 #endif
 
+#if BUILDFLAG(ARKWEB_DELEGATE_COMPOSITING)
+  virtual void DiscardCompositingResources() {}
+#endif
+
   // Notify the browser that screen information has changed. Only used with
   // windowless rendering and external (client-provided) root window.
   virtual void NotifyScreenInfoChanged();
