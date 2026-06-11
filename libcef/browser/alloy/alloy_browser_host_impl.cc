@@ -428,6 +428,12 @@ void AlloyBrowserHostImpl::SetIsOfflineWebComponent() {
 }
 #endif
 
+#if BUILDFLAG(ARKWEB_DELEGATE_COMPOSITING)
+void AlloyBrowserHostImpl::DiscardCompositingResources() {
+  implUtils->DiscardCompositingResources();
+}
+#endif
+
 #include "cef/ohos_cef_ext/libcef/browser/alloy/alloy_browser_host_impl_for_include.cc"
 
 void AlloyBrowserHostImpl::Invalidate(PaintElementType type) {

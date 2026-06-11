@@ -553,6 +553,35 @@ void ArkWebRenderWidgetHostViewOSRExt::SetIfNeedCleanBuffers(bool need_clean_buf
 }
 #endif
 
+#if BUILDFLAG(ARKWEB_DELEGATE_COMPOSITING)
+void ArkWebRenderWidgetHostViewOSRExt::DiscardCompositingResources() {
+  TRACE_EVENT0("base",
+      "ArkWebRenderWidgetHostViewOSRExt::DiscardCompositingResources");
+  if (browser_impl_.get() && browser_impl_->GetAcceleratedWidget(is_popup_)) {
+    auto compositor = ArkWebRenderWidgetHostViewOSRUtils::GetCompositor(
+      browser_impl_->GetAcceleratedWidget(is_popup_));
+    if (compositor) {
+      compositor->Utils()->DiscardCompositingResources();
+    }
+  }
+}
+
+void ArkWebRenderWidgetHostViewOSRExt::UpdateFocusAndScreenStatus(
+    bool is_focused, bool is_single_screen) {
+  TRACE_EVENT0("base",
+      "ArkWebRenderWidgetHostViewOSRExt::UpdateFocusAndScreenStatus");
+
+  if (browser_impl_.get() && browser_impl_->GetAcceleratedWidget(is_popup_)) {
+    auto compositor = ArkWebRenderWidgetHostViewOSRUtils::GetCompositor(
+      browser_impl_->GetAcceleratedWidget(is_popup_));
+    if (compositor) {
+      compositor->Utils()->UpdateFocusAndScreenStatus(is_focused,
+                                                      is_single_screen);
+    }
+  }
+}
+#endif
+
 #if BUILDFLAG(ARKWEB_OFFLINE_WEB_EVICT_BACK_BUFFERS)
 void ArkWebRenderWidgetHostViewOSRExt::SetIsOfflineWebComponentInactive(bool is_inactive) {
   TRACE_EVENT0("base", "ArkWebRenderWidgetHostViewOSRExt::SetIsOfflineWebComponentInactive");
