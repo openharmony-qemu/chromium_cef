@@ -81,6 +81,9 @@ static inline void setForInclude(const struct_type* src,
   target->custom_video_player_enable = src->custom_video_player_enable;
   target->custom_video_player_overlay = src->custom_video_player_overlay;
 #endif  // ARKWEB_CUSTOM_VIDEO_PLAYER
+#if BUILDFLAG(ARKWEB_FULLSCREEN_VIDEO_OVERLAY)
+  target->fullscreen_video_overlay_enable = src->fullscreen_video_overlay_enable;
+#endif  // ARKWEB_FULLSCREEN_VIDEO_OVERLAY
 #if BUILDFLAG(ARKWEB_MULTI_WINDOW)
   target->supports_multiple_windows = src->supports_multiple_windows;
 #endif  // ARKWEB_MULTI_WINDOW

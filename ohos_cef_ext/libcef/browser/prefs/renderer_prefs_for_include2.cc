@@ -196,6 +196,9 @@ void SetCefPrefsSetStateExt(const CefBrowserSettings& cef,
   web.custom_video_player_enable = cef.custom_video_player_enable;
   web.custom_video_player_overlay = cef.custom_video_player_overlay;
 #endif  // ARKWEB_CUSTOM_VIDEO_PLAYER
+#if BUILDFLAG(ARKWEB_FULLSCREEN_VIDEO_OVERLAY)
+  web.fullscreen_video_overlay_enable = cef.fullscreen_video_overlay_enable;
+#endif  // ARKWEB_FULLSCREEN_VIDEO_OVERLAY
 #if BUILDFLAG(ARKWEB_ERROR_PAGE)
   web.error_page_enabled = cef.error_page_enabled;
 #endif

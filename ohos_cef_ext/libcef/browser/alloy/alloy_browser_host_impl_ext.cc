@@ -1449,6 +1449,26 @@ AlloyBrowserHostImplExt::CreateCustomMediaPlayer(
 }
 #endif // ARKWEB_CUSTOM_VIDEO_PLAYER
 
+#if BUILDFLAG(ARKWEB_FULLSCREEN_VIDEO_OVERLAY)
+bool AlloyBrowserHostImplExt::IsFullscreenVideoOverlayEnabled() const {
+  if (!client_) {
+    LOG(ERROR) << "client is null, IsFullscreenVideoOverlayEnabled failed";
+    return false;
+  }
+  return client_->IsFullscreenVideoOverlayEnabled();
+}
+
+void AlloyBrowserHostImplExt::OnVideoStatusChanged(
+    content::VideoPlaybackNotificationType action,
+    std::map<std::string, std::string>& param) {
+  if (!client_) {
+    LOG(ERROR) << "client is null, OnVideoStatusChanged failed";
+    return;
+  }
+  client_->OnVideoStatusChanged(static_cast<int>(action), param);
+}
+#endif  // ARKWEB_FULLSCREEN_VIDEO_OVERLAY
+
 #if BUILDFLAG(ARKWEB_VIDEO_LTPO)
 void AlloyBrowserHostImplExt::UpdateVSyncFrequency() {
   if (!base::ohos::IsMobileDevice()) {
