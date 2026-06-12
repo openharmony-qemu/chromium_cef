@@ -605,9 +605,14 @@ CefCookieManagerImplExt::CefCookieManagerImplExt(bool support_incognito)
   if (base::PathService::Get(chrome::DIR_USER_DATA, &cookie_store_path_)) {
     cookie_store_path_ = cookie_store_path_.Append("Cookies");
   } else if (command_line) {
-    cookie_store_path_ =
-        command_line->GetSwitchValuePath(switches::kUserDataDir)
-            .Append("Cookies");
+    bool isSeparation =
+        (command_line->GetSwitchValueASCII(
+             switches::kEnableCacheDataDirSeparation) == "true");
+    std::string target_data_dir_tag =
+        isSeparation ? "files/arkweb" : "cache/web";
+    cookie_store_path = command_line->GetSwitchValuePath(switches::kUserDataDir)
+                            .Append(target_data_dir_tag);
+    cookie_store_path = cookie_store_path_.Append("Cookies");
   } else {
     base::PathService::Get(base::DIR_CACHE, &cookie_store_path_);
     cookie_store_path_ = cookie_store_path_.Append("Cookies");
