@@ -212,6 +212,35 @@ void SetCanonicalCookieCallback(SaveCookiesProgress* progress,
   }
 }
 
+base::FilePath GetCookieStorePath() {
+  base::FilePath cookie_store_path;
+  base::PathService::Get(chrome::DIR_USER_DATA, &cookie_store_path);
+  if (!cookie_store_path.empty()) {
+    // Get the user data directory after initializing webengine.
+    return cookie_store_path.Append("Cookies");
+  }
+
+  const base::CommandLine *command_line =
+      base::CommandLine::ForCurrentProcess();
+  if (command_line) {
+    bool isSeparation =
+        (command_line->GetSwitchValueASCII(
+             switches::kEnableCacheDataDirSeparation) == "true");
+    std::string target_data_dir_tag =
+        isSeparation ? "files/__arkweb" : "cache/web";
+    cookie_store_path =
+        command_line->GetSwitchValuePath(switches::kUserDataDir);
+    if (!cookie_store_path.empty()) {
+      // Get the user data directory before initializing webengine.
+      return cookie_store_path.Append(target_data_dir_tag).Append("Cookies");
+    }
+  }
+
+  base::PathService::Get(base::DIR_CACHE, &cookie_store_path);
+  cookie_store_path = cookie_store_path.Append("Cookies");
+  return cookie_store_path;
+}
+
 }  // namespace
 
 #if BUILDFLAG(ARKWEB_PERFORMANCE_SCHEDULING)
@@ -599,21 +628,10 @@ CefCookieManagerImplExt::CefCookieManagerImplExt(bool support_incognito)
   cookie_store_task_thread_.Start();
   cookie_store_backend_thread_.Start();
   cookie_store_task_runner_ = cookie_store_task_thread_.task_runner();
-
-  const base::CommandLine *command_line =
-      base::CommandLine::ForCurrentProcess();
-  if (base::PathService::Get(chrome::DIR_USER_DATA, &cookie_store_path_)) {
-    cookie_store_path_ = cookie_store_path_.Append("Cookies");
-  } else if (command_line) {
-    cookie_store_path_ =
-        command_line->GetSwitchValuePath(switches::kUserDataDir)
-            .Append("Cookies");
-  } else {
-    base::PathService::Get(base::DIR_CACHE, &cookie_store_path_);
-    cookie_store_path_ = cookie_store_path_.Append("Cookies");
-  }
+  cookie_store_path_ = GetCookieStorePath();
 
 #if BUILDFLAG(ARKWEB_PERFORMANCE_SCHEDULING)
+  base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
   cmd_value_ = false;
   if (command_line) {
     cmd_value_ = command_line->HasSwitch(switches::kEnableReportCookieMonsterClient);
