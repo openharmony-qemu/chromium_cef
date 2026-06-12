@@ -171,11 +171,11 @@ void ArkWebCefBrowserPlatformDelegateExt::CreateWebPrintDocumentAdapterV2(
 #endif  // BUILDFLAG(ARKWEB_PRINT)
 
 #if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
-int ArkWebCefBrowserPlatformDelegateExt::GetTopControlsOffset() {
+float ArkWebCefBrowserPlatformDelegateExt::GetTopControlsOffset() {
   return 0;
 }
 
-int ArkWebCefBrowserPlatformDelegateExt::GetShrinkViewportHeight() {
+float ArkWebCefBrowserPlatformDelegateExt::GetShrinkViewportHeight() {
   return 0;
 }
 #endif

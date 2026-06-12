@@ -66,9 +66,21 @@ class ArkWebCefWebContentsViewOSRExt : public CefWebContentsViewOSR {
 #endif
 
 #if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
-  int GetTopControlsHeight() override;
+  float GetTopControlsHeight() override;
   bool DoBrowserControlsShrinkRendererSize() const override;
   void UpdateBrowserControlsHeight(int height, bool animate) override;
+  void SetBrowserControlsParams(float top_controls_height,
+                                float top_controls_min_height,
+                                float bottom_controls_height,
+                                float bottom_controls_min_height) override;
+  float GetTopControlsMinHeight() const override;
+  float GetBottomControlsHeight() const override;
+  float GetBottomControlsMinHeight() const override;
+
+ private:
+  bool has_called_by_update_browser_controls_height_{false};
+
+ public:
 #endif
 
 #if BUILDFLAG(USE_EXTERNAL_POPUP_MENU)

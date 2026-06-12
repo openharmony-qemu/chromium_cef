@@ -302,7 +302,7 @@ gfx::Size ArkWebRenderWidgetHostViewOSRExt::GetPhysicalVisibleViewportSize() {
 gfx::Size ArkWebRenderWidgetHostViewOSRExt::GetVisibleViewportSize() {
   gfx::Size bounds = GetPhysicalVisibleViewportSize();
 #if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
-  bounds.set_height(bounds.height() - GetShrinkViewportHeight());
+  bounds.set_height(bounds.height() - GetShrinkVisualViewportHeight());
 #endif
   return bounds;
 }
@@ -310,7 +310,7 @@ gfx::Size ArkWebRenderWidgetHostViewOSRExt::GetVisibleViewportSize() {
 gfx::Size ArkWebRenderWidgetHostViewOSRExt::GetVisibleViewportSizeDevicePx() {
   gfx::Size bounds = GetPhysicalVisibleViewportSize();
 #if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
-  bounds.set_height(bounds.height() - GetShrinkViewportHeight());
+  bounds.set_height(bounds.height() - GetShrinkVisualViewportHeight());
 #endif
   return gfx::ScaleToCeiledSize(bounds, GetDeviceScaleFactor());
 }
@@ -1360,6 +1360,21 @@ void ArkWebRenderWidgetHostViewOSRExt::
     top_content_offset_ = top_content_offset;
     top_controls_offset_ = top_controls_offset;
     OnTopControlsChanged(top_controls_offset_, top_content_offset_);
+  }
+
+  float bottom_content_offset = metadata.bottom_controls_height *
+                                metadata.bottom_controls_shown_ratio /
+                                metadata.device_scale_factor;
+  float bottom_controls_offset =
+      bottom_content_offset -
+      metadata.bottom_controls_height / metadata.device_scale_factor;
+
+  if (!pull_to_refreshing_ &&
+      (bottom_content_offset != bottom_content_offset_ ||
+       bottom_controls_offset != bottom_controls_offset_)) {
+    bottom_content_offset_ = bottom_content_offset;
+    bottom_controls_offset_ = bottom_controls_offset;
+    OnBottomControlsChanged(bottom_controls_offset_, bottom_content_offset_);
   }
 
   if (enable_nweb_ex_) {
@@ -2834,27 +2849,55 @@ void ArkWebRenderWidgetHostViewOSRExt::DidStopRefresh() {
 #if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
 void ArkWebRenderWidgetHostViewOSRExt::TransformPointToRootSurface(
     gfx::PointF* point) {
-  *point += gfx::Vector2d(0, GetShrinkViewportHeight());
+  *point += gfx::Vector2dF(0, GetShrinkVisualViewportHeight());
 }
 
-int ArkWebRenderWidgetHostViewOSRExt::GetTopControlsOffset() const {
+float ArkWebRenderWidgetHostViewOSRExt::GetTopControlsOffset() const {
   return (enable_nweb_ex_ ? top_controls_offset_ : 0);
 }
 
-int ArkWebRenderWidgetHostViewOSRExt::GetShrinkViewportHeight() {
-  int shrink_viewport_height = 0;
+float ArkWebRenderWidgetHostViewOSRExt::GetTopContentOffset() const {
+  return (enable_nweb_ex_ ? top_content_offset_ * GetDeviceScaleFactor() : 0);
+}
+
+float ArkWebRenderWidgetHostViewOSRExt::GetBottomContentOffset() const {
+  return (enable_nweb_ex_ ? bottom_content_offset_ * GetDeviceScaleFactor()
+                          : 0);
+}
+
+float ArkWebRenderWidgetHostViewOSRExt::GetShrinkVisualViewportHeight() {
+  float shrink_visual_viewport_height = 0;
+  if (!enable_nweb_ex_ || !host()->delegate()) {
+    return shrink_visual_viewport_height;
+  }
+
+  auto rvh_delegate_view = host()->delegate()->GetDelegateView();
+  gfx::SizeF shrink_size(0,
+                         rvh_delegate_view->GetTopControlsMinHeight() +
+                             rvh_delegate_view->GetBottomControlsMinHeight());
+  if (rvh_delegate_view->DoBrowserControlsShrinkRendererSize()) {
+    shrink_size =
+        gfx::SizeF(0, rvh_delegate_view->GetTopControlsHeight() +
+                          rvh_delegate_view->GetBottomControlsHeight());
+  }
+  shrink_visual_viewport_height =
+      gfx::ScaleSize(shrink_size, 1.f / GetDeviceScaleFactor()).height();
+  return shrink_visual_viewport_height;
+}
+
+float ArkWebRenderWidgetHostViewOSRExt::GetShrinkViewportHeight() {
+  float shrink_viewport_height = 0;
   if (!enable_nweb_ex_ || !host()->delegate()) {
     return shrink_viewport_height;
   }
 
   auto rvh_delegate_view = host()->delegate()->GetDelegateView();
+  gfx::SizeF shrink_size(0, rvh_delegate_view->GetTopControlsMinHeight());
   if (rvh_delegate_view->DoBrowserControlsShrinkRendererSize()) {
-    gfx::Size shrink_size(0, rvh_delegate_view->GetTopControlsHeight());
-    shrink_viewport_height =
-        gfx::ScaleToFlooredSize(shrink_size, 1.f / GetDeviceScaleFactor())
-            .height();
+    shrink_size = gfx::SizeF(0, rvh_delegate_view->GetTopControlsHeight());
   }
-
+  shrink_viewport_height =
+      gfx::ScaleSize(shrink_size, 1.f / GetDeviceScaleFactor()).height();
   return shrink_viewport_height;
 }
 
@@ -2886,6 +2929,17 @@ void ArkWebRenderWidgetHostViewOSRExt::OnTopControlsHeightChanged() {
     GetRootLayer()->SetTopControlsHeight(
         rvh_delegate_view->GetTopControlsHeight() / GetDeviceScaleFactor());
   }
+}
+
+void ArkWebRenderWidgetHostViewOSRExt::OnBottomControlsChanged(
+    float bottom_controls_offset,
+    float bottom_content_offset) {
+  if (!enable_nweb_ex_ || !browser_impl_.get() ||
+      !browser_impl_->GetClient().get()) {
+    return;
+  }
+  browser_impl_->GetClient()->AsArkWebClient()->OnBottomControlsChanged(
+      bottom_controls_offset, bottom_content_offset);
 }
 #endif  // BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
 

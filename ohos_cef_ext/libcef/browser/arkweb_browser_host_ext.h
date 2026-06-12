@@ -303,6 +303,10 @@ class ArkWebBrowserHostExtImpl : public ArkWebBrowserHostExt,
                                   int current,
                                   bool animate) override;
   void UpdateBrowserControlsHeight(int height, bool animate) override;
+  void SetBrowserControlsParams(float top_controls_height,
+                                float top_controls_min_height,
+                                float bottom_controls_height,
+                                float bottom_controls_min_height) override;
   void StartCamera() override;
   void StopCamera() override;
   void CloseCamera() override;
@@ -576,8 +580,8 @@ class ArkWebBrowserHostExtImpl : public ArkWebBrowserHostExt,
   bool GetSavePassword() override { return true; }
   void SetSavePassword(bool enable) override {}
 
-  int GetTopControlsOffset() override;
-  int GetShrinkViewportHeight() override;
+  float GetTopControlsOffset() override;
+  float GetShrinkViewportHeight() override;
 
 #if BUILDFLAG(ARKWEB_SAFEBROWSING)
   bool IsSafeBrowsingEnabled() override;

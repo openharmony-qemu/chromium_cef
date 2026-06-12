@@ -261,6 +261,14 @@ class ArkWebBrowserExt : public virtual CefBrowser {
   ///
   virtual void UpdateBrowserControlsHeight(int height, bool animate) = 0;
 
+  ///
+  /// Set browser controls parameters.
+  ///
+  virtual void SetBrowserControlsParams(float top_controls_height,
+                                        float top_controls_min_height,
+                                        float bottom_controls_height,
+                                        float bottom_controls_min_height) = 0;
+
 #if BUILDFLAG(ARKWEB_SAVE_PAGE)
   virtual bool SavePage(int32_t type,
                         CefString& filePath,
@@ -1089,12 +1097,12 @@ class ArkWebBrowserHostExt : public virtual CefBrowserHost,
   ///
   /// Get the top controls offset.
   ///
-  virtual int GetTopControlsOffset() = 0;
+  virtual float GetTopControlsOffset() = 0;
 
   ///
   /// Get the shrink viewport height.
   ///
-  virtual int GetShrinkViewportHeight() = 0;
+  virtual float GetShrinkViewportHeight() = 0;
 
   ///
   /// Called when picking color.
