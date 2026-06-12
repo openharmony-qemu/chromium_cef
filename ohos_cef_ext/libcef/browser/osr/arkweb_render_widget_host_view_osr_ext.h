@@ -305,11 +305,16 @@ void UpdateFocusAndScreenStatus(bool is_focused, bool is_single_screen) override
 
 #if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
   void TransformPointToRootSurface(gfx::PointF* point) override;
-  int GetShrinkViewportHeight() override;
-  int GetTopControlsOffset() const override;
+  float GetShrinkViewportHeight() override;
+  float GetShrinkVisualViewportHeight() override;
+  float GetTopControlsOffset() const override;
+  float GetTopContentOffset() const override;
+  float GetBottomContentOffset() const override;
   void OnTopControlsHeightChanged();
   void OnTopControlsChanged(float top_controls_offset,
                             float top_content_offset);
+  void OnBottomControlsChanged(float bottom_controls_offset,
+                               float bottom_content_offset);
 #endif
 
 #if BUILDFLAG(ARKWEB_FOCUS)

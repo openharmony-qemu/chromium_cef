@@ -3839,7 +3839,32 @@ void ArkWebBrowserHostExtImpl::UpdateBrowserControlsHeight(int height,
 #endif
 }
 
-int ArkWebBrowserHostExtImpl::GetTopControlsOffset() {
+void ArkWebBrowserHostExtImpl::SetBrowserControlsParams(
+    float top_controls_height,
+    float top_controls_min_height,
+    float bottom_controls_height,
+    float bottom_controls_min_height) {
+#if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
+  if (!CEF_CURRENTLY_ON_UIT()) {
+    CEF_POST_TASK(
+        CEF_UIT,
+        base::BindOnce(&ArkWebBrowserHostExtImpl::SetBrowserControlsParams,
+                       this, top_controls_height, top_controls_min_height,
+                       bottom_controls_height, bottom_controls_min_height));
+    return;
+  }
+
+  if (!GetWebContents()) {
+    return;
+  }
+
+  GetWebContents()->SetBrowserControlsParams(
+      top_controls_height, top_controls_min_height, bottom_controls_height,
+      bottom_controls_min_height);
+#endif
+}
+
+float ArkWebBrowserHostExtImpl::GetTopControlsOffset() {
 #if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
   if (platform_delegate_) {
     return platform_delegate_->AsArkWebCefBrowserPlatformDelegateExt()->GetTopControlsOffset();
@@ -3850,7 +3875,7 @@ int ArkWebBrowserHostExtImpl::GetTopControlsOffset() {
 #endif
 }
 
-int ArkWebBrowserHostExtImpl::GetShrinkViewportHeight() {
+float ArkWebBrowserHostExtImpl::GetShrinkViewportHeight() {
 #if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
   if (platform_delegate_) {
     return platform_delegate_->AsArkWebCefBrowserPlatformDelegateExt()->GetShrinkViewportHeight();

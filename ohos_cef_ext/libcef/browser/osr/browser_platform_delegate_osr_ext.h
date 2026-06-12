@@ -115,8 +115,8 @@ public:
 #endif
 
 #if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
-  int GetTopControlsOffset() override;
-  int GetShrinkViewportHeight() override;
+  float GetTopControlsOffset() override;
+  float GetShrinkViewportHeight() override;
 #endif
 #if BUILDFLAG(ARKWEB_SOFTWARE_COMPOSITOR)
   bool WebPageSnapshot(const char* id,
@@ -218,7 +218,7 @@ protected:
       bool use_shared_texture,
       bool use_external_begin_frame);
 #if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
-  int shrink_viewport_height_ = 0;
+  float shrink_viewport_height_ = 0;
 #endif
 #if BUILDFLAG(ARKWEB_FOCUS)
   // We keep track of the view's focus-capturing logic, and if the view hasn't

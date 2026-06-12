@@ -134,6 +134,10 @@ class ArkWebBrowserExtImpl : virtual public ArkWebBrowserExt,
                                   int current,
                                   bool animate) override {}
   void UpdateBrowserControlsHeight(int height, bool animate) override {}
+  void SetBrowserControlsParams(float top_controls_height,
+                                float top_controls_min_height,
+                                float bottom_controls_height,
+                                float bottom_controls_min_height) override {}
   // #endif  // BUILDFLAG(ARKWEB_NWEB_EX)
 
 #if BUILDFLAG(ARKWEB_EXT_NAVIGATION)

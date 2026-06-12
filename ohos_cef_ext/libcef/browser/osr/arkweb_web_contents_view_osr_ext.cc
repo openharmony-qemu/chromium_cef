@@ -162,22 +162,22 @@ content::WebContents* ArkWebCefWebContentsViewOSRExt::GetWebContents()
 #endif
 
 #if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
-int ArkWebCefWebContentsViewOSRExt::GetTopControlsHeight()
-{
+float ArkWebCefWebContentsViewOSRExt::GetTopControlsHeight() {
   if (!base::CommandLine::ForCurrentProcess()->HasSwitch(switches::kEnableNwebExTopControls)) {
     return 0;
   }
 
-  int top_controls_height = top_controls_height_;
+  float top_controls_height = top_controls_height_;
 
   CefRefPtr<AlloyBrowserHostImpl> browser = GetBrowser();
-  if (browser.get() && browser->GetClient()) {
+  if (browser.get() && browser->GetClient() &&
+      has_called_by_update_browser_controls_height_) {
     top_controls_height =
         browser->GetClient()->AsArkWebClient()->OnGetTopControlsHeight();
   }
   if (top_controls_height != top_controls_height_) {
-    LOG(INFO) << "browser controls height changed:" << top_controls_height_
-              << "->" << top_controls_height;
+    LOG_FEEDBACK(INFO) << "TopControlsHeightChanged height:"
+                       << top_controls_height_ << "->" << top_controls_height;
     top_controls_height_ = top_controls_height;
     if (CefRenderWidgetHostViewOSR* view = GetView()) {
       view->AsArkWebRenderWidgetHostViewOSRExt()->OnTopControlsHeightChanged();
@@ -187,27 +187,36 @@ int ArkWebCefWebContentsViewOSRExt::GetTopControlsHeight()
   return top_controls_height_;
 }
 
-bool ArkWebCefWebContentsViewOSRExt::DoBrowserControlsShrinkRendererSize() const
-{
-  CefRefPtr<AlloyBrowserHostImpl> browser = GetBrowser();
-  if (browser.get() && browser->GetClient()) {
-    return browser->GetClient()
-        ->AsArkWebClient()
-        ->DoBrowserControlsShrinkRendererSize();
+bool ArkWebCefWebContentsViewOSRExt::DoBrowserControlsShrinkRendererSize()
+    const {
+  if (CefRenderWidgetHostViewOSR* view = GetView()) {
+    auto arkweb_view = view->AsArkWebRenderWidgetHostViewOSRExt();
+    return arkweb_view->GetTopContentOffset() - top_controls_min_height_ >
+               0.01f ||
+           arkweb_view->GetBottomContentOffset() - bottom_controls_min_height_ >
+               0.01f;
   }
   return false;
 }
 
 void ArkWebCefWebContentsViewOSRExt::UpdateBrowserControlsHeight(int height,
-                                                                 bool animate)
-{
-  if (!base::CommandLine::ForCurrentProcess()->HasSwitch(switches::kEnableNwebExTopControls) ||
-      height == top_controls_height_) {
+                                                                 bool animate) {
+  if (!base::CommandLine::ForCurrentProcess()->HasSwitch(
+          switches::kEnableNwebExTopControls)) {
     return;
   }
 
-  LOG(INFO) << "browser controls height changed:" << top_controls_height_
-            << "->" << height;
+  if (!has_called_by_update_browser_controls_height_) {
+    has_called_by_update_browser_controls_height_ = true;
+  }
+
+  if (height == top_controls_height_) {
+    return;
+  }
+
+  LOG_FEEDBACK(INFO, kNetwork)
+      << "UpdateTopControlsHeight height:" << top_controls_height_ << "->"
+      << height;
   top_controls_height_ = height;
 
   if (CefRenderWidgetHostViewOSR* view = GetView()) {
@@ -215,6 +224,61 @@ void ArkWebCefWebContentsViewOSRExt::UpdateBrowserControlsHeight(int height,
     view->SynchronizeVisualProperties(cc::DeadlinePolicy::UseDefaultDeadline(),
                                       absl::nullopt);
   }
+}
+
+void ArkWebCefWebContentsViewOSRExt::SetBrowserControlsParams(
+    float top_controls_height,
+    float top_controls_min_height,
+    float bottom_controls_height,
+    float bottom_controls_min_height) {
+  LOG_FEEDBACK(INFO, kNetwork)
+      << "SetBrowserControlsParams topH:" << top_controls_height_ << "->"
+      << top_controls_height << " topMinH:" << top_controls_min_height_ << "->"
+      << top_controls_min_height << " botH:" << bottom_controls_height_ << "->"
+      << bottom_controls_height << " botMinH:" << bottom_controls_min_height_
+      << "->" << bottom_controls_min_height;
+  bool top_height_changed = false;
+  bool changed = false;
+  if (!has_called_by_update_browser_controls_height_ &&
+      top_controls_height_ != top_controls_height) {
+    top_controls_height_ = top_controls_height;
+    top_height_changed = true;
+    changed = true;
+  }
+  if (top_controls_min_height_ != top_controls_min_height) {
+    top_controls_min_height_ = top_controls_min_height;
+    changed = true;
+  }
+  if (bottom_controls_height_ != bottom_controls_height) {
+    bottom_controls_height_ = bottom_controls_height;
+    changed = true;
+  }
+  if (bottom_controls_min_height_ != bottom_controls_min_height) {
+    bottom_controls_min_height_ = bottom_controls_min_height;
+    changed = true;
+  }
+  if (changed) {
+    if (CefRenderWidgetHostViewOSR* view = GetView()) {
+      if (top_height_changed) {
+        view->AsArkWebRenderWidgetHostViewOSRExt()
+            ->OnTopControlsHeightChanged();
+      }
+      view->SynchronizeVisualProperties(
+          cc::DeadlinePolicy::UseDefaultDeadline(), absl::nullopt);
+    }
+  }
+}
+
+float ArkWebCefWebContentsViewOSRExt::GetTopControlsMinHeight() const {
+  return top_controls_min_height_;
+}
+
+float ArkWebCefWebContentsViewOSRExt::GetBottomControlsHeight() const {
+  return bottom_controls_height_;
+}
+
+float ArkWebCefWebContentsViewOSRExt::GetBottomControlsMinHeight() const {
+  return bottom_controls_min_height_;
 }
 #endif  // BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
 
