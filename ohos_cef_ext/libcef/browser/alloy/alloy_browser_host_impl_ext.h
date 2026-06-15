@@ -432,6 +432,10 @@ private:
 #if BUILDFLAG(ARKWEB_INPUT_EVENTS)
   raw_ptr<content::EyeDropperListener> listener_;
 #endif
+
+#if BUILDFLAG(ARKWEB_RENDERER_ANR_DUMP)
+  base::WeakPtrFactory<AlloyBrowserHostImplExt> weak_ptr_factory_{this}; // keep it last
+#endif
 };
 
 #endif  // CEF_OHOS_CEF_EXT_LIBCEF_BROWSER_ALLOY_ALLOY_BROWSER_HOST_IMPL_EXT_H_
