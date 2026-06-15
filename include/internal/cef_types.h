@@ -783,10 +783,6 @@ typedef struct _cef_browser_settings_t {
   bool is_system_rtl_enabled;
 #endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
 
-#if BUILDFLAG(ARKWEB_DRAG_DROP)
-  bool is_drag_enabled;
-#endif
-
 #if BUILDFLAG(ARKWEB_MENU)
   bool touch_handle_exist;
   bool viewport_scale;
