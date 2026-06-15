@@ -17,6 +17,10 @@
 #include "components/spellcheck/common/spellcheck_common.h"
 #endif
 
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+#include "cef/ohos_cef_ext/libcef/browser/menu_manager_ext.h"
+#endif // BUILDFLAG(ARKWEB_DEVTOOLS)
+
 namespace content {
 class RenderFrameHost;
 class WebContents;
@@ -46,11 +50,8 @@ class CefMenuManager : public CefMenuModelImpl::Delegate,
   bool CreateContextMenu(const content::ContextMenuParams& params,
                          bool query_spellcheck = true);
   void CancelContextMenu();
-
 #if BUILDFLAG(ARKWEB_DEVTOOLS)
-  CefRefPtr<CefMenuModelImpl> GetContextMenuModel();
-  void onContextMenuSelected(int command_id);
-  void onContextMenuClosed();
+  CefMenuManagerExt& GetMenuManagerExt();
 #endif // BUILDFLAG(ARKWEB_DEVTOOLS)
 
  private:
@@ -100,6 +101,11 @@ class CefMenuManager : public CefMenuModelImpl::Delegate,
 
   // Not owned by this class.
   raw_ptr<CefRunContextMenuCallback> custom_menu_callback_ = nullptr;
+
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+  friend class CefMenuManagerExt;
+  CefMenuManagerExt menu_manager_ext_;
+#endif // BUILDFLAG(ARKWEB_DEVTOOLS)
 
   // Must be the last member.
   base::WeakPtrFactory<CefMenuManager> weak_ptr_factory_;
