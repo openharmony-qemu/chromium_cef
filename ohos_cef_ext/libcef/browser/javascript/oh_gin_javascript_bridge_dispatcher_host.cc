@@ -3,8 +3,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include <sys/mman.h>
-
 #include "arkweb/build/features/features.h"
 
 #if BUILDFLAG(ARKWEB_SECURE_JAVASCRIPT_PROXY)
@@ -13,7 +11,6 @@
 #include "arkweb/chromium_ext/url/ohos/log_utils.h"
 #include "base/functional/bind.h"
 #include "base/memory/scoped_refptr.h"
-#include "base/memory/read_only_shared_memory_region.h"
 #include "content/browser/renderer_host/agent_scheduling_group_host.h"
 #include "content/browser/renderer_host/render_frame_host_impl.h"
 #include "content/browser/web_contents/web_contents_impl.h"
@@ -30,9 +27,6 @@ namespace {
 // For the sake of the storage API, make this quite large.
 const size_t MAX_RECURSION_DEPTH = 11;
 const size_t MAX_DATA_LENGTH = 10000;
-constexpr int MAX_ARGS_SIZE = 100;
-constexpr int MAX_ENTRIES = 10;
-constexpr int HEADER_SIZE = (MAX_ENTRIES * 8);
 
 class ValueConvertState {
  public:
@@ -1215,7 +1209,6 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethod(
                                               result, routing_id, object_id);
   *error_code = static_cast<content::mojom::OhGinJavascriptBridgeError>(error);
   if (error != 0) {
-    LOG(INFO) << "OnInvokeMethod:  NotifyJavaScriptResult error !=0 " << error;
     return;
   }
 
@@ -1535,159 +1528,37 @@ void OhGinJavascriptBridgeDispatcherHost::InvokeMethodAsync(const std::string& m
 void OhGinJavascriptBridgeDispatcherHost::InvokeMethodFlowbuf(const std::string& method_name,
                                                               const std::string& document_url,
                                                               base::Value::List arguments,
-                                                              base::ReadOnlySharedMemoryRegion flowbuf_region,
+                                                              int fd,
                                                               InvokeMethodFlowbufCallback callback) {
-
-  if (!flowbuf_region.IsValid()) {
-    LOG(ERROR) << "flowbuf_region is invalid , run combined_args way";
-    CombinedArgsToRunOnInvokeMethod(object_receivers_.current_context().first.frame_routing_id,
-                                    object_receivers_.current_context().second,
-                                    document_url,
-                                    method_name,
-                                    std::move(arguments),
-                                    std::move(flowbuf_region),
-                                    std::move(callback));
-    return;
-  }
-
-  int fd = flowbuf_region.GetPlatformHandle();
-  int dup_fd = dup(fd);
-  if (fd < 0 || dup_fd < 0) {
-    LOG(ERROR) << "flowbuf_region is invalid, fd < 0 , run combined_args way";
-    CombinedArgsToRunOnInvokeMethod(object_receivers_.current_context().first.frame_routing_id,
-                                    object_receivers_.current_context().second,
-                                    document_url,
-                                    method_name,
-                                    std::move(arguments),
-                                    std::move(flowbuf_region),
-                                    std::move(callback));
-    return;
-  }
-
-  base::Value::List wrapped_result;
-  content::mojom::OhGinJavascriptBridgeError error_code
-      = content::mojom::OhGinJavascriptBridgeError::kOhGinJavascriptBridgeNoError;
-
-  OnInvokeMethodFlowbuf(object_receivers_.current_context().first.frame_routing_id,
-                        object_receivers_.current_context().second,
-                        document_url,
-                        method_name,
-                        std::move(arguments),
-                        dup_fd,
-                        &wrapped_result,
-                        &error_code);
-  OnInvokeMethodFlowbufCallback(error_code, std::move(wrapped_result), std::move(callback));
-  if (dup_fd > 0) {
-    close(dup_fd);
+  bool isAsyncthread = false;
+  OnHasAsyncThreadMethod(object_receivers_.current_context().second, method_name, &isAsyncthread);
+  if (isAsyncthread) {
+    async_task_runner_->PostTask(
+        FROM_HERE, base::BindOnce(&OhGinJavascriptBridgeDispatcherHost::InvokeMethodFlowbufInternal,
+                                  base::WrapRefCounted(this),
+                                  object_receivers_.current_context().first.frame_routing_id,
+                                  object_receivers_.current_context().second, method_name, document_url,
+                                  std::move(arguments), fd, std::move(callback)));
+  } else {
+    InvokeMethodFlowbufInternal(object_receivers_.current_context().first.frame_routing_id,
+                                object_receivers_.current_context().second, method_name, document_url,
+                                std::move(arguments), fd, std::move(callback));
   }
 }
 
-void OhGinJavascriptBridgeDispatcherHost::CombinedArgsToRunOnInvokeMethod(int32_t routing_id,
-                                                                          int32_t object_id,
-                                                                          const std::string& method_name,
-                                                                          const std::string& document_url,
-                                                                          base::Value::List arguments,
-                                                                          base::ReadOnlySharedMemoryRegion flowbuf_region,
-                                                                          InvokeMethodFlowbufCallback callback) {
-  base::Value::List combined_args;
-  int max_flowbuf_idx = -1;
-  int flowbuf_count = 0;
-  std::vector<std::pair<int, std::string>> flowbuf_entries;
-
-  if (flowbuf_region.IsValid()) {
-    auto mapping = flowbuf_region.Map();
-    if (mapping.IsValid() && mapping.size() >= HEADER_SIZE) {
-      const int* header = static_cast<const int*>(mapping.memory());
-      const char* data_area = static_cast<const char*>(mapping.memory()) + HEADER_SIZE;
-      int string_offset = 0;
- 
-      for (int i = 0; i < MAX_ENTRIES; ++i) {
-        int idx = *(header + (i * 2));
-        int len = *(header + (i * 2) + 1);
- 
-        if (len == 0) break;
- 
-        if (len < 0) {
-          LOG(ERROR) << "ParseFlowbuf: invalid len=" << len << " at entry " << i;
-          break;
-        }
- 
-        if (idx < 0 || idx >= MAX_ARGS_SIZE) {
-          LOG(ERROR) << "ParseFlowbuf: invalid idx=" << idx << " at entry " << i;
-          string_offset += len;
-          continue;
-        }
- 
-        size_t data_area_size = mapping.size() - HEADER_SIZE;
-        if (static_cast<size_t>(string_offset + len) > data_area_size) {
-          LOG(ERROR) << "ParseFlowbuf: overflow at entry " << i;
-          break;
-        }
- 
-        const char* str = data_area + string_offset;
-        std::string value(str, len - 1);
-
-        flowbuf_entries.emplace_back(idx, std::move(value));
-        flowbuf_count++;
-        if (idx > max_flowbuf_idx) max_flowbuf_idx = idx;
- 
-        string_offset += len;
-      }
-    }
-  }
- 
-  int arguments_count = static_cast<int>(arguments.size());
-  int total_params = flowbuf_count + arguments_count;
- 
-  int min_required_idx = total_params > 0 ? total_params - 1 : 0;
-  int max_idx = std::max(max_flowbuf_idx, min_required_idx);
- 
-  if (max_idx >= MAX_ARGS_SIZE) {
-    LOG(ERROR) << "InvokeMethodFlowbuf: too many args, max_idx=" << max_idx;
-    std::move(callback).Run(
-        content::mojom::OhGinJavascriptBridgeError::kOhGinJavascriptBridgeClientDeleted,
-        base::Value::List());
-    return;
-  }
- 
-  for (int i = 0; i <= max_idx; ++i) {
-    combined_args.Append(base::Value());
-  }
- 
-  for (auto& entry : flowbuf_entries) {
-    int idx = entry.first;
-    if (idx >= 0 && idx < static_cast<int>(combined_args.size())) {
-      combined_args[idx] = base::Value(std::move(entry.second));
-    }
-  }
- 
-  int arg_idx = 0;
-  for (auto& arg : arguments) {
-    while (arg_idx < static_cast<int>(combined_args.size()) &&
-            !combined_args[arg_idx].is_none()) {
-      arg_idx++;
-    }
-    if (arg_idx < static_cast<int>(combined_args.size())) {
-      combined_args[arg_idx] = std::move(arg);
-    } else {
-      LOG(WARNING) << "InvokeMethodFlowbuf: appending extra arg at idx=" << arg_idx;
-      combined_args.Append(std::move(arg));
-    }
-    arg_idx++;
-  }
-
+void OhGinJavascriptBridgeDispatcherHost::InvokeMethodFlowbufInternal(int routing_id,
+                                                                      int32_t object_id,
+                                                                      const std::string& method_name,
+                                                                      const std::string& document_url,
+                                                                      base::Value::List arguments,
+                                                                      int fd,
+                                                                      InvokeMethodFlowbufCallback callback) {
   base::Value::List wrapped_result;
   content::mojom::OhGinJavascriptBridgeError error_code
       = content::mojom::OhGinJavascriptBridgeError::kOhGinJavascriptBridgeNoError;
+  OnInvokeMethodFlowbuf(routing_id, object_id, document_url, method_name,
+                        std::move(arguments), fd, &wrapped_result, &error_code);
 
-  OnInvokeMethod(routing_id,
-                 object_id,
-                 document_url,
-                 method_name,
-                 std::move(arguments),
-                 &wrapped_result,
-                 &error_code);
-  
   OnInvokeMethodFlowbufCallback(error_code, std::move(wrapped_result), std::move(callback));
 }
 
