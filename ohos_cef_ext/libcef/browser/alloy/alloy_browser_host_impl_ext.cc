@@ -487,6 +487,45 @@ void AlloyBrowserHostImplExt::OnPdfLoadEvent(int32_t result, const std::string& 
 }
 #endif  // BUILDFLAG(ARKWEB_PDF)
 
+#if BUILDFLAG(ARKWEB_AI)
+void AlloyBrowserHostImplExt::OnCreateAISession(
+    content::AISessionType type,
+    const std::string& id,
+    const std::string& params,
+    content::AISessionCallback callback) {
+  if (client_ && client_->AsArkWebClient()) {
+    client_->AsArkWebClient()->OnCreateAISession(type, id, params,
+                                                 std::move(callback));
+  } else {
+    LOG(ERROR) << "OnCreateAISession, client_ is nullptr";
+    std::move(callback).Run(content::AISessionResultType::FAILURE, "");
+  }
+}
+
+void AlloyBrowserHostImplExt::OnExecuteAIAction(
+    content::AISessionType type,
+    const std::string& id,
+    const std::string& params,
+    content::AISessionCallback callback) {
+  if (client_ && client_->AsArkWebClient()) {
+    client_->AsArkWebClient()->OnExecuteAIAction(type, id, params,
+                                                 std::move(callback));
+  } else {
+    LOG(ERROR) << "OnExecuteAIAction, client_ is nullptr";
+    std::move(callback).Run(content::AISessionResultType::FAILURE, "");
+  }
+}
+
+void AlloyBrowserHostImplExt::OnDestroyAISession(content::AISessionType type,
+                                                 const std::string& id) {
+  if (client_ && client_->AsArkWebClient()) {
+    client_->AsArkWebClient()->OnDestroyAISession(type, id);
+  } else {
+    LOG(ERROR) << "OnDestroyAISession, client_ is nullptr";
+  }
+}
+#endif  // BUILDFLAG(ARKWEB_AI)
+
 #if BUILDFLAG(ARKWEB_MEDIA_CAST)
 void AlloyBrowserHostImplExt::OnMediaCastEnter() {
   LOG(INFO) << "AlloyBrowserHostImplExt::OnMediaCastEnter";
