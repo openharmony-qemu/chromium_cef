@@ -473,6 +473,11 @@ PermissionStatus AlloyPermissionManager::GetPermissionStatus(
     // Follow AW, LNA permission auto-granted.
     return PermissionStatus::GRANTED;
 #endif // ARKWEB_NETWORK_LOAD
+#if BUILDFLAG(ARKWEB_SCREEN_LOCK)
+  } else if (permission_type == PermissionType::WAKE_LOCK_SCREEN) {
+    // permission auto-granted.
+    return PermissionStatus::GRANTED;
+#endif // ARKWEB_SCREEN_LOCK
   }
   return PermissionStatus::DENIED;
 }
