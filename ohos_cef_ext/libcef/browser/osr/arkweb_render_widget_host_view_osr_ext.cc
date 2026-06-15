@@ -1400,11 +1400,9 @@ void ArkWebRenderWidgetHostViewOSRExt::
   }
 
 #if BUILDFLAG(ARKWEB_MENU)
-  if (clipped_selection_bounds_ != metadata.clipped_selection_bounds) {
-    clipped_selection_bounds_ = metadata.clipped_selection_bounds;
-    selection_controller_client_->UpdateClientClippedSelectionBounds(
-        clipped_selection_bounds_);
-  }
+  clipped_selection_bounds_ = metadata.clipped_selection_bounds;
+  selection_controller_client_->UpdateClientClippedSelectionBounds(
+      clipped_selection_bounds_);
 #endif
 }
 #endif  // BUILDFLAG(IS_ARKWEB)
