@@ -786,6 +786,7 @@ typedef struct _cef_browser_settings_t {
 #if BUILDFLAG(ARKWEB_MENU)
   bool touch_handle_exist;
   bool viewport_scale;
+  bool smart_edge_state;
 #endif  // BUILDFLAG(ARKWEB_MENU)
 
 #if BUILDFLAG(ARKWEB_SAME_LAYER)

@@ -200,6 +200,9 @@ void SetCefPrefsSetStateExt(const CefBrowserSettings& cef,
 #if BUILDFLAG(ARKWEB_DRAG_DROP)
   web.is_drag_enabled = cef.is_drag_enabled;
 #endif  // BUILDFLAG(ARKWEB_DRAG_DROP)
+#if BUILDFLAG(ARKWEB_MENU)
+  web.smart_edge_state = cef.smart_edge_state;
+#endif  // BUILDFLAG(ARKWEB_MENU)
 }
 
 #if BUILDFLAG(ARKWEB_EXT_EXCEPTION_LIST)

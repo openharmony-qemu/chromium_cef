@@ -725,6 +725,7 @@ void ArkWebBrowserHostExtImpl::UpdateBrowserSettings(
 #if BUILDFLAG(ARKWEB_MENU)
   settings_.touch_handle_exist = browser_settings.touch_handle_exist;
   settings_.viewport_scale = browser_settings.viewport_scale;
+  settings_.smart_edge_state = browser_settings.smart_edge_state;
 #endif  // BUILDFLAG(ARKWEB_MENU)
 #if BUILDFLAG(IS_OHOS)
   settings_.draw_mode = browser_settings.draw_mode;
