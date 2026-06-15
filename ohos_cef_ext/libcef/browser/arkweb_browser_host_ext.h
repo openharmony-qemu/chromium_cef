@@ -81,6 +81,9 @@
 #include "content/public/browser/prerender_handle.h"
 #endif
 
+#if BUILDFLAG(ARKWEB_EXT_DOWNLOAD)
+#include "ohos_nweb/src/capi/browser_service/nweb_extension_downloader_types.h"
+#endif
 
 #if BUILDFLAG(ARKWEB_MSGPORT)
 class WebMessageReceiverImpl : public blink::WebMessagePort::MessageReceiver {
@@ -835,6 +838,16 @@ class ArkWebBrowserHostExtImpl : public ArkWebBrowserHostExt,
 
 #if BUILDFLAG(ARKWEB_EXT_RECEIVE_RESPONSE)
 int32_t GetLastCommittedEntryPageTransition() override;
+#endif
+
+#if BUILDFLAG(ARKWEB_EXT_DOWNLOAD)
+void StartDownloadWithParams(
+    const CefString& url,
+    const DownloadUrlParameters& input_params) override;
+
+void ParseDownloadUrlParamsIntoClass(
+    const DownloadUrlParameters& input_params,
+    std::unique_ptr<download::DownloadUrlParameters>& params);
 #endif
 
  private:
