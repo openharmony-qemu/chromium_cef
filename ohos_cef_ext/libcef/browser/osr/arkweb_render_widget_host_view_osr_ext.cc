@@ -2929,6 +2929,10 @@ void ArkWebRenderWidgetHostViewOSRExt::ModifyRenderFit(int32_t fitType) {
 #if BUILDFLAG(ARKWEB_FLING)
 bool ArkWebRenderWidgetHostViewOSRExt::OnNestedScroll(float& delta_x,
                                                       float& delta_y) {
+  if (!browser_impl_.get() || !browser_impl_->GetClient().get())
+  {
+    return false;
+  }
   CefRefPtr<CefRenderHandler> handler =
       browser_impl_->client()->GetRenderHandler();
   if (!handler) {
@@ -2937,6 +2941,23 @@ bool ArkWebRenderWidgetHostViewOSRExt::OnNestedScroll(float& delta_x,
   }
   bool ret = handler->AsArkWebRenderHandler()->OnNestedScroll(
       browser_impl_.get(), delta_x, delta_y);
+  return ret;
+}
+
+bool ArkWebRenderWidgetHostViewOSRExt::OnNestedFling(float& velocity_x,
+                                                     float& velocity_y) {
+  if (!browser_impl_.get() || !browser_impl_->GetClient().get())
+  {
+    return false;
+  }
+  CefRefPtr<CefRenderHandler> handler =
+      browser_impl_->client()->GetRenderHandler();
+  if (!handler) {
+    LOG(ERROR) << "OnNestedFling get handler is nullptr.";
+    return false;
+  }
+  bool ret = handler->AsArkWebRenderHandler()->OnNestedFling(
+      browser_impl_.get(), velocity_x, velocity_y);
   return ret;
 }
 #endif

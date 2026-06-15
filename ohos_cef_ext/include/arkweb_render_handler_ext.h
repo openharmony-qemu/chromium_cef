@@ -375,6 +375,16 @@ class ArkWebRenderHandlerExt : public virtual CefRenderHandler,
   ///
   virtual void ModifyRenderFit(int32_t fitType) {}
 #endif  // ARKWEB_ROTATE_RESIZE
+
+  ///
+  /// Called when Fling.
+  ///
+  /*--cef()--*/
+  virtual bool OnNestedFling(CefRefPtr<CefBrowser> browser,
+                             float& velocity_x,
+                             float& velocity_y) {
+    return false;
+  }
 };
 
 #endif  // OHOS_CEF_EXT_INCLUDE_ARKWEB_RENDER_HANDLER_EXT_H_
