@@ -814,6 +814,18 @@ void ArkWebBrowserHostExtImpl::UpdateBrowserSettings(
 #if BUILDFLAG(ARKWEB_MEDIA_CAST)
   settings_.cast_enabled = browser_settings.cast_enabled;
 #endif  // BUILDFLAG(ARKWEB_MEDIA_CAST)
+
+#if BUILDFLAG(ARKWEB_FONT_SETTINGS)
+  settings_.has_web_set_cursive_font = browser_settings.has_web_set_cursive_font;
+  settings_.has_web_set_fantasy_font = browser_settings.has_web_set_fantasy_font;
+  settings_.has_web_set_serif_font = browser_settings.has_web_set_serif_font;
+  settings_.has_web_set_fixed_font = browser_settings.has_web_set_fixed_font;
+  settings_.has_web_set_sans_serif_font = browser_settings.has_web_set_sans_serif_font;
+  settings_.has_web_set_standard_font = browser_settings.has_web_set_standard_font;
+  settings_.has_web_set_default_font_size = browser_settings.has_web_set_default_font_size;
+  settings_.has_web_set_default_fixed_font_size = browser_settings.has_web_set_default_fixed_font_size;
+  settings_.has_web_set_font_size_lower_limit = browser_settings.has_web_set_font_size_lower_limit;
+#endif
 }
 
 void ArkWebBrowserHostExtImpl::SetDrawRect(int x,

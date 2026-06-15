@@ -56,6 +56,42 @@ void SetCefPrefsExt(const CefBrowserSettings& cef,
 #if BUILDFLAG(ARKWEB_ACTIVE_POLICY)
   web.delay_for_background_tab_freezing = cef.delay_for_background_tab_freezing;
 #endif
+
+#if BUILDFLAG(ARKWEB_FONT_SETTINGS)
+  if (cef.standard_font_family.length > 0 && cef.has_web_set_standard_font) {
+    web.standard_font_family_map[blink::web_pref::kCommonScript] =
+        CefString(&cef.standard_font_family);
+  }
+  if (cef.fixed_font_family.length > 0 && cef.has_web_set_fixed_font) {
+    web.fixed_font_family_map[blink::web_pref::kCommonScript] =
+        CefString(&cef.fixed_font_family);
+  }
+  if (cef.serif_font_family.length > 0 && cef.has_web_set_serif_font) {
+    web.serif_font_family_map[blink::web_pref::kCommonScript] =
+        CefString(&cef.serif_font_family);
+  }
+  if (cef.sans_serif_font_family.length > 0 && cef.has_web_set_sans_serif_font) {
+    web.sans_serif_font_family_map[blink::web_pref::kCommonScript] =
+        CefString(&cef.sans_serif_font_family);
+  }
+  if (cef.cursive_font_family.length > 0 && cef.has_web_set_cursive_font) {
+    web.cursive_font_family_map[blink::web_pref::kCommonScript] =
+        CefString(&cef.cursive_font_family);
+  }
+  if (cef.fantasy_font_family.length > 0 && cef.has_web_set_fantasy_font) {
+    web.fantasy_font_family_map[blink::web_pref::kCommonScript] =
+        CefString(&cef.fantasy_font_family);
+  }
+  if (cef.default_font_size > 0 && cef.has_web_set_default_font_size) {
+    web.default_font_size = cef.default_font_size;
+  }
+  if (cef.default_fixed_font_size > 0 && cef.has_web_set_default_fixed_font_size) {
+    web.default_fixed_font_size = cef.default_fixed_font_size;
+  }
+  if (cef.minimum_font_size > 0 && cef.has_web_set_font_size_lower_limit) {
+    web.minimum_font_size = cef.minimum_font_size;
+  }
+#endif
 }
 
 void SetCefPrefsSetStateExt(const CefBrowserSettings& cef,

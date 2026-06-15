@@ -48,6 +48,7 @@ namespace renderer_prefs {
 
 void SetCefPrefs(const CefBrowserSettings& cef,
                  blink::web_pref::WebPreferences& web) {
+#if !BUILDFLAG(IS_ARKWEB)
   if (cef.standard_font_family.length > 0) {
     web.standard_font_family_map[blink::web_pref::kCommonScript] =
         CefString(&cef.standard_font_family);
@@ -72,10 +73,13 @@ void SetCefPrefs(const CefBrowserSettings& cef,
     web.fantasy_font_family_map[blink::web_pref::kCommonScript] =
         CefString(&cef.fantasy_font_family);
   }
+#endif
+
 #if BUILDFLAG(IS_ARKWEB)
   SetCefPrefsExt(cef, web);
 #endif
 
+#if !BUILDFLAG(IS_ARKWEB)
   if (cef.default_font_size > 0) {
     web.default_font_size = cef.default_font_size;
   }
@@ -85,6 +89,7 @@ void SetCefPrefs(const CefBrowserSettings& cef,
   if (cef.minimum_font_size > 0) {
     web.minimum_font_size = cef.minimum_font_size;
   }
+#endif
   if (cef.minimum_logical_font_size > 0) {
     web.minimum_logical_font_size = cef.minimum_logical_font_size;
   }

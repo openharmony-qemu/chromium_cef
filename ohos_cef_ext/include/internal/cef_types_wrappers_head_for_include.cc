@@ -114,6 +114,18 @@ static inline void setForInclude(const struct_type* src,
   target->clipboard_site_permission_enabled = src->clipboard_site_permission_enabled;
 #endif  // BUILDFLAG(ARKWEB_CLIPBOARD)
 
+#if BUILDFLAG(ARKWEB_FONT_SETTINGS)
+  target->has_web_set_cursive_font = src->has_web_set_cursive_font;
+  target->has_web_set_fantasy_font = src->has_web_set_fantasy_font;
+  target->has_web_set_fixed_font = src->has_web_set_fixed_font;
+  target->has_web_set_sans_serif_font = src->has_web_set_sans_serif_font;
+  target->has_web_set_serif_font = src->has_web_set_serif_font;
+  target->has_web_set_standard_font = src->has_web_set_standard_font;
+  target->has_web_set_default_fixed_font_size = src->has_web_set_default_fixed_font_size;
+  target->has_web_set_default_font_size = src->has_web_set_default_font_size;
+  target->has_web_set_font_size_lower_limit = src->has_web_set_font_size_lower_limit;
+#endif
+
 #if BUILDFLAG(ARKWEB_PASSWORD_AUTOFILL)
   target->is_autofill_enabled = src->is_autofill_enabled;
 #endif  // BUILDFLAG(ARKWEB_PASSWORD_AUTOFILL)
