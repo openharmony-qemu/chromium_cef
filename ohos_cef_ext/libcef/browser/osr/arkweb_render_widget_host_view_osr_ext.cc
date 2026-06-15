@@ -1794,27 +1794,21 @@ ArkWebRenderWidgetHostViewOSRExt::FilterInputEvent(
 #if BUILDFLAG(ARKWEB_AI)
       is_scrolling_ = true;
 #endif
-      float x = 0.0f, y = 0.0f, xVelocity = 0.0f, yVelocity = 0.0f;
-      bool isAvailable = false;
+      float x = 0.0f, y = 0.0f;
       x = gesture_event.data.scroll_update.delta_x;
       y = gesture_event.data.scroll_update.delta_y;
-      is_scroll_consumed_ =
-        handler->AsArkWebRenderHandler()->OnNestedScroll(browser_impl_.get(),
-                                                         x,
-                                                         y, xVelocity, yVelocity, isAvailable);
-      
-      if (!isAvailable) {
-        is_scroll_consumed_ =
-          handler->AsArkWebRenderHandler()->FilterScrollEvent(browser_impl_.get(),
-                                                              gesture_event.data.scroll_update.delta_x,
-                                                              gesture_event.data.scroll_update.delta_y, 0, 0);
-      } else {
-        const blink::WebGestureEvent& const_gesture_event = static_cast<const blink::WebGestureEvent&>(input_event);
-        blink::WebGestureEvent& mutable_gesture = const_cast<blink::WebGestureEvent&>(const_gesture_event);
-        if (x != gesture_event.data.scroll_update.delta_x)
-          mutable_gesture.data.scroll_update.delta_x = x;
-        if (y != gesture_event.data.scroll_update.delta_y)
-          mutable_gesture.data.scroll_update.delta_y = y;
+      is_scroll_consumed_ = handler->AsArkWebRenderHandler()->OnNestedScroll(
+          browser_impl_.get(), x, y);
+
+      const blink::WebGestureEvent& const_gesture_event =
+          static_cast<const blink::WebGestureEvent&>(input_event);
+      blink::WebGestureEvent& mutable_gesture =
+          const_cast<blink::WebGestureEvent&>(const_gesture_event);
+      if (x != gesture_event.data.scroll_update.delta_x) {
+        mutable_gesture.data.scroll_update.delta_x = x;
+      }
+      if (y != gesture_event.data.scroll_update.delta_y) {
+        mutable_gesture.data.scroll_update.delta_y = y;
       }
       is_mouse_wheel_scroll_ = false;
     }
@@ -2337,47 +2331,23 @@ void ArkWebRenderWidgetHostViewOSRExt::FilterScrollEventImpl(
     LOG(ERROR) << "FilterScrollEventImpl get handler is nullptr.";
     return;
   }
-  float x = 0.0f, y = 0.0f, xVelocity = 0.0f, yVelocity = 0.0f;
-  bool isAvailable = false;
+  float x = 0.0f, y = 0.0f;
   if (web_event.GetType() == blink::WebInputEvent::Type::kGestureScrollUpdate) {
     x = web_event.data.scroll_update.delta_x;
     y = web_event.data.scroll_update.delta_y;
-    is_scroll_consumed_ =
-      handler->AsArkWebRenderHandler()->OnNestedScroll(browser_impl_.get(),
-                                                       x,
-                                                       y, xVelocity, yVelocity, isAvailable);
-    if (!isAvailable) {
-      is_scroll_consumed_ =
-        handler->AsArkWebRenderHandler()->FilterScrollEvent(browser_impl_.get(),
-                                                            web_event.data.scroll_update.delta_x,
-                                                            web_event.data.scroll_update.delta_y, 0, 0);
-    } else {
-      ui::GestureEventData& mutable_gesture = const_cast<ui::GestureEventData&>(gesture);
-      if (x != web_event.data.scroll_update.delta_x)
-        mutable_gesture.details.set_scroll_update_x(x);
-      if (y != web_event.data.scroll_update.delta_y)
-        mutable_gesture.details.set_scroll_update_y(y);
+    is_scroll_consumed_ = handler->AsArkWebRenderHandler()->OnNestedScroll(
+        browser_impl_.get(), x, y);
+    ui::GestureEventData& mutable_gesture =
+        const_cast<ui::GestureEventData&>(gesture);
+    if (x != web_event.data.scroll_update.delta_x) {
+      mutable_gesture.details.set_scroll_update_x(x);
+    }
+    if (y != web_event.data.scroll_update.delta_y) {
+      mutable_gesture.details.set_scroll_update_y(y);
     }
   } else if (web_event.GetType() ==
              blink::WebInputEvent::Type::kGestureFlingStart) {
-    xVelocity = web_event.data.fling_start.velocity_x;
-    yVelocity = web_event.data.fling_start.velocity_y;
-    is_scroll_consumed_ =
-      handler->AsArkWebRenderHandler()->OnNestedScroll(browser_impl_.get(),
-                                                       x,
-                                                       y, xVelocity, yVelocity, isAvailable);
-    if (!isAvailable) {
-      is_scroll_consumed_ =
-        handler->AsArkWebRenderHandler()->FilterScrollEvent(browser_impl_.get(),
-                                                            0, 0, web_event.data.fling_start.velocity_x,
-                                                            web_event.data.fling_start.velocity_y);
-    } else {
-      ui::GestureEventData& mutable_gesture = const_cast<ui::GestureEventData&>(gesture);
-      if (xVelocity != web_event.data.fling_start.velocity_x)
-        mutable_gesture.details.set_velocity_x(xVelocity);
-      if (yVelocity != web_event.data.fling_start.velocity_y)
-        mutable_gesture.details.set_velocity_y(yVelocity);
-    }
+    is_scroll_consumed_ = false;
 #if BUILDFLAG(ARKWEB_PERFORMANCE_JITTER)
     is_fling_ = true;
 #endif
@@ -2955,5 +2925,20 @@ void ArkWebRenderWidgetHostViewOSRExt::ModifyRenderFit(int32_t fitType) {
   if (handler && handler->AsArkWebRenderHandler()) {
     handler->AsArkWebRenderHandler()->ModifyRenderFit(fitType);
   }
+}
+#endif
+
+#if BUILDFLAG(ARKWEB_FLING)
+bool ArkWebRenderWidgetHostViewOSRExt::OnNestedScroll(float& delta_x,
+                                                      float& delta_y) {
+  CefRefPtr<CefRenderHandler> handler =
+      browser_impl_->client()->GetRenderHandler();
+  if (!handler) {
+    LOG(ERROR) << "OnNestedScroll get handler is nullptr.";
+    return false;
+  }
+  bool ret = handler->AsArkWebRenderHandler()->OnNestedScroll(
+      browser_impl_.get(), delta_x, delta_y);
+  return ret;
 }
 #endif

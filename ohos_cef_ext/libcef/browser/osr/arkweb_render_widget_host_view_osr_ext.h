@@ -380,6 +380,9 @@ class ArkWebRenderWidgetHostViewOSRExt : public CefRenderWidgetHostViewOSR {
       blink::mojom::DragEventSourceInfoPtr event_info) override;
 #endif
 
+#if BUILDFLAG(ARKWEB_FLING)
+  bool OnNestedScroll(float& delta_x, float& delta_y) override;
+#endif
  private:
   bool is_popup = false;
 
