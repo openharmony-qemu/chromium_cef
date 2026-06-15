@@ -24,6 +24,8 @@ struct WebPreferences;
 #if BUILDFLAG(ARKWEB_LOGGER_REPORT)
 #include "base/base_switches.h"
 #include "base/command_line.h"
+#include "base/ohos/nweb_engine_event_logger.h"
+#include "base/ohos/nweb_engine_event_logger_code.h"
 #include "url/ohos/log_utils.h"
 #endif
 
@@ -231,11 +233,20 @@ CertificateErrorCallback AllowAllCertificateError(
   bool is_incognito = false;
   if (base::CommandLine::ForCurrentProcess()->HasSwitch(
           switches::kEnableLoggerReport)) {
-    is_fatal_error = IsSslCertErrorFatal(cert_error) || is_fatal_error;
+    is_fatal_error =
+        IsSslCertErrorFatal(cert_error) || ssl_info.is_fatal_cert_error;
+    bool is_captive_portal = false;
     std::string err_msg =
         "a ssl error occurred, err_code: " + std::to_string(cert_error) +
+        ", is_fatal_cert_error: " +
+        std::to_string(ssl_info.is_fatal_cert_error) +
+        ", is_captive_portal: " + std::to_string(is_captive_portal) +
         ", is_fatal_error: " + std::to_string(is_fatal_error) +
-        ", origin: " + origin_url.spec() + ", refer: " + referrer;
+        ", origin: " + url::LogUtils::ConvertUrlWithMask(origin_url.spec()) +
+        ", refer: " + url::LogUtils::ConvertUrlWithMask(referrer);
+    base::ohos::ReportEngineEvent(base::ohos::kModuleContentBrowser,
+                                  std::string(request_url.host()),
+                                  base::ohos::kNetworkSSLError, err_msg);
     if (!is_incognito) {
       int32_t usage_scenario = GetUsageScenarioSafely(web_contents);
       LOG(URL) << "event_message: " << err_msg << ", url: " << origin_url.spec();
