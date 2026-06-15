@@ -18,6 +18,12 @@ namespace content {
 class WebContents;
 }  // namespace content
 
+namespace ohos_safe_browsing {
+#if BUILDFLAG(ARKWEB_SAFEBROWSING)
+class SafeBrowsingMetricsCollector;
+#endif  // BUILDFLAG(ARKWEB_SAFEBROWSING)
+}
+
 namespace security_interstitials {
 class MetricsHelper;
 class SettingsPageHelper;
@@ -41,6 +47,10 @@ class SbControllerClient : public SecurityInterstitialControllerClient {
   void GoBack() override;
   PrefService* GetPrefService() override;
   const std::string& GetApplicationLocale() const override;
+
+#if BUILDFLAG(ARKWEB_SAFEBROWSING)
+  ohos_safe_browsing::SafeBrowsingMetricsCollector* GetMetricsCollector();
+#endif  // BUILDFLAG(ARKWEB_SAFEBROWSING)
 
  protected:
   const std::string GetExtendedReportingPrefName() const override;

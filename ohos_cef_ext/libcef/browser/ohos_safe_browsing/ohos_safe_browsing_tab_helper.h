@@ -10,6 +10,7 @@
 #include "include/cef_safe_browsing_detection_callback.h"
 #include "libcef/browser/browser_host_base.h"
 #include "libcef/browser/ohos_safe_browsing/ohos_sb_client.h"
+#include "libcef/browser/ohos_safe_browsing/safe_browsing_metrics_collector.h"
 #include "net/traffic_annotation/network_traffic_annotation.h"
 #include "services/data_decoder/public/cpp/data_decoder.h"
 #include "services/network/public/cpp/network_connection_tracker.h"
@@ -34,10 +35,12 @@ class SafeBrowsingTabHelper
   SafeBrowsingTabHelper& operator=(const SafeBrowsingTabHelper&) = delete;
   ~SafeBrowsingTabHelper() override;
 
-  void OnDetectionResult(int code,
-                         int policy,
-                         const std::string& mapping_type,
-                         const std::string& url) override;
+  void OnDetectionResult(
+      const SafeBrowsingDetectionResult& safeBrowsingDetectionResult) override;
+
+  SafeBrowsingMetricsCollector* GetMetricsCollector() {
+    return metrics_collector_.get();
+  }
 
 IMPLEMENT_REFCOUNTING(SafeBrowsingTabHelper);
 
@@ -55,6 +58,8 @@ IMPLEMENT_REFCOUNTING(SafeBrowsingTabHelper);
       content::NavigationHandle* navigation_handle) override;
   void DidRedirectNavigation(
       content::NavigationHandle* navigation_handle) override;
+  void DidFinishNavigation(
+      content::NavigationHandle* navigation_handle) override;
 
  private:
   friend class content::WebContentsUserData<SafeBrowsingTabHelper>;
@@ -66,6 +71,7 @@ IMPLEMENT_REFCOUNTING(SafeBrowsingTabHelper);
   void QuerySafeBrowsingResults(content::NavigationHandle* navigation_handle);
 
   std::unique_ptr<SbClient> sb_client_;
+  std::unique_ptr<SafeBrowsingMetricsCollector> metrics_collector_;
   raw_ptr<CefBrowserHostBase> browser_ = nullptr ;
 
   WEB_CONTENTS_USER_DATA_KEY_DECL();

@@ -18,6 +18,7 @@
 #pragma once
 
 #include "include/cef_base.h"
+#include "arkweb/ohos_nweb/src/capi/nweb_safe_browsing_detection_result_item.h"
 
 ///
 /// Interface to implement to be notified of asynchronous completion via
@@ -30,10 +31,8 @@ class CefSafeBrowsingDetectionCallback : public virtual CefBaseRefCounted {
   /// Method that will be called upon completion.
   ///
   /*--cef()--*/
-  virtual void OnDetectionResult(int code,
-                                 int policy,
-                                 const std::string& mappingType,
-                                 const std::string& url) = 0;
+  virtual void OnDetectionResult(
+      const SafeBrowsingDetectionResult& safeBrowsingDetectionResult) = 0;
 };
 
 #endif  // CEF_INCLUDE_CEF_SAFE_BROWSING_DETECTION_CALLBACK_H_

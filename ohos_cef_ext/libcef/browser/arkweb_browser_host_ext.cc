@@ -204,6 +204,9 @@ using OhPasswordManagerClient = ChromePasswordManagerClient;
 #if BUILDFLAG(ARKWEB_EX_FALLBACK_PROXY)
 #include "cef/ohos_cef_ext/libcef/browser/fallback_proxy/fallback_proxy_service.h"
 #endif  // ARKWEB_EX_FALLBACK_PROXY
+#if BUILDFLAG(ARKWEB_SAFEBROWSING)
+#include "ohos_nweb_ex/overrides/cef/libcef/browser/alloy/alloy_arkweb_safebrowsing_af_detection_config.h"
+#endif  // ARKWEB_SAFEBROWSING
 
 #include "arkweb/ohos_adapter_ndk/inputmethodframework_adapter/imf_adapter_impl.h"
 #include "net/http/http_util.h"
@@ -3748,7 +3751,7 @@ void ArkWebBrowserHostExtImpl::OnSafeBrowsingDetectionResult(
     const SafeBrowsingDetectionResult& safeBrowsingDetectionResult) {
   LOG(INFO) << "code is " << safeBrowsingDetectionResult.code
             << ",policy is " << safeBrowsingDetectionResult.policy
-            << ",mapping type is " << safeBrowsingDetectionResult.mappingType ;
+            << ",mapping type is " << safeBrowsingDetectionResult.mapping_type ;
 
   if (!CEF_CURRENTLY_ON_UIT()) {
     CEF_POST_TASK(CEF_UIT, base::BindOnce(
@@ -3761,12 +3764,24 @@ void ArkWebBrowserHostExtImpl::OnSafeBrowsingDetectionResult(
     return;
   }
 
-  if(safeBrowsingDetectionResult.isContentCheck){
+  if(safeBrowsingDetectionResult.is_content_check && 
+      nweb_ex::AlloyArkwebSafebrowsingAFDetectionConfig::GetInstance()
+      ->IsArkwebSafebrowsingAFDetectionEnabled()){
     ohos_safe_browsing::SafeBrowsingSnapshotManager::GetInstance().
-        SetNewUrl(safeBrowsingDetectionResult.accessUrl,
+        SetNewUrl(safeBrowsingDetectionResult.access_url,
         safeBrowsingDetectionResult, web_contents->GetNWebId());
     LOG(INFO) << "safeBrowsingDetectionResult isContentCheck is true";
     return;
+  }
+  if (safeBrowsingDetectionResult.is_from_af_detect) {
+    ohos_safe_browsing::SafeBrowsingTabHelper* safe_browsing_tab_helper =
+        ohos_safe_browsing::SafeBrowsingTabHelper::FromWebContents(web_contents);
+    if (safe_browsing_tab_helper) {
+        auto* metrics_collector = safe_browsing_tab_helper->GetMetricsCollector();
+        if (metrics_collector) {
+            metrics_collector->RecordAfStartTime();
+        }
+    }
   }
   
   ohos_safe_browsing::SafeBrowsingTabHelper* safe_browsing_tab_helper =
@@ -3775,7 +3790,7 @@ void ArkWebBrowserHostExtImpl::OnSafeBrowsingDetectionResult(
   if (base::CommandLine::ForCurrentProcess()->HasSwitch(
           ::switches::kEnableNwebEx)) {
     fallback_proxy::FallbackProxyService::GetInstance()
-        ->SaveURLMaliciousTypeAndHwCode(safeBrowsingDetectionResult.accessUrl, 
+        ->SaveURLMaliciousTypeAndHwCode(safeBrowsingDetectionResult.access_url, 
         safeBrowsingDetectionResult.policy, safeBrowsingDetectionResult.code);
   }
 #endif  // ARKWEB_EX_FALLBACK_PROXY
@@ -3784,10 +3799,7 @@ void ArkWebBrowserHostExtImpl::OnSafeBrowsingDetectionResult(
     return;
   }
 
-  safe_browsing_tab_helper->OnDetectionResult(safeBrowsingDetectionResult.code, 
-                                              safeBrowsingDetectionResult.policy,
-                                              safeBrowsingDetectionResult.mappingType, 
-                                              safeBrowsingDetectionResult.accessUrl);
+  safe_browsing_tab_helper->OnDetectionResult(safeBrowsingDetectionResult);
 }
 #endif  // BUILDFLAG(ARKWEB_SAFEBROWSING)
 

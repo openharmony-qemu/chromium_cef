@@ -14,6 +14,10 @@
 #include "content/public/common/referrer.h"
 #include "libcef/browser/ohos_safe_browsing/ohos_sb_malicious_allowlist.h"
 #include "libcef/browser/ohos_safe_browsing/ohos_sb_prefs.h"
+#if BUILDFLAG(ARKWEB_SAFEBROWSING)
+#include "libcef/browser/ohos_safe_browsing/ohos_safe_browsing_tab_helper.h"
+#include "libcef/browser/ohos_safe_browsing/safe_browsing_metrics_collector.h"
+#endif  // BUILDFLAG(ARKWEB_SAFEBROWSING)
 
 constexpr char kDefaultPageUrl[] = "about:blank";
 
@@ -46,6 +50,13 @@ std::unique_ptr<MetricsHelper> SbControllerClient::GetMetricsHelper(
 }
 
 void SbControllerClient::GoBack() {
+#if BUILDFLAG(ARKWEB_SAFEBROWSING)
+  ohos_safe_browsing::SafeBrowsingMetricsCollector* metrics_collector = GetMetricsCollector();
+  if (metrics_collector) {
+    metrics_collector->SetUserAction(ohos_safe_browsing::UserAction::kForbidden);
+  }
+#endif  // BUILDFLAG(ARKWEB_SAFEBROWSING)
+
   if (base::CommandLine::ForCurrentProcess()->HasSwitch(
           switches::kEnableNwebEx) &&
       !SecurityInterstitialControllerClient::CanGoBack()) {
@@ -59,6 +70,13 @@ void SbControllerClient::GoBack() {
 }
 
 void SbControllerClient::Proceed() {
+#if BUILDFLAG(ARKWEB_SAFEBROWSING)
+  ohos_safe_browsing::SafeBrowsingMetricsCollector* metrics_collector = GetMetricsCollector();
+  if (metrics_collector) {
+    metrics_collector->SetUserAction(ohos_safe_browsing::UserAction::kAllow);
+  }
+#endif  // BUILDFLAG(ARKWEB_SAFEBROWSING)
+
   // With committed interstitials the site has already
   // been added to the allowlist, so reload will proceed.
   Reload();
@@ -88,3 +106,18 @@ const std::string& SbControllerClient::GetApplicationLocale() const {
 const std::string SbControllerClient::GetExtendedReportingPrefName() const {
   return std::string();
 }
+
+#if BUILDFLAG(ARKWEB_SAFEBROWSING)
+ohos_safe_browsing::SafeBrowsingMetricsCollector* SbControllerClient::GetMetricsCollector() {
+  if (!web_contents_) {
+    return nullptr;
+  }
+  auto* tab_helper =
+      ohos_safe_browsing::SafeBrowsingTabHelper::FromWebContents(
+          web_contents_);
+  if (!tab_helper) {
+    return nullptr;
+  }
+  return tab_helper->GetMetricsCollector();
+}
+#endif  // BUILDFLAG(ARKWEB_SAFEBROWSING)
