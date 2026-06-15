@@ -5,6 +5,8 @@
 module content.mojom;
 
 import "mojo/public/mojom/base/values.mojom";
+import "mojo/public/mojom/base/shared_memory.mojom";
+import "mojo/public/mojom/base/file_path.mojom";
 
 // Descriptive errors raised by the gin java bridge.
 enum OhGinJavascriptBridgeError {
@@ -72,7 +74,10 @@ interface OhGinJavascriptBridgeRemoteObject {
   InvokeMethodAsync(string method_name, string document_url, mojo_base.mojom.ListValue arguments);
 
   [Sync]
-  InvokeMethodFlowbuf(string method_name, string document_url, mojo_base.mojom.ListValue arguments, int32 fd) =>
+  InvokeMethodFlowbuf(string method_name,
+                      string document_url,
+                      mojo_base.mojom.ListValue arguments,
+                      mojo_base.mojom.ReadOnlySharedMemoryRegion? flowbuf_region) =>
     (OhGinJavascriptBridgeError error_code, mojo_base.mojom.ListValue result);
 };
 
