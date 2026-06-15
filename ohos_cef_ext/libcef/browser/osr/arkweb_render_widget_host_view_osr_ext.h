@@ -423,6 +423,9 @@ class ArkWebRenderWidgetHostViewOSRExt : public CefRenderWidgetHostViewOSR {
 #endif
 #if BUILDFLAG(ARKWEB_SYNC_RENDER)
   void UpdateDrawRect(const gfx::Rect& rect);
+  void ForwardDrawRectToChildFrames(const gfx::Rect& rect);
+  std::map<int, std::unique_ptr<content::SoftwareCompositorHostOhos>>
+        child_frame_compositor_map_; 
 #endif
 #if BUILDFLAG(ARKWEB_INPUT_EVENTS)
   void GestureEventAck(const blink::WebGestureEvent& event,

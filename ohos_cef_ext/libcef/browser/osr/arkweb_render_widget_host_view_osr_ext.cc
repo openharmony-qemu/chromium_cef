@@ -861,6 +861,66 @@ void ArkWebRenderWidgetHostViewOSRExt::UpdateDrawRect(const gfx::Rect& rect) {
     return;
   }
   software_compositor_->DrawRect(rect);
+  ForwardDrawRectToChildFrames(rect);
+}
+
+void ArkWebRenderWidgetHostViewOSRExt::ForwardDrawRectToChildFrames(
+    const gfx::Rect& rect) {
+  content::RenderFrameHost* main_frame =
+      (browser_impl_ && browser_impl_->web_contents())
+          ? browser_impl_->web_contents()->GetPrimaryMainFrame()
+          : nullptr;
+  if (!main_frame) {
+    LOG(DEBUG) << "it's ChildFrame";
+    return;
+  }
+  content::RenderWidgetHostView* main_view = main_frame->GetView();
+  int main_view_y = 0;
+  float device_scale_factor = 1.0f;
+  if (main_view) {
+    main_view_y = main_view->GetViewBounds().y();
+    device_scale_factor = main_view->GetDeviceScaleFactor();
+  }
+  std::set<int> active_routing_ids;
+  main_frame->ForEachRenderFrameHost( 
+      [this, &rect, &active_routing_ids, main_view_y, device_scale_factor](content::RenderFrameHost* rfh) {
+        content::RenderWidgetHostImpl* rwhi =
+            content::RenderWidgetHostImpl::From(rfh->GetRenderWidgetHost());
+        if (!rwhi || rwhi == render_widget_host_) {
+          return;
+        }
+        int routing_id = rwhi->GetRoutingID();
+        active_routing_ids.insert(routing_id);
+        if (child_frame_compositor_map_.find(routing_id) ==
+            child_frame_compositor_map_.end()) {
+          child_frame_compositor_map_[routing_id] =
+              std::make_unique<content::SoftwareCompositorHostOhos>(rwhi);
+          LOG(DEBUG) << "Created SoftwareCompositorHostOhos for OOPIF routing_id="
+                    << routing_id;
+        }
+        auto& compositor_host = child_frame_compositor_map_[routing_id];
+        if (compositor_host) {
+          content::RenderWidgetHostView* child_view = rfh->GetView();
+          int oopif_visible_y = 0;
+          if (child_view) {
+            int delta_dip = child_view->GetViewBounds().y() - main_view_y;
+            oopif_visible_y = std::max(0, rect.y() - static_cast<int>(delta_dip * device_scale_factor));
+          }
+          gfx::Rect oopif_rect(rect.x(), oopif_visible_y, rect.width(), rect.height());
+          compositor_host->DrawRect(oopif_rect);
+        }
+      });
+
+  for (auto it = child_frame_compositor_map_.begin();
+       it != child_frame_compositor_map_.end();) {
+    if (active_routing_ids.find(it->first) == active_routing_ids.end()) {
+      LOG(DEBUG) << "Removing stale OOPIF compositor for routing_id="
+                << it->first;
+      it = child_frame_compositor_map_.erase(it);
+    } else {
+      ++it;
+    }
+  }
 }
 
 void ArkWebRenderWidgetHostViewOSRExt::SetDrawMode(int mode) {
