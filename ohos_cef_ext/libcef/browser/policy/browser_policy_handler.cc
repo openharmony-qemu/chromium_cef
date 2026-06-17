@@ -21,15 +21,14 @@
 #include "cef/libcef/browser/chrome/chrome_browser_context.h"
 #include "cef/libcef/browser/request_context_impl.h"
 #include "cef/libcef/common/app_manager.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "components/policy/core/common/policy_loader_ohos.h"
+#include "components/policy/core/common/policy_pref_names.h"
 #include "components/prefs/pref_service.h"
 #include "content/public/common/content_switches.h"
 
 namespace policy {
 
 namespace {
-constexpr int kApiMinApiVersion = 16;
 const char kBrowserPolicyFileName[] = "BrowserEnterprisePolicy.json";
 
 Profile* GetActiveProfile() {
@@ -102,11 +101,6 @@ void BrowserPolicyHandler::InitPolicyFromFile(
 
 void BrowserPolicyHandler::SetPolicyAndNotify(const std::string& policy,
                                               int version) {
-  if (base::ohos::ApplicationApiVersion() < kApiMinApiVersion) {
-    LOG(ERROR) << "current api version does not support enterprise ";
-    return;
-  }
-
   if (!SetPolicy(policy, version)) {
     return;
   }
