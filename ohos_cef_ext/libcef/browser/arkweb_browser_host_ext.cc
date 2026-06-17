@@ -671,6 +671,10 @@ void ArkWebBrowserHostExtImpl::UpdateBrowserSettings(
   settings_.dark_prefer_color_scheme_enabled =
       browser_settings.dark_prefer_color_scheme_enabled;
 #endif
+#if BUILDFLAG(ARKWEB_NIGHT_MODE)
+  settings_.night_prefer_color_scheme_enabled =
+      browser_settings.night_prefer_color_scheme_enabled;
+#endif
   settings_.javascript_can_open_windows_automatically =
       browser_settings.javascript_can_open_windows_automatically;
   settings_.loads_images_automatically =
