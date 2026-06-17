@@ -429,6 +429,11 @@ private:
       const content::OpenURLParams& params);
 #endif
 
+#if BUILDFLAG(ARKWEB_MEDIA_CAPTURE)
+  void ResumeAudioCapture(int nweb_id);
+  void PauseAudioCapture(int nweb_id);
+#endif // ARKWEB_MEDIA_CAPTURE
+
 #if BUILDFLAG(ARKWEB_INPUT_EVENTS)
   raw_ptr<content::EyeDropperListener> listener_;
 #endif

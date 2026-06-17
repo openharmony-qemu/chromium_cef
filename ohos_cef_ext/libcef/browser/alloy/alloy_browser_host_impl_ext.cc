@@ -180,6 +180,12 @@ using content::KeyboardEventProcessingResult;
 #include "cef/ohos_cef_ext/libcef/browser/alloy/alloy_browser_host_impl_ext.h"
 #include "cef/ohos_cef_ext/libcef/browser/alloy/alloy_browser_host_impl_utils.h"
 
+#if BUILDFLAG(ARKWEB_MEDIA_CAPTURE)
+#include "content/browser/browser_main_loop.h"
+#include "media/audio/audio_manager.h"
+#include "media/base/audio_latency.h"
+#endif // ARKWEB_MEDIA_CAPTURE
+
 #if BUILDFLAG(IS_OHOS) && BUILDFLAG(ARKWEB_SLIDE_LTPO)
 int32_t AlloyBrowserHostImplExt::ltpo_strategy_ = -1;
 #endif
@@ -1669,6 +1675,12 @@ void AlloyBrowserHostImplExt::OnWindowShow() {
 #if BUILDFLAG(ARKWEB_SLIDE_LTPO)
   SetVisible(nweb_id_, true);
 #endif
+
+#if BUILDFLAG(ARKWEB_MEDIA_CAPTURE)
+  if (!(base::ohos::IsPcDevice() || base::ohos::IsPcMode())) {
+    ResumeAudioCapture(nweb_id_);
+  }
+#endif
 }
 
 void AlloyBrowserHostImplExt::OnWindowHide() {
@@ -1680,7 +1692,66 @@ void AlloyBrowserHostImplExt::OnWindowHide() {
 #if BUILDFLAG(ARKWEB_SLIDE_LTPO)
   SetVisible(nweb_id_, false);
 #endif
+#if BUILDFLAG(ARKWEB_MEDIA_CAPTURE)
+  if (!(base::ohos::IsPcDevice() || base::ohos::IsPcMode())) {
+    PauseAudioCapture(nweb_id_);
+  }
+#endif
 }
+
+#if BUILDFLAG(ARKWEB_MEDIA_CAPTURE)
+void AlloyBrowserHostImplExt::ResumeAudioCapture(int nweb_id) {
+  auto* main_loop = content::BrowserMainLoop::GetInstance();
+  if (!main_loop) {
+    LOG(DEBUG) << "main_loop is null.";
+    return;
+  }
+  auto* audio_manager = main_loop->audio_manager();
+  if (!audio_manager) {
+    LOG(DEBUG) << "audio_manager is null.";
+    return;
+  }
+  auto output_params = audio_manager->GetStreamParametersMap();
+  for (const auto& pair : output_params) {
+    if (pair.second.latency_tag() == media::AudioLatency::Type::kRtc) {
+      LOG(DEBUG) << "audio_manager output_params have webrtc.";
+      return;
+    }
+  }
+  auto input_streams = audio_manager->GetInputStreamsByNWebId(nweb_id);
+  for (auto& stream : input_streams) {
+    if (stream) {
+      stream->Resume();
+    }
+  }
+}
+
+void AlloyBrowserHostImplExt::PauseAudioCapture(int nweb_id) {
+  auto* main_loop = content::BrowserMainLoop::GetInstance();
+  if (!main_loop) {
+    LOG(DEBUG) << "main_loop is null.";
+    return;
+  }
+  auto* audio_manager = main_loop->audio_manager();
+  if (!audio_manager) {
+    LOG(DEBUG) << "audio_manager is null.";
+    return;
+  }
+  auto output_params = audio_manager->GetStreamParametersMap();
+  for (const auto& pair : output_params) {
+    if (pair.second.latency_tag() == media::AudioLatency::Type::kRtc) {
+      LOG(DEBUG) << "audio_manager output_params have webrtc.";
+      return;
+    }
+  }
+  auto input_streams = audio_manager->GetInputStreamsByNWebId(nweb_id);
+  for (auto& stream : input_streams) {
+    if (stream) {
+      stream->Pause();
+    }
+  }
+}
+#endif
 
 
 void AlloyBrowserHostImplExt::OnOnlineRenderToForeground() {
