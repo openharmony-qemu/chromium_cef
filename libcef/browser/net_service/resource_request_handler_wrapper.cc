@@ -728,7 +728,7 @@ class InterceptedRequestHandlerWrapper : public InterceptedRequestHandler {
     }
 
 #if BUILDFLAG(ARKWEB_NETWORK_LOAD)
-    MaybeLoadCookies(request_id, state, {}, current_request_uses_header_client,
+    MaybeLoadCookies(request_id, state, {}, {}, current_request_uses_header_client,
                      std::move(exec_callback));
 #else
     MaybeLoadCookies(request_id, state, std::move(exec_callback));
@@ -739,6 +739,7 @@ class InterceptedRequestHandlerWrapper : public InterceptedRequestHandler {
                         RequestState* state,
 #if BUILDFLAG(ARKWEB_NETWORK_LOAD)
                         const std::optional<GURL>& new_url,
+                        const std::optional<std::string>& new_method,
                         bool current_request_uses_header_client,
 #endif
                         base::OnceClosure callback) {
@@ -776,7 +777,7 @@ class InterceptedRequestHandlerWrapper : public InterceptedRequestHandler {
     cookie_helper::LoadCookies(
         init_state_->browser_context_getter_, *(state->request_),
 #if BUILDFLAG(ARKWEB_NETWORK_LOAD)
-        new_url, init_state_->is_off_the_record_,
+        new_url, new_method, init_state_->is_off_the_record_,
         GetIsolationInfo(*(state->request_)),
 #endif
         allow_cookie_callback, std::move(done_cookie_callback));
@@ -1130,6 +1131,14 @@ class InterceptedRequestHandlerWrapper : public InterceptedRequestHandler {
     }
     state->pending_request_->SetReadOnly(true);
 
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+    std::optional<std::string> new_method = {};
+    if (base::FeatureList::IsEnabled(kEnableSyncMethodOnRedirect)) {
+      LOG(DEBUG) << "Update new_method to " << redirect_info.new_method;
+      new_method = redirect_info.new_method;
+    }
+#endif
+
 #if BUILDFLAG(ARKWEB_NETWORK_BASE)
     state->request_->site_for_cookies = redirect_info.new_site_for_cookies;
     state->request_->method = redirect_info.new_method;
@@ -1138,6 +1147,7 @@ class InterceptedRequestHandlerWrapper : public InterceptedRequestHandler {
         weak_ptr_factory_.GetWeakPtr(), request_id,
 #if BUILDFLAG(ARKWEB_NETWORK_LOAD)
         current_request_uses_header_client,
+        new_method,
 #endif
         std::move(callback), new_url);
 #else

@@ -41,6 +41,10 @@ class ProxyURLLoaderFactory;
 using ContextId = uint64_t;
 constexpr ContextId kInvalidContextId = 0;
 
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+NET_EXPORT BASE_DECLARE_FEATURE(kEnableSyncMethodOnRedirect);
+#endif
+
 // Implement this interface to to evaluate requests. All methods are called on
 // the IO thread, and all callbacks must be executed on the IO thread.
 class InterceptedRequestHandler {
