@@ -53,6 +53,11 @@
 #include "ui/compositor/compositor.h"
 #endif
 
+#if BUILDFLAG(ARKWEB_SAFEBROWSING)
+#include "content/browser/gpu/compositor_util.h"
+#include "content/browser/gpu/gpu_process_host.h"
+#endif
+
 namespace {
 
 #if BUILDFLAG(ARKWEB_CLIPBOARD)
@@ -1063,5 +1068,15 @@ void ArkwebFrameHostExtImpl::OverrideErrorPage(
     }
   }
   std::move(callback).Run(html);
+}
+#endif
+
+#if BUILDFLAG(ARKWEB_SAFEBROWSING)
+void ArkwebFrameHostExtImpl::RequestSnapshotOnce(){
+  if (auto* host = content::GpuProcessHost::Get()) {
+    if (auto* host_impl = host->gpu_host()) {
+      host_impl->RequestSnapshotOnce();
+    }
+  }
 }
 #endif

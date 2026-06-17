@@ -105,6 +105,11 @@ static double POSITION_RATIO = 138.9;
 #include "content/renderer/render_frame_impl.h"
 #endif
 
+#if BUILDFLAG(ARKWEB_SAFEBROWSING)
+#include "content/browser/gpu/compositor_util.h"
+#include "content/browser/gpu/gpu_process_host.h"
+#endif
+
 #include "third_party/blink/public/common/input/web_gesture_event.h"
 #include "third_party/blink/renderer/core/exported/web_view_impl.h"
 #include "third_party/blink/renderer/core/events/web_input_event_conversion.h"
@@ -942,5 +947,15 @@ void ArkwebFrameExtImpl::SendBlanklessKeyToRenderFrame(
           render_frame->SendBlanklessKeyToRenderFrame(nweb_id, blankless_key, frame_sink_id, pref_hash);
         }
       }, nweb_id, blankless_key, frame_sink_id, pref_hash));
+}
+#endif
+
+#if BUILDFLAG(ARKWEB_SAFEBROWSING)
+void ArkwebFrameExtImpl::RequestSnapshotOnce(){
+  if (auto* host = content::GpuProcessHost::Get()) {
+    if (auto* host_impl = host->gpu_host()) {
+      host_impl->RequestSnapshotOnce();
+    }
+  }
 }
 #endif
