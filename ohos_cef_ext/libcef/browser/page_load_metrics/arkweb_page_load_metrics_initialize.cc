@@ -10,6 +10,8 @@
 #include "components/page_load_metrics/browser/page_load_tracker.h"
 #include "content/public/browser/browser_context.h"
 #include "ohos_cef_ext/libcef/browser/page_load_metrics/arkweb_page_load_metrics_observer.h"
+#include "chrome/browser/page_load_metrics/observers/core/ukm_page_load_metrics_observer.h"
+#include "services/metrics/public/cpp/ukm_recorder.h"
 
 namespace content {
 class BrowserContext;
@@ -52,6 +54,12 @@ void PageLoadMetricsEmbedder::RegisterObservers(
     content::NavigationHandle* navigation_handle) {
   RegisterCommonObservers(tracker);
   tracker->AddObserver(std::make_unique<OhPageLoadMetricsObserver>());
+
+  std::unique_ptr<page_load_metrics::PageLoadMetricsObserver> ukm_observer =
+      UkmPageLoadMetricsObserver::CreateIfNeeded();
+  if (ukm_observer) {
+    tracker->AddObserver(std::move(ukm_observer));
+  }
 }
 
 PageLoadMetricsEmbedder::PageLoadMetricsEmbedder(
