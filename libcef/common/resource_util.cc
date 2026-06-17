@@ -11,6 +11,7 @@
 #include "base/base_paths.h"
 #include "base/command_line.h"
 #include "base/files/file_path.h"
+#include "base/files/file_util.h"
 #include "base/logging.h"
 #include "base/path_service.h"
 #include "chrome/common/chrome_paths.h"
@@ -131,23 +132,18 @@ base::FilePath GetResourcesDir() {
 void OverrideUserDataDir(CefSettings* settings,
                          const base::CommandLine* command_line) {
   const base::FilePath& user_data_path =
-#if BUILDFLAG(IS_ARKWEB)
-      command_line->GetSwitchValuePath(switches::kArkwebAppDataDir);
-#else
       GetUserDataPath(settings, command_line);
-#endif
 
 #if BUILDFLAG(IS_OHOS)
-  const base::FilePath& cache_path =
-      command_line->GetSwitchValuePath(switches::kUserCacheDir);
   OverrideUserDataDirExt(user_data_path, command_line);
-  OverrideCacheDirExt(cache_path);
 #endif
 
 #if BUILDFLAG(IS_ARKWEB)
-  const base::FilePath& user_data_dir =
-      command_line->GetSwitchValuePath(switches::kUserDataDir);
-  base::PathService::Override(chrome::DIR_USER_DATA, user_data_dir);
+  bool isSeparation = (command_line->GetSwitchValueASCII(switches::kEnableCacheDataDirSeparation) == "true");
+  std::string target_data_dir_tag = isSeparation ? "files/__arkweb" : "cache/web";
+
+  base::PathService::Override(chrome::DIR_USER_DATA,
+                              user_data_path.Append(target_data_dir_tag));
 #else
   base::PathService::Override(chrome::DIR_USER_DATA, user_data_path);
 #endif
