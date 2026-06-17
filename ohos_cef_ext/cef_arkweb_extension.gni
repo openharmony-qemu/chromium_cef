@@ -149,6 +149,8 @@ libcef_arkweb_sources = [
   "//cef/ohos_cef_ext/libcef/browser/first_meaningful_paint_details_impl.cc",
   "//cef/ohos_cef_ext/libcef/browser/largest_contentful_paint_details_impl.h",
   "//cef/ohos_cef_ext/libcef/browser/largest_contentful_paint_details_impl.cc",
+  "//cef/ohos_cef_ext/libcef/browser/net/extra_headers_url_throttle.h",
+  "//cef/ohos_cef_ext/libcef/browser/net/extra_headers_url_throttle.cc",
   "//cef/ohos_cef_ext/libcef/common/javascript/oh_gin_javascript_bridge_errors.cc",
   "//cef/ohos_cef_ext/libcef/common/javascript/oh_gin_javascript_bridge_errors.h",
   #"//cef/ohos_cef_ext/libcef/common/javascript/oh_gin_javascript_bridge_message_generator.cc",
