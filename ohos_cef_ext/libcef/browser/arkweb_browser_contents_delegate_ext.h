@@ -99,6 +99,11 @@ class ArkWebBrowserContentsDelegateExt : public CefBrowserContentsDelegate {
   void OnRequestOpenDevTools(RequestOpenDevToolsParams* params) override;
 #endif // ARKWEB_DEVTOOLS
 
+#if BUILDFLAG(ARKWEB_WEB_APP)
+  void DidUpdateWebManifestURL(content::RenderFrameHost* target_frame,
+                               const GURL& manifest_url) override;
+#endif
+
 private:
 #if BUILDFLAG(ARKWEB_INPUT_EVENTS)
   void UnlockPointer();

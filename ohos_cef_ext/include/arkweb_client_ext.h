@@ -40,6 +40,14 @@
 #if BUILDFLAG(ARKWEB_READER_MODE)
 #include "components/dom_distiller/content/common/mojom/distillability_service.mojom.h"
 #endif  // ARKWEB_READER_MODE
+
+#if BUILDFLAG(ARKWEB_WEB_APP)
+namespace content {
+class RenderFrameHost;
+}
+class GURL;
+#endif
+
 ///
 /// Extended from CefClient
 ///
@@ -247,6 +255,11 @@ class ArkWebClientExt : public CefClient, public virtual CefBaseRefCounted {
 #endif
 
   virtual void OnInputMethodAttached() {}
+
+#if BUILDFLAG(ARKWEB_WEB_APP)
+  virtual void DidUpdateWebManifestURL(content::RenderFrameHost* target_frame,
+                                       const GURL& manifest_url) {}
+#endif
 };
 
 #endif  // OHOS_CEF_EXT_INCLUDE_ARKWEB_CLIENT_EXT_H_
