@@ -8,9 +8,12 @@
 #include "arkweb/ohos_nweb_ex/build/features/features.h"
 #endif
 #include "base/containers/contains.h"
+#include "base/files/file_path.h"
+#include "base/files/file_util.h"
 #include "base/path_service.h"
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/profiles/profile.h"
+#include "chrome/common/chrome_paths.h"
 #include "components/keyed_service/content/browser_context_dependency_manager.h"
 #include "components/password_manager/core/browser/password_store/login_database.h"
 #include "components/password_manager/core/browser/password_store/password_store.h"
@@ -19,8 +22,6 @@
 #include "cef/libcef/browser/browser_context.h"
 
 #if BUILDFLAG(ARKWEB_EXT_PASSWORD)
-#include "base/files/file_path.h"
-#include "base/files/file_util.h"
 #include "base/logging.h"
 #endif
 
@@ -29,6 +30,19 @@ using password_manager::PasswordStore;
 #if BUILDFLAG(ARKWEB_EXT_PASSWORD)
 constexpr base::FilePath::CharType kNWebMigrateDir[] = FILE_PATH_LITERAL("migrate_bak");
 #endif
+
+base::FilePath GetAppDataPath() {
+  base::FilePath path;
+  if (base::PathService::Get(chrome::DIR_USER_DATA, &path)) {
+    base::FilePath migratePath = path.Append(FILE_PATH_LITERAL("migrate"));
+    if (base::PathExists(migratePath)) {
+      return path;
+    }
+  }
+ 
+  base::PathService::Get(base::DIR_CACHE, &path);
+  return path;
+}
 
 // static
 scoped_refptr<PasswordStore> OhPasswordStoreFactory::GetPasswordStoreForContext(
@@ -66,8 +80,7 @@ scoped_refptr<PasswordStore> OhPasswordStoreFactory::BuildServiceInstanceFor(
     return password_store_;
   }
 
-  base::FilePath cache_path;
-  base::PathService::Get(base::DIR_CACHE, &cache_path);
+  base::FilePath cache_path = GetAppDataPath();
 #if BUILDFLAG(ARKWEB_EXT_PASSWORD)
   base::FilePath migrate_path = cache_path.Append(FILE_PATH_LITERAL(kNWebMigrateDir));
   if (base::PathExists(migrate_path)) {
