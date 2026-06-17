@@ -189,6 +189,15 @@ interface RenderFrame {
   [EnableIf=arkweb_input_events, Sync]
   IsElementExist(string xPath) => (bool isExist);
 
+  [EnableIf=arkweb_input_events, Sync]
+  ExecuteInputCommand(string xpath, string value, string event_type)
+      => (int32 result);
+
+  [EnableIf=arkweb_input_events, Sync]
+  ExecuteSelectCommand(string xpath, array<int32> indexes,
+                       array<string> values)
+      => (int32 result);
+
   [EnableIf=arkweb_optimize_parser_budget]
   SetOptimizeParserBudgetEnabled(bool enable);
 

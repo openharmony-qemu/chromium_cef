@@ -151,6 +151,14 @@ std::string OverrideErrorPage(const CefString& url,
   void SetOverscrollMode(int mode) override;
   void SetFocusByPosition(float x, float y, cef::mojom::RenderFrame::SetFocusByPositionCallback callback) override;
   void IsElementExist(const std::string& xPath, cef::mojom::RenderFrame::IsElementExistCallback callback) override;
+  void ExecuteInputCommand(const std::string& xpath,
+                           const std::string& value,
+                           const std::string& event_type,
+                           cef::mojom::RenderFrame::ExecuteInputCommandCallback callback) override;
+  void ExecuteSelectCommand(const std::string& xpath,
+                            const std::vector<int32_t>& indexes,
+                            const std::vector<std::string>& values,
+                            cef::mojom::RenderFrame::ExecuteSelectCommandCallback callback) override;
   void Clone(mojo::PendingReceiver<cef::mojom::RenderFrame> receiver) override {
     receivers_.Add(this, std::move(receiver));
   }

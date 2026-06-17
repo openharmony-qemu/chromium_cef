@@ -457,6 +457,12 @@ class ArkWebBrowserHostExtImpl : public ArkWebBrowserHostExt,
   void SetOverscrollMode(int overScrollMode) override;
   void SetScrollable(bool enable, int scrollType) override;
   bool IsElementExist(CefString& xPath) override;
+  int32_t ExecuteInputCommand(const std::string& xpath,
+                              const std::string& value,
+                              const std::string& event_type) override;
+  int32_t ExecuteSelectCommand(const std::string& xpath,
+                               const std::vector<int32_t>& indexes,
+                               const std::vector<std::string>& values) override;
 #if BUILDFLAG(ARKWEB_SYNC_RENDER)
   void UpdateDrawRect() override;
 #endif

@@ -17,6 +17,7 @@
 #define ARKWEB_INCLUDE_CEF_BROWSER_H_
 #pragma once
 
+#include <memory>
 #include <vector>
 
 #include "arkweb/ohos_nweb/src/capi/nweb_extension_javascript_item.h"
@@ -1138,6 +1139,17 @@ class ArkWebBrowserHostExt : public virtual CefBrowserHost,
   ///
   virtual bool IsElementExist(CefString& xPath) = 0;
 
+  /// Execute input command by xpath.
+  ///
+  virtual int32_t ExecuteInputCommand(const std::string& xpath,
+                                      const std::string& value,
+                                      const std::string& event_type) = 0;
+
+  /// Execute select command by xpath.
+  ///
+  virtual int32_t ExecuteSelectCommand(const std::string& xpath,
+                                       const std::vector<int32_t>& indexes,
+                                       const std::vector<std::string>& values) = 0;
   ///
   /// Set whether the soft keyboard is displayed.
   ///
