@@ -60,6 +60,10 @@
 #include <qos/qos.h>
 #endif // BUILDFLAG(ARKWEB_PERFORMANCE_SCHEDULING)
 
+#if BUILDFLAG(ARKWEB_ENCRYPT)
+#include "arkweb/chromium_ext/components/cookie_config/ohos_cookie_store_util.h"
+#endif
+
 using network::mojom::CookieManager;
 
 namespace {
@@ -485,7 +489,11 @@ net::CookieStore* CefCookieManagerImplExt::GetCookieStore() {
     cookie_config.client_task_runner = cookie_store_task_runner_;
     cookie_config.background_task_runner =
         cookie_store_backend_thread_.task_runner();
+#if BUILDFLAG(ARKWEB_ENCRYPT)
+    cookie_config.crypto_delegate = cookie_config::GetCookieOHOSCryptoDelegate();
+#else
     cookie_config.crypto_delegate = nullptr;
+#endif
 
     // Use GetDefaultCookieableSchemes() to get the default schemes
     auto default_schemes = net::CookieMonster::GetDefaultCookieableSchemes();
