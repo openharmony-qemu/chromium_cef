@@ -103,6 +103,20 @@ public:
   virtual void ReloadFocusedFrame() = 0;
 #endif
 
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+  ///
+  /// Get whether it is the ViewSource.
+  ///
+  /*--cef()--*/
+  virtual void ViewSource() = 0;
+
+  ///
+  /// IsViewSourceEnabled for context menu.
+  ///
+  /*--cef()--*/
+  virtual  bool IsViewSourceEnabled() = 0;
+#endif
+
 #if BUILDFLAG(ARKWEB_EX_SCREEN_CAPTURE)
   ///
   ///  Close current screen capture.

@@ -180,6 +180,11 @@ class ArkWebBrowserHostExtImpl : public ArkWebBrowserHostExt,
   void SendCancelFlingEvent(const CefMouseEvent& event) override;
 #endif
 
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+  void ViewSource() override;
+  bool IsViewSourceEnabled() override;
+#endif
+
 #if BUILDFLAG(ARKWEB_PDF)
   void CreateToPDF(const CefPdfPrintSettings& settings,
                    CefRefPtr<CefPdfValueCallback> callback) override;

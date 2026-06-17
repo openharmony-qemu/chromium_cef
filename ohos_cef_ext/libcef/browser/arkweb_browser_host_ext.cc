@@ -587,6 +587,33 @@ void ArkWebBrowserHostExtImpl::SetEnableHalfFrameRate(bool enabled) {
   // TODO(ohos): please impl the function and remove this comment.
 }
 
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+void ArkWebBrowserHostExtImpl::ViewSource() {
+  auto web_contents = GetWebContents();
+  if (!web_contents) {
+    LOG(ERROR) << "NWebDelegate::ViewSource "
+                  "callback is nullptr or web_contents is null";
+    return;
+  }
+
+  content::RenderFrameHost* main_frame =
+      GetWebContents()->GetPrimaryMainFrame();
+  main_frame->ViewSource();
+
+}
+
+bool ArkWebBrowserHostExtImpl::IsViewSourceEnabled() {
+  auto web_contents = GetWebContents();
+  if (!web_contents) {
+    LOG(ERROR) << "ArkWebBrowserHostExtImpl::IsViewSourceEnabled "
+                  "callback is nullptr or web_contents is null";
+    return false;
+  }
+
+  return GetWebContents()->GetController().CanViewSource();
+}
+#endif
+
 #if BUILDFLAG(ARKWEB_PDF)
 void ArkWebBrowserHostExtImpl::CreateToPDF(
     const CefPdfPrintSettings& settings,
