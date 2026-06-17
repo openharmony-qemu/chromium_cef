@@ -860,10 +860,6 @@ int32_t GetLastCommittedEntryPageTransition() override;
 void StartDownloadWithParams(
     const CefString& url,
     const DownloadUrlParameters& input_params) override;
-
-void ParseDownloadUrlParamsIntoClass(
-    const DownloadUrlParameters& input_params,
-    std::unique_ptr<download::DownloadUrlParameters>& params);
 #endif
 
  private:
