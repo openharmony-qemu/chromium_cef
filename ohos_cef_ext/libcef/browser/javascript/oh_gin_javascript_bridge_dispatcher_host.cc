@@ -3,6 +3,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include <sys/mman.h>
 #include "arkweb/build/features/features.h"
 
 #if BUILDFLAG(ARKWEB_SECURE_JAVASCRIPT_PROXY)
@@ -11,6 +12,7 @@
 #include "arkweb/chromium_ext/url/ohos/log_utils.h"
 #include "base/functional/bind.h"
 #include "base/memory/scoped_refptr.h"
+#include "base/memory/read_only_shared_memory_region.h"
 #include "content/browser/renderer_host/agent_scheduling_group_host.h"
 #include "content/browser/renderer_host/render_frame_host_impl.h"
 #include "content/browser/web_contents/web_contents_impl.h"
@@ -1528,37 +1530,32 @@ void OhGinJavascriptBridgeDispatcherHost::InvokeMethodAsync(const std::string& m
 void OhGinJavascriptBridgeDispatcherHost::InvokeMethodFlowbuf(const std::string& method_name,
                                                               const std::string& document_url,
                                                               base::Value::List arguments,
-                                                              int fd,
+                                                              base::ReadOnlySharedMemoryRegion flowbuf_region,
                                                               InvokeMethodFlowbufCallback callback) {
-  bool isAsyncthread = false;
-  OnHasAsyncThreadMethod(object_receivers_.current_context().second, method_name, &isAsyncthread);
-  if (isAsyncthread) {
-    async_task_runner_->PostTask(
-        FROM_HERE, base::BindOnce(&OhGinJavascriptBridgeDispatcherHost::InvokeMethodFlowbufInternal,
-                                  base::WrapRefCounted(this),
-                                  object_receivers_.current_context().first.frame_routing_id,
-                                  object_receivers_.current_context().second, method_name, document_url,
-                                  std::move(arguments), fd, std::move(callback)));
-  } else {
-    InvokeMethodFlowbufInternal(object_receivers_.current_context().first.frame_routing_id,
-                                object_receivers_.current_context().second, method_name, document_url,
-                                std::move(arguments), fd, std::move(callback));
+  if (!flowbuf_region.IsValid()) {
+    LOG(ERROR) << "OhGinJavascriptBridgeDispatcherHost::InvokeMethodFlowbuf flowbuf_region is invalid , run combined_args way";
+    return;
   }
-}
-
-void OhGinJavascriptBridgeDispatcherHost::InvokeMethodFlowbufInternal(int routing_id,
-                                                                      int32_t object_id,
-                                                                      const std::string& method_name,
-                                                                      const std::string& document_url,
-                                                                      base::Value::List arguments,
-                                                                      int fd,
-                                                                      InvokeMethodFlowbufCallback callback) {
+ 
+  int fd = flowbuf_region.GetPlatformHandle();
+  int dup_fd = dup(fd);
+  if (fd < 0 || dup_fd < 0) {
+    LOG(ERROR) << "OhGinJavascriptBridgeDispatcherHost::InvokeMethodFlowbuf flowbuf_region is invalid, fd < 0 , run combined_args way";
+    return;
+  }
+ 
   base::Value::List wrapped_result;
   content::mojom::OhGinJavascriptBridgeError error_code
       = content::mojom::OhGinJavascriptBridgeError::kOhGinJavascriptBridgeNoError;
-  OnInvokeMethodFlowbuf(routing_id, object_id, document_url, method_name,
-                        std::move(arguments), fd, &wrapped_result, &error_code);
-
+ 
+  OnInvokeMethodFlowbuf(object_receivers_.current_context().first.frame_routing_id,
+                        object_receivers_.current_context().second,
+                        document_url,
+                        method_name,
+                        std::move(arguments),
+                        dup_fd,
+                        &wrapped_result,
+                        &error_code);
   OnInvokeMethodFlowbufCallback(error_code, std::move(wrapped_result), std::move(callback));
 }
 

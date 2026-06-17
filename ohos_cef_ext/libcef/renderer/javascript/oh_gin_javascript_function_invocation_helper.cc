@@ -12,6 +12,8 @@
 #include "arkweb/build/features/features.h"
 #include "arkweb/chromium_ext/base/ohos/render_uid_define.h"
 #include "base/values.h"
+#include "base/memory/read_only_shared_memory_region.h"
+#include "base/memory/platform_shared_memory_region.h"
 #include "content/public/renderer/v8_value_converter.h"
 #include "libcef/common/javascript/oh_gin_javascript_bridge_errors.h"
 #include "libcef/common/javascript/oh_gin_javascript_bridge_value.h"
@@ -63,15 +65,14 @@ OhGinJavascriptFunctionInvocationHelper::
 
 bool OhGinJavascriptFunctionInvocationHelper::StoreString(int index,
                                                           void* mem,
-                                                          const char* str) {
-  // Find the next available header entry
-  int i;
-  int dataPos = 0;
-
-  if (strlen(str) == 0) {
+                                                          const char* str,
+                                                          size_t str_len) {
+  if (str_len == 0 || str_len > static_cast<size_t>(MAX_FLOWBUF_DATA_SIZE)) {
     return false;
   }
 
+  int i;
+  int dataPos = 0;
   for (i = 0; i < MAX_ENTRIES; ++i) {
     int* entry = static_cast<int*>(mem) + (i * INDEX_SIZE);
     dataPos += *(entry + 1);
@@ -87,16 +88,17 @@ bool OhGinJavascriptFunctionInvocationHelper::StoreString(int index,
 
   char* dataMem = static_cast<char*>(mem) + HEADER_SIZE;
   // Check for available space in data port
-  if (dataPos + static_cast<int>(strlen(str) + 1) > MAX_FLOWBUF_DATA_SIZE) {
+  int len = static_cast<int>(str_len);
+  if (dataPos + len > MAX_FLOWBUF_DATA_SIZE) {
     LOG(DEBUG) << "Flowbuf not enough space to store more strings";
     return false;
   }
 
   int* newEntry = static_cast<int*>(mem) + (i * INDEX_SIZE);
   *(newEntry) = index;
-  *(newEntry + 1) = static_cast<int>(strlen(str) + 1);
+  *(newEntry + 1) = len;
   if (memcpy_s(dataMem + dataPos, MAX_FLOWBUF_DATA_SIZE - dataPos, str,
-               strlen(str) + 1) != EOK) {
+               len) != EOK) {
     LOG(DEBUG) << "Flowbuf memcpy fail, cannot store more strings";
     return false;
   }
@@ -134,8 +136,11 @@ v8::Local<v8::Value> OhGinJavascriptFunctionInvocationHelper::Invoke(
   content::mojom::OhGinJavascriptBridgeError error =
       content::mojom::OhGinJavascriptBridgeError::kOhGinJavascriptBridgeNoError;
   std::unique_ptr<base::Value> result;
-  
-  result = InvokeJavascriptMethod(arguments, error, args, object);
+  if (usedFd_.load() < maxFdNum_) {
+    result = InvokeJavascriptMethodFlowbuf(arguments, error, args, object);
+  } else {
+    result = InvokeJavascriptMethod(arguments, error, args, object);
+  }
   if (!result.get()) {
     LOG(DEBUG)
         << "OhGinJavascriptFunctionInvocationHelper::Invoke result is null";
@@ -213,8 +218,6 @@ OhGinJavascriptFunctionInvocationHelper::InvokeJavascriptMethod(
   }
   std::unique_ptr<base::Value> result;
   if (dispatcher_->IsAsyncMethod(object->object_id(), method_name_)) {
-    // result = dispatcher_->InvokeJavascriptMethodAsync(object->object_id(),
-    //                                                   method_name_, arguments);
     remote->InvokeMethodAsync(method_name_, url, std::move(arguments));
     LOG(DEBUG) << "OhGinJavascriptFunctionInvocationHelper::Invoke call "
                   "InvokeJavascriptMethodAsync end";
@@ -260,13 +263,19 @@ OhGinJavascriptFunctionInvocationHelper::InvokeJavascriptMethodFlowbuf(
   flowbufferAdapter->StartPerformanceBoost();
 #endif  // BUILDFLAG(ARKWEB_RENDER_REMOVE_BINDER)
 
-  int fd;
-  auto ashmem = flowbufferAdapter->CreateAshmem(
-      MAX_FLOWBUF_DATA_SIZE + HEADER_SIZE, PROT_READ | PROT_WRITE, fd);
-  if (!ashmem) {
+  constexpr size_t region_size = MAX_FLOWBUF_DATA_SIZE + HEADER_SIZE;
+  base::WritableSharedMemoryRegion writable_region =
+      base::WritableSharedMemoryRegion::Create(region_size);
+  if (!writable_region.IsValid()) {
+    LOG(ERROR) << "Failed to create WritableSharedMemoryRegion";
     return InvokeJavascriptMethod(arguments, error, args, object);
   }
-  usedFd_.fetch_add(1);
+
+  base::WritableSharedMemoryMapping mapping = writable_region.Map();
+  if (!mapping.IsValid()) {
+    LOG(ERROR) << "Failed to map WritableSharedMemoryRegion";
+    return InvokeJavascriptMethod(arguments, error, args, object);
+  }
 
   int index = -1;
   bool useFlowbuf = false;
@@ -278,7 +287,8 @@ OhGinJavascriptFunctionInvocationHelper::InvokeJavascriptMethodFlowbuf(
       index++;
       if (val->IsString()) {
         v8::String::Utf8Value str(args->isolate(), val);
-        if (StoreString(index, ashmem, *str)) {
+        size_t len = static_cast<size_t>(str.length()) + 1;
+        if (StoreString(index, mapping.memory(), *str, len)) {
           useFlowbuf = true;
           continue;
         }
@@ -310,10 +320,17 @@ OhGinJavascriptFunctionInvocationHelper::InvokeJavascriptMethodFlowbuf(
   }
   base::Value::List result_wrapper;
   if (useFlowbuf) {
-    remote->InvokeMethodFlowbuf(method_name_, url, std::move(arguments), fd, &error,
-                                                &result_wrapper);
-    LOG(DEBUG) << "OhGinJavascriptFunctionInvocationHelper::Invoke call "
-                  "InvokeJavascriptMethodFlowbuf end";
+    usedFd_.fetch_add(1);
+    result = InvokeMethodFlowbufMojo(object,
+                                     url,
+                                     method_name_,
+                                     arguments,
+                                     std::move(writable_region),
+                                     &error);
+    usedFd_.fetch_sub(1);
+    LOG(INFO) << "OhGinJavascriptFunctionInvocationHelper::Invoke call "
+                  "InvokeMethodFlowbufMojo end";
+    return result;
   } else {
     remote->InvokeMethod(method_name_, url, std::move(arguments), &error,
                                &result_wrapper);
@@ -323,8 +340,55 @@ OhGinJavascriptFunctionInvocationHelper::InvokeJavascriptMethodFlowbuf(
   if (!result_wrapper.empty()) {
     result = base::Value::ToUniquePtrValue(result_wrapper[0].Clone());
   }
-  close(fd);
-  usedFd_.fetch_sub(1);
   return result;
 }
+ 
+std::unique_ptr<base::Value>
+OhGinJavascriptFunctionInvocationHelper::InvokeMethodFlowbufMojo(
+    OhGinJavascriptBridgeObject* object,
+    const std::string& url,
+    const std::string& method_name,
+    base::Value::List& arguments,
+    base::WritableSharedMemoryRegion writable_region,
+    content::mojom::OhGinJavascriptBridgeError* error) {
+ 
+  base::ReadOnlySharedMemoryRegion region =
+    base::WritableSharedMemoryRegion::ConvertToReadOnly(std::move(writable_region));
+ 
+  if (!region.IsValid()) {
+    LOG(ERROR) << "OhGinJavascriptFunctionInvocationHelper::InvokeMethodFlowbufMojo "
+               << "region Deserialize failed";
+    *error = content::mojom::OhGinJavascriptBridgeError::kOhGinJavascriptBridgeClientDeleted;
+    return nullptr;
+  }
+ 
+  auto* remote = object->GetRemote();
+  if (!remote) {
+    *error = content::mojom::OhGinJavascriptBridgeError::kOhGinJavascriptBridgeObjectIsGone;
+    return nullptr;
+  }
+ 
+  content::mojom::OhGinJavascriptBridgeError mojo_error_code;
+  base::Value::List mojo_result;
+  bool success = remote->InvokeMethodFlowbuf(method_name,
+                                             url,
+                                             std::move(arguments),
+                                             std::move(region),
+                                             &mojo_error_code,
+                                             &mojo_result);
+  if (!success) {
+    *error = content::mojom::OhGinJavascriptBridgeError::kOhGinJavascriptBridgeClientDeleted;
+    return nullptr;
+  }
+ 
+  *error = mojo_error_code;
+  if (mojo_error_code != content::mojom::OhGinJavascriptBridgeError::kOhGinJavascriptBridgeNoError) {
+    return nullptr;
+  }
+  if (!mojo_result.empty()) {
+    return std::make_unique<base::Value>(std::move(mojo_result[0]));
+  }
+  return nullptr;
+}
+ 
 }  // namespace NWEB
