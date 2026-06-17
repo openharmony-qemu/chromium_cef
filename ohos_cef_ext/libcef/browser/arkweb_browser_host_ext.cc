@@ -4412,6 +4412,22 @@ void ArkWebBrowserHostExtImpl::GetLastJavaScriptProxyCallingFrameInfo(
 }
 #endif
 
+#if BUILDFLAG(ARKWEB_AUTOLAYOUT)
+void ArkWebBrowserHostExtImpl::SetPageVisibility(bool visible) {
+  auto* web_contents_impl = static_cast<content::WebContentsImpl*>(GetWebContents());
+  if (!web_contents_impl) {
+    LOG(ERROR) << "Unable to get WebContentsImpl";
+    return;
+  }
+  auto* web_contents_ext = web_contents_impl->AsWebContentsImplExt();
+  if (!web_contents_ext) {
+    LOG(ERROR) << "Unable to get WebContentsImplExt";
+    return;
+  }
+  web_contents_ext->SetPageVisibility(visible);
+}
+#endif
+
 #if BUILDFLAG(ARKWEB_READER_MODE)
 void ArkWebBrowserHostExtImpl::EnableReaderMode(bool enabled) {
   auto web_contents = GetWebContents();

@@ -805,6 +805,10 @@ class ArkWebBrowserHostExtImpl : public ArkWebBrowserHostExt,
     CefRefPtr<CefLastJavaScriptProxyCallingFrameInfoCallback> callback) override;
 #endif
 
+#if BUILDFLAG(ARKWEB_AUTOLAYOUT)
+  void SetPageVisibility(bool visible) override;
+#endif
+
 #if BUILDFLAG(ARKWEB_READER_MODE)
   void EnableReaderMode(bool enabled) override;
   void Distill(uint64_t request_id, const DistillOptions& distill_options,
