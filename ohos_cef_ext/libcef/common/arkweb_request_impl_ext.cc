@@ -247,8 +247,6 @@ void ArkWebCefPostDataStreamImpl::Set(network::ResourceRequestBody* body) {
         const auto& file_element = element.As<network::DataElementFile>();
         std::string real_path =
             base::GetRealPath(base::FilePath(file_element.path()));
-        LOG(INFO) << "scheme_handler file path: " << file_element.path()
-                  << " real path: " << real_path;
         open_files.push_back(
             base::File(base::FilePath(real_path),
                        base::File::FLAG_OPEN | base::File::FLAG_READ));
