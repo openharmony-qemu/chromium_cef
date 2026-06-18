@@ -837,6 +837,9 @@ typedef struct _cef_browser_settings_t {
   bool custom_video_player_enable;
   bool custom_video_player_overlay;
 #endif  // ARKWEB_CUSTOM_VIDEO_PLAYER
+#if BUILDFLAG(ARKWEB_FULLSCREEN_VIDEO_OVERLAY)
+  bool fullscreen_video_overlay_enable;
+#endif  // ARKWEB_FULLSCREEN_VIDEO_OVERLAY
 #if BUILDFLAG(ARKWEB_MULTI_WINDOW)
   bool supports_multiple_windows;
 #endif  // ARKWEB_MULTI_WINDOW

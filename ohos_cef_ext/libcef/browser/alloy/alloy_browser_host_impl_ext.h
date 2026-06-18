@@ -14,6 +14,9 @@
 #if BUILDFLAG(ARKWEB_DEVTOOLS)
 struct RequestOpenDevToolsParams;
 #endif // ARKWEB_DEVTOOLS
+#if BUILDFLAG(ARKWEB_FULLSCREEN_VIDEO_OVERLAY)
+enum class VideoPlaybackNotificationType;
+#endif // ARKWEB_FULLSCREEN_VIDEO_OVERLAY
 class AlloyBrowserHostImplExt : public AlloyBrowserHostImpl
 #if BUILDFLAG(ARKWEB_INPUT_EVENTS)
                                 , public extensions::ExtensionKeybindingRegistry::Delegate
@@ -91,6 +94,12 @@ public:
   void SetNativeEmbedMode(bool flag) override;
   void SetNativeInnerWeb(bool isInnerWeb) override;
 #endif
+
+#if BUILDFLAG(ARKWEB_FULLSCREEN_VIDEO_OVERLAY)
+  bool IsFullscreenVideoOverlayEnabled() const override;
+  void OnVideoStatusChanged(content::VideoPlaybackNotificationType action,
+                            std::map<std::string, std::string>& param) override;
+#endif  // ARKWEB_FULLSCREEN_VIDEO_OVERLAY
 
 #if BUILDFLAG(ARKWEB_ACTIVITY_STATE)
   void OnFormEditingStateChanged(bool state, uint64_t form_id) override;

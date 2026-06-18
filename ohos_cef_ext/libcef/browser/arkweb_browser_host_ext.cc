@@ -814,6 +814,10 @@ void ArkWebBrowserHostExtImpl::UpdateBrowserSettings(
   settings_.custom_video_player_overlay =
       browser_settings.custom_video_player_overlay;
 #endif  // ARKWEB_CUSTOM_VIDEO_PLAYER
+#if BUILDFLAG(ARKWEB_FULLSCREEN_VIDEO_OVERLAY)
+  settings_.fullscreen_video_overlay_enable =
+      browser_settings.fullscreen_video_overlay_enable;
+#endif  // ARKWEB_FULLSCREEN_VIDEO_OVERLAY
 #if BUILDFLAG(ARKWEB_MULTI_WINDOW)
   settings_.supports_multiple_windows =
       browser_settings.supports_multiple_windows;

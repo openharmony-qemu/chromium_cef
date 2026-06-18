@@ -265,6 +265,18 @@ class CefClient : public virtual CefBaseRefCounted {
                                     const CefString& buttonLabelOK,
                                     const CefString& buttonLabelCancel) {}
 #endif // ARKWEB_ARKWEB_EXTENSIONS
+
+#if BUILDFLAG(ARKWEB_FULLSCREEN_VIDEO_OVERLAY)
+  ///
+  /// Return whether fullscreen video overlay is enabled.
+  ///
+  virtual bool IsFullscreenVideoOverlayEnabled() const {}
+  ///
+  /// Called when video playback status changed.
+  ///
+  virtual void OnVideoStatusChanged(int action,
+                                    std::map<std::string, std::string>& param) {}
+#endif  // ARKWEB_FULLSCREEN_VIDEO_OVERLA
 };
 
 #endif  // CEF_INCLUDE_CEF_CLIENT_H_
