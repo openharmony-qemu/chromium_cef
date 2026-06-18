@@ -20,7 +20,7 @@
 #include "base/ohos/sys_info_utils_ext.h"
 #include "cef/libcef/browser/chrome/chrome_browser_context.h"
 #include "cef/libcef/browser/request_context_impl.h"
-#include "cef/libcef/common/app_manager.h"
+#include "cef/include/cef_request_context.h"
 #include "components/policy/core/common/policy_loader_ohos.h"
 #include "components/policy/core/common/policy_pref_names.h"
 #include "components/prefs/pref_service.h"
@@ -32,13 +32,23 @@ namespace {
 const char kBrowserPolicyFileName[] = "BrowserEnterprisePolicy.json";
 
 Profile* GetActiveProfile() {
-  auto request_context = static_cast<CefRequestContextImpl*>(
-      CefAppManager::Get()->GetGlobalRequestContext().get());
-  if (!request_context || !request_context->GetBrowserContext()) {
-    LOG(ERROR) << "GetActiveProfile failed";
+  CefRefPtr<CefRequestContext> request_context =
+      CefRequestContext::GetGlobalContext();
+  if (!request_context) {
+    LOG(ERROR) << "request context is null";
     return nullptr;
   }
-  return request_context->GetBrowserContext()->AsProfile();
+
+  CefRequestContextImpl* request_context_impl =
+    static_cast<CefRequestContextImpl*>(request_context.get());
+  CefBrowserContext* cef_browser_context =
+      request_context_impl->GetBrowserContext();
+  if (!cef_browser_context) {
+    LOG(ERROR) << "cef browser context is null";
+    return nullptr;
+  }
+  Profile* profile = cef_browser_context->AsProfile();
+  return profile;
 }
 }  // namespace
 
