@@ -1710,7 +1710,19 @@ void InterceptedRequest::SendErrorAndCompleteImmediately(int error_code) {
 
 void InterceptedRequest::SendErrorStatusAndCompleteImmediately(
     const network::URLLoaderCompletionStatus& status) {
+#if BUILDFLAG(ARKWEB_EXT_NAVIGATION)
+  network::URLLoaderCompletionStatus temp_status = status;
+  if (!temp_status.navigation_info.has_value() && current_response_ &&
+      current_response_->status.has_value() &&
+      current_response_->status->navigation_info.has_value()) {
+    temp_status.navigation_info =
+        current_response_->status->navigation_info.value();
+  }
+  status_ = temp_status;
+#else
   status_ = status;
+#endif
+
   SendErrorCallback(status_.error_code, false);
   OnDestroy();
 }

@@ -21,6 +21,11 @@
 #include "libcef/browser/ohos_safe_browsing/ohos_sb_prefs.h"
 #include "libcef/browser/ohos_safe_browsing/ohos_sb_snapshot_info.h"
 
+#if BUILDFLAG(ARKWEB_SAFEBROWSING)
+#include "arkweb/chromium_ext/content/browser/web_contents/web_contents_impl_ext.h"
+#include "content/browser/web_contents/web_contents_impl.h"
+#endif
+
 namespace {
 constexpr int kMaxCachedProfiles = 100;
 base::LRUCache<GURL, ohos_safe_browsing::SbClient::SbBlockingPageInfo>
@@ -222,6 +227,18 @@ void SbClient::SetEvilUrlPolicyAndHwCode(const GURL& url,
     LOG(WARNING) << "SafeBrowsing no visible entry, skip.";
     return;
   }
+
+#if BUILDFLAG(ARKWEB_EXT_NAVIGATION)
+  // Save safe browsing check detail to WebContents
+  content::WebContentsImpl* web_contents_impl =
+      static_cast<content::WebContentsImpl*>(web_contents());
+  if (web_contents_impl && web_contents_impl->AsWebContentsImplExt()) {
+    int threat_type = static_cast<int>(block_type);
+    web_contents_impl->AsWebContentsImplExt()->SetSafeBrowsingCheckDetail(
+        hw_code, threat_type, url);
+  }
+#endif
+
   if (!pending_entry && !web_contents()->IsWaitingForResponse() && visible_entry->GetURL() == url) {
     LOG(INFO) << "SafeBrowsing SetEvilUrlPolicyAndHwCode ShowBlockingPage";
     ShowBlockingPage();
@@ -372,6 +389,7 @@ void SbClient::NotifySafeBrowsingCheckDetail(int code,
     LOG(WARNING) << "NotifySafeBrowsingCheckDetail: web_contents is null";
     return;
   }
+
   CefRefPtr<AlloyBrowserHostImpl> browser =
       AlloyBrowserHostImpl::GetBrowserForContents(web_contents());
   if (!browser.get()) {
@@ -393,6 +411,7 @@ void SbClient::NotifySafeBrowsingCheckDetail(int code,
       threat_type == OHSBThreatType::THREAT_WARNING) {
     threat = static_cast<int>(OHSBThreatType::THREAT_RISK);
   }
+
   load_handler->AsArkWebLoadHandlerExt()->OnSafeBrowsingCheckDetail(
       code, policy, threat);
 }

@@ -59,6 +59,11 @@
 #include "extensions/browser/view_type_utils.h"
 #endif
 
+#if BUILDFLAG(ARKWEB_EXT_NAVIGATION)
+#include "ohos_cef_ext/libcef/browser/web_navigation_info_impl.h"
+#include "ohos_nweb_ex/overrides/cef/libcef/browser/alloy/alloy_ark_web_global_config.h"
+#endif
+
 #if BUILDFLAG(ARKWEB_SITE_ISOLATION)
 bool g_siteIsolationMode = false;
 #endif
@@ -412,3 +417,34 @@ bool ChromeContentBrowserClientCef::SupportsAvoidUnnecessaryBeforeUnloadCheckSyn
   return false;
 }
 #endif // ARKWEB_NETWORK_LOAD
+
+#if BUILDFLAG(ARKWEB_EXT_NAVIGATION)
+void ChromeContentBrowserClientCef::OnReportNewNavigationInfo(
+    content::WebContents* web_contents,
+    const net::WebNavigationInfo& navigation_info) {
+  CefRefPtr<CefBrowserHostBase> browser =
+      CefBrowserHostBase::GetBrowserForContents(web_contents);
+  if (!browser) {
+    return;
+  }
+
+  CefRefPtr<CefClient> client = browser->GetClient();
+  if (!client) {
+    return;
+  }
+
+  CefRefPtr<CefRequestHandler> handler = client->GetRequestHandler();
+  if (!handler) {
+    return;
+  }
+
+  CefRefPtr<CefWebNavigationInfo> cef_info =
+      new CefWebNavigationInfoImpl(navigation_info);
+  handler->AsCefRequestHandlerExt()->OnReportNewNavigationInfo(cef_info);
+}
+
+bool ChromeContentBrowserClientCef::ShouldReportNewNavigationInfo() {
+  return nweb_ex::AlloyArkWebGlobalConfig::GetInstance()
+      ->ShouldReportNewNavigationInfo();
+}
+#endif
