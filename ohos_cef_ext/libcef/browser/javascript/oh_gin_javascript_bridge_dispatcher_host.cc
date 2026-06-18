@@ -60,7 +60,8 @@ namespace NWEB {
 OhGinJavascriptBridgeDispatcherHost::OhGinJavascriptBridgeDispatcherHost(
     content::WebContents* web_contents,
     CefRefPtr<ArkWebClientExt> client)
-    : content::WebContentsObserver(web_contents), client_(client) {
+    : content::WebContentsObserver(web_contents), client_(client),
+      weak_ptr_factory_(this) {
   async_task_runner_ = base::ThreadPool::CreateSingleThreadTaskRunner(
       {base::TaskPriority::USER_BLOCKING},
       base::SingleThreadTaskRunnerThreadMode::DEDICATED);
@@ -189,10 +190,14 @@ void OhGinJavascriptBridgeDispatcherHost::RenderFrameCreated(
 
 void OhGinJavascriptBridgeDispatcherHost::WebContentsDestroyed() {
   // Unretained() is safe because ForEachFrame() is synchronous.
-  CEF_POST_TASK(
-    CEF_UIT,
-    base::BindOnce(&OhGinJavascriptBridgeDispatcherHost::ClearAllReceivers,
-                   base::WrapRefCounted(this)));
+  if (!CEF_CURRENTLY_ON_UIT()) {
+    CEF_POST_TASK(CEF_UIT,
+                  base::BindOnce(&OhGinJavascriptBridgeDispatcherHost::WebContentsDestroyed,
+                                 weak_ptr_factory_.GetWeakPtr()));
+    return;
+  }
+  ClearAllReceivers();
+  return;
 }
 
 void OhGinJavascriptBridgeDispatcherHost::ParseJson(
@@ -1177,7 +1182,7 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethod(
     CEF_POST_TASK(CEF_UIT,
         base::BindOnce(&OhGinJavascriptBridgeDispatcherHost::
                        SetLastCallingFrameInfosOnUIThread,
-            base::WrapRefCounted(this), routing_id, document_url));
+            weak_ptr_factory_.GetWeakPtr(), routing_id, document_url));
   }
   base::Value::List* argument = const_cast<base::Value::List*>(&arguments);
 
@@ -1248,7 +1253,7 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodAsync(
     CEF_POST_TASK(CEF_UIT,
         base::BindOnce(&OhGinJavascriptBridgeDispatcherHost::
                        SetLastCallingFrameInfosOnUIThread,
-            base::WrapRefCounted(this), routing_id, document_url));
+            weak_ptr_factory_.GetWeakPtr(), routing_id, document_url));
   }
   base::Value::List* argument = const_cast<base::Value::List*>(&arguments);
 
@@ -1313,7 +1318,7 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodFlowbuf(
     CEF_POST_TASK(CEF_UIT,
         base::BindOnce(&OhGinJavascriptBridgeDispatcherHost::
                        SetLastCallingFrameInfosOnUIThread,
-            base::WrapRefCounted(this), routing_id, document_url));
+            weak_ptr_factory_.GetWeakPtr(), routing_id, document_url));
   }
   base::Value::List* argument = const_cast<base::Value::List*>(&arguments);
 
@@ -1376,7 +1381,7 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodFlowbufAsync(
     CEF_POST_TASK(CEF_UIT,
         base::BindOnce(&OhGinJavascriptBridgeDispatcherHost::
                        SetLastCallingFrameInfosOnUIThread,
-            base::WrapRefCounted(this), routing_id, document_url));
+            weak_ptr_factory_.GetWeakPtr(), routing_id, document_url));
   }
   base::Value::List* argument = const_cast<base::Value::List*>(&arguments);
 
@@ -1478,7 +1483,7 @@ void OhGinJavascriptBridgeDispatcherHost::InvokeMethod(const std::string& method
   if (isAsyncthread) {
     async_task_runner_->PostTask(
         FROM_HERE, base::BindOnce(&OhGinJavascriptBridgeDispatcherHost::InvokeMethodInternal,
-                                  base::WrapRefCounted(this),
+                                  base::Unretained(this),
                                   object_receivers_.current_context().first.frame_routing_id,
                                   object_receivers_.current_context().second, method_name, document_url,
                                   std::move(arguments), std::move(callback)));
@@ -1510,7 +1515,7 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodCallback(content::mojom:
   if (!CEF_CURRENTLY_ON_UIT()) {
     CEF_POST_TASK(CEF_UIT,
                   base::BindOnce(&OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodCallback,
-                                 base::WrapRefCounted(this), error_code,
+                                 weak_ptr_factory_.GetWeakPtr(), error_code,
                                  std::move(wrapped_result), std::move(callback)));
     return;
   }
@@ -1525,7 +1530,7 @@ void OhGinJavascriptBridgeDispatcherHost::InvokeMethodAsync(const std::string& m
     OhGinJavascriptBridgeDispatcherHost::MIN_NATIVE_OBJ_ID) {
     async_task_runner_->PostTask(
         FROM_HERE, base::BindOnce(&OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodAsync,
-                                  base::WrapRefCounted(this),
+                                  base::Unretained(this),
                                   object_receivers_.current_context().first.frame_routing_id,
                                   object_receivers_.current_context().second, document_url, method_name,
                                   std::move(arguments)));
@@ -1575,7 +1580,7 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodFlowbufCallback(
   if (!CEF_CURRENTLY_ON_UIT()) {
     CEF_POST_TASK(CEF_UIT,
                   base::BindOnce(&OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodFlowbufCallback,
-                                 base::WrapRefCounted(this), error_code,
+                                 weak_ptr_factory_.GetWeakPtr(), error_code,
                                  std::move(wrapped_result), std::move(callback)));
     return;
   }
