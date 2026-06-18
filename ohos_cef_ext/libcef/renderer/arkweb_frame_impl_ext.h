@@ -40,6 +40,10 @@ class ArkwebFrameExtImpl : public ArkwebFrameExt, public CefFrameImpl {
 // TODO:
 #if BUILDFLAG(IS_OHOS)
   void GetImages(CefRefPtr<CefGetImagesCallback> callback) override;
+  void GetFullDom(const CefString& params,
+                  CefRefPtr<CefAIPageCommandCallback> callback) override;
+  void GetLiteDom(const CefString& params,
+                  CefRefPtr<CefAIPageCommandCallback> callback) override;
   void LoadHeaderUrl(const CefString& url,
                      const CefString& additionalHttpHeaders) override;
 #endif  // BUILDFLAG(IS_OHOS)
@@ -60,6 +64,14 @@ class ArkwebFrameExtImpl : public ArkwebFrameExt, public CefFrameImpl {
       cef::mojom::RenderFrame::GetImagesWithResponseCallback response_callback)
       override;
 #endif  // BUILDFLAG(ARKWEB_MEDIA)
+#if BUILDFLAG(IS_OHOS)
+  void GetFullDom(const std::string& params,
+                  cef::mojom::RenderFrame::GetFullDomCallback callback)
+      override;
+  void GetLiteDom(const std::string& params,
+                  cef::mojom::RenderFrame::GetLiteDomCallback callback)
+      override;
+#endif  // BUILDFLAG(IS_OHOS)
 
 #if BUILDFLAG(ARKWEB_INPUT_EVENTS)
   void ScrollToWithAnime(float x, float y, int32_t duration) override;

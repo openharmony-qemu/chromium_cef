@@ -57,6 +57,10 @@ class ArkwebFrameHostExtImpl : public ArkwebFrameExt, public CefFrameHostImpl {
   void LoadHeaderUrl(const CefString& url,
                      const CefString& additionalHttpHeaders) override;
   void GetImages(CefRefPtr<CefGetImagesCallback> callback) override;
+  void GetFullDom(const CefString& params,
+                  CefRefPtr<CefAIPageCommandCallback> callback) override;
+  void GetLiteDom(const CefString& params,
+                  CefRefPtr<CefAIPageCommandCallback> callback) override;
 
 #if BUILDFLAG(ARKWEB_SYNC_RENDER)
   void UpdateDrawRect() override;
@@ -157,6 +161,13 @@ void SetIsFling(bool is_fling);
   void GetImagesWithResponse(
       cef::mojom::RenderFrame::GetImagesWithResponseCallback response_callback);
 #endif  // BUILDFLAG(ARKWEB_MEDIA)
+
+  void GetFullDomWithResponse(
+      const std::string& params,
+      cef::mojom::RenderFrame::GetFullDomCallback response_callback);
+  void GetLiteDomWithResponse(
+      const std::string& params,
+      cef::mojom::RenderFrame::GetLiteDomCallback response_callback);
 
 #if BUILDFLAG(ARKWEB_PAGE_UP_DOWN)
   void ScrollPageUpDown(bool is_up, bool is_half, float view_height);

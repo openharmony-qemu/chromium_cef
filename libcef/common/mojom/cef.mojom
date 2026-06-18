@@ -123,6 +123,12 @@ interface RenderFrame {
   [EnableIf=arkweb_media]
   GetImagesWithResponse() => (bool response);
 
+  [EnableIf=is_ohos]
+  GetFullDom(string params) => (string result);
+
+  [EnableIf=is_ohos]
+  GetLiteDom(string params) => (string result);
+
   [EnableIf=arkweb_input_events]
   SetInitialScale(float initialScale);
 

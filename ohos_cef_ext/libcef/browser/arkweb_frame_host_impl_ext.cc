@@ -30,6 +30,7 @@
 #include "cef/libcef/common/request_impl.h"
 #include "cef/libcef/common/string_util.h"
 #include "cef/libcef/common/task_runner_impl.h"
+#include "cef/ohos_cef_ext/libcef/browser/ai_page_dom_frame_tree_assembler.h"
 #include "content/browser/renderer_host/frame_tree_node.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/render_view_host.h"
@@ -199,6 +200,68 @@ void ArkwebFrameHostExtImpl::GetImages(
       &ArkwebFrameHostExtImpl::GetImagesCallback, weak_ptr_factory_.GetWeakPtr(),
       CefRefPtr<CefFrameHostImpl>(this), callback));
 #endif  // BUILDFLAG(ARKWEB_MEDIA)
+}
+
+void ArkwebFrameHostExtImpl::GetFullDomWithResponse(
+    const std::string& params,
+    cef::mojom::RenderFrame::GetFullDomCallback response_callback) {
+  SendToRenderFrame(
+      __FUNCTION__,
+      base::BindOnce(
+          [](const std::string& params,
+             cef::mojom::RenderFrame::GetFullDomCallback response_callback,
+             const RenderFrameType& render_frame) {
+            render_frame->GetFullDom(params, std::move(response_callback));
+          },
+          params, std::move(response_callback)));
+}
+
+void ArkwebFrameHostExtImpl::GetLiteDomWithResponse(
+    const std::string& params,
+    cef::mojom::RenderFrame::GetLiteDomCallback response_callback) {
+  SendToRenderFrame(
+      __FUNCTION__,
+      base::BindOnce(
+          [](const std::string& params,
+             cef::mojom::RenderFrame::GetLiteDomCallback response_callback,
+             const RenderFrameType& render_frame) {
+            render_frame->GetLiteDom(params, std::move(response_callback));
+          },
+          params, std::move(response_callback)));
+}
+
+void ArkwebFrameHostExtImpl::GetFullDom(
+    const CefString& params,
+    CefRefPtr<CefAIPageCommandCallback> callback) {
+  arkweb::ai_page::AIPageDomFrameTreeAssembler::Capture(
+      GetBrowserInfo(), CefRefPtr<ArkwebFrameHostExtImpl>(this),
+      arkweb::ai_page::AIPageDomFrameTreeAssembler::Method::kFullDom,
+      params.ToString(),
+      base::BindOnce(
+          [](CefRefPtr<CefAIPageCommandCallback> callback,
+             std::string result) {
+            if (callback) {
+              callback->OnResult(result);
+            }
+          },
+          callback));
+}
+
+void ArkwebFrameHostExtImpl::GetLiteDom(
+    const CefString& params,
+    CefRefPtr<CefAIPageCommandCallback> callback) {
+  arkweb::ai_page::AIPageDomFrameTreeAssembler::Capture(
+      GetBrowserInfo(), CefRefPtr<ArkwebFrameHostExtImpl>(this),
+      arkweb::ai_page::AIPageDomFrameTreeAssembler::Method::kLiteDom,
+      params.ToString(),
+      base::BindOnce(
+          [](CefRefPtr<CefAIPageCommandCallback> callback,
+             std::string result) {
+            if (callback) {
+              callback->OnResult(result);
+            }
+          },
+          callback));
 }
 
 #if BUILDFLAG(ARKWEB_INPUT_EVENTS)
