@@ -443,10 +443,12 @@ class CefBrowserHostBase : virtual public CefBrowserHost,
   void OnAfterCreated();
   void OnBeforeClose();
   void OnBrowserDestroyed();
-
+#if BUILDFLAG(ARKWEB_VIDEO_ASSISTANT)
   void EnableVideoAssistant(bool enable) override;
+  void EnableVideoAssistantAVCast(bool enable) override;
   void ExecuteVideoAssistantFunction(const CefString& cmdId) override;
   void CustomWebMediaPlayer(bool enable) override;
+#endif  // ARKWEB_VIDEO_ASSISTANT
 
 #if BUILDFLAG(ARKWEB_BFCACHE)
   void SetMediaResumeFromBFCachePage(bool resume) override;

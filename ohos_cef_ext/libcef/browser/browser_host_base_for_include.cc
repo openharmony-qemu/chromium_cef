@@ -115,38 +115,43 @@ void CefBrowserHostBase::RegisterScreenCaptureDelegateListener(
 }
 #endif  // defined(ARKWEB_EX_SCREEN_CAPTURE)
 
-void CefBrowserHostBase::EnableVideoAssistant(bool enable) {
 #if BUILDFLAG(ARKWEB_VIDEO_ASSISTANT)
+void CefBrowserHostBase::EnableVideoAssistant(bool enable) {
   if (!GetWebContents()) {
     LOG(ERROR) << "failed to get content when enable video assistant";
     return;
   }
 
   GetWebContents()->EnableVideoAssistant(enable);
-#endif  // ARKWEB_VIDEO_ASSISTANT
+}
+
+void CefBrowserHostBase::EnableVideoAssistantAVCast(bool enable) {
+  if (!GetWebContents()) {
+    LOG(ERROR) << "failed to get content when enable video assistant avcast";
+    return;
+  }
+
+  GetWebContents()->EnableVideoAssistantAVCast(enable);
 }
 
 void CefBrowserHostBase::ExecuteVideoAssistantFunction(const CefString& cmdId) {
-#if BUILDFLAG(ARKWEB_VIDEO_ASSISTANT)
   if (!GetWebContents()) {
     LOG(ERROR) << "failed to get content when execute video assistant function";
     return;
   }
 
   GetWebContents()->ExecuteVideoAssistantFunction(cmdId.ToString());
-#endif  // ARKWEB_VIDEO_ASSISTANT
 }
 
 void CefBrowserHostBase::CustomWebMediaPlayer(bool enable) {
-#if BUILDFLAG(ARKWEB_VIDEO_ASSISTANT)
   if (!GetWebContents()) {
     LOG(ERROR) << "failed to get content when enable custom web media player";
     return;
   }
 
   GetWebContents()->CustomWebMediaPlayer(enable);
-#endif  // ARKWEB_VIDEO_ASSISTANT
 }
+#endif  // ARKWEB_VIDEO_ASSISTANT
 
 void CefBrowserHostBase::SetMediaResumeFromBFCachePage(bool resume) {
   LOG(INFO) << "CefBrowserHostBase SetMediaResumeFromBFCachePage resume:" << resume;
