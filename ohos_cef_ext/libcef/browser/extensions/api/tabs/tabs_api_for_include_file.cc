@@ -57,7 +57,7 @@ class TabsCreateFunction : public ExtensionFunction {
   DECLARE_EXTENSION_FUNCTION("tabs.create", TABS_CREATE)
   static void OnTabCreated(const base::WeakPtr<TabsCreateFunction>& function,
                            const NWebExtensionTab& tab,
-                           std::optional<std::string>& error);
+                           const std::optional<std::string>& error);
   static void CreateTabForExtension(std::string& url, content::BrowserContext* context);
   bool call_create_tab_ = false;
   base::WeakPtrFactory<TabsCreateFunction> weak_ptr_factory_{this};
@@ -69,7 +69,7 @@ class TabsDuplicateFunction : public ExtensionFunction {
   DECLARE_EXTENSION_FUNCTION("tabs.duplicate", TABS_DUPLICATE)
   static void OnTabDuplicated(const base::WeakPtr<TabsDuplicateFunction>& function,
                              NWebExtensionTab& tab,
-                             std::optional<std::string>& error);
+                             const std::optional<std::string>& error);
   bool call_duplicate_tab_ = false;
   base::WeakPtrFactory<TabsDuplicateFunction> weak_ptr_factory_{this};
 };
@@ -85,7 +85,7 @@ class TabsHighlightFunction : public ExtensionFunction {
   DECLARE_EXTENSION_FUNCTION("tabs.highlight", TABS_HIGHLIGHT)
   static void OnTabHighlighted(const base::WeakPtr<TabsHighlightFunction>& function,
                                WebExtensionWindow& window,
-                               std::optional<std::string>& error);
+                               const std::optional<std::string>& error);
   bool call_highlight_tab_ = false;
   base::WeakPtrFactory<TabsHighlightFunction> weak_ptr_factory_{this};
 };
@@ -110,7 +110,7 @@ class TabsUpdateFunction : public ExtensionFunction {
   DECLARE_EXTENSION_FUNCTION("tabs.update", TABS_UPDATE)
   static void OnTabUpdated(const base::WeakPtr<TabsUpdateFunction>& function,
                            NWebExtensionTab& tab,
-                           std::optional<std::string>& error);
+                           const std::optional<std::string>& error);
   bool GetUpdateParams(int tab_id,
                        std::optional<api::tabs::Update::Params>&,
                        NWebExtensionTabUpdateProperties& update_properties);
@@ -129,8 +129,8 @@ class TabsMoveFunction : public ExtensionFunction {
                std::string* error);
   DECLARE_EXTENSION_FUNCTION("tabs.move", TABS_MOVE)
   static void OnTabMoved(const base::WeakPtr<TabsMoveFunction>& function,
-                      const std::vector<NWebExtensionTab>& tab,
-                      std::optional<std::string>& error);
+                         const std::vector<NWebExtensionTab>& tab,
+                         const std::optional<std::string>& error);
   bool call_move_tab_ = false;
   base::WeakPtrFactory<TabsMoveFunction> weak_ptr_factory_{this};
 };
@@ -152,7 +152,7 @@ class TabsRemoveFunction : public ExtensionFunction {
       web_contents_destroyed_observers_;
   DECLARE_EXTENSION_FUNCTION("tabs.remove", TABS_REMOVE)
   static void OnTabRemoved(const base::WeakPtr<TabsRemoveFunction>& function,
-                        std::optional<std::string>& error);
+                           const std::optional<std::string>& error);
   bool call_remove_tab_ = false;
   base::WeakPtrFactory<TabsRemoveFunction> weak_ptr_factory_{this};
 };
@@ -163,7 +163,7 @@ class TabsGroupFunction : public ExtensionFunction {
   DECLARE_EXTENSION_FUNCTION("tabs.group", TABS_GROUP)
   static void OnTabGrouped(const base::WeakPtr<TabsGroupFunction>& function,
                            int group_id,
-                           std::optional<std::string>& error);
+                           const std::optional<std::string>& error);
   bool call_group_tab_ = false;
   base::WeakPtrFactory<TabsGroupFunction> weak_ptr_factory_{this};
 };
@@ -174,7 +174,7 @@ class TabsUngroupFunction : public ExtensionFunction {
   bool UngroupTab(int tab_id, std::string* error);
   DECLARE_EXTENSION_FUNCTION("tabs.ungroup", TABS_UNGROUP)
   static void OnTabUngrouped(const base::WeakPtr<TabsUngroupFunction>& function,
-                             std::optional<std::string>& error);
+                             const std::optional<std::string>& error);
   bool call_ungroup_tab_ = false;
   base::WeakPtrFactory<TabsUngroupFunction> weak_ptr_factory_{this};
 };
@@ -194,7 +194,7 @@ class TabsDiscardFunction : public ExtensionFunction {
   ExtensionFunction::ResponseAction Run() override;
   static void OnTabDiscarded(const base::WeakPtr<TabsDiscardFunction>& function,
                              NWebExtensionTab& tab,
-                             std::optional<std::string>& error);
+                             const std::optional<std::string>& error);
   bool call_discard_tab_ = false;
   base::WeakPtrFactory<TabsDiscardFunction> weak_ptr_factory_{this};
 };

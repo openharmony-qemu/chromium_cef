@@ -306,7 +306,7 @@ ExtensionFunction::ResponseAction TabsCaptureVisibleTabFunction::Run() {
 
 void TabsCreateFunction::OnTabCreated(const base::WeakPtr<TabsCreateFunction>& function,
                                       const NWebExtensionTab& tab,
-                                      std::optional<std::string>& error) {
+                                      const std::optional<std::string>& error) {
   DCHECK(function);
   if (!function) {
     LOG(ERROR) << "OnTabCreated is empty!!!!";
@@ -334,7 +334,7 @@ void TabsCreateFunction::OnTabCreated(const base::WeakPtr<TabsCreateFunction>& f
 }
 
 void OnCreateTabForExtension(const NWebExtensionTab& tab,
-                             std::optional<std::string>& error) {
+                             const std::optional<std::string>& error) {
   if (error) {
     LOG(ERROR) << "OnCreateTabForExtension create error, " << error.value();
   }
@@ -448,7 +448,7 @@ ExtensionFunction::ResponseAction TabsDiscardFunction::Run() {
 void TabsDiscardFunction::OnTabDiscarded(
     const base::WeakPtr<TabsDiscardFunction>& function,
     NWebExtensionTab& tab,
-    std::optional<std::string>& error) {
+    const std::optional<std::string>& error) {
   DCHECK(function);
   if (!function) {
     LOG(ERROR) << "OnTabDiscarded is empty!!!!";
@@ -504,7 +504,7 @@ ExtensionFunction::ResponseAction TabsDuplicateFunction::Run() {
 void TabsDuplicateFunction::OnTabDuplicated(
     const base::WeakPtr<TabsDuplicateFunction>& function,
     NWebExtensionTab& tab,
-    std::optional<std::string>& error) {
+    const std::optional<std::string>& error) {
   DCHECK(function);
   if (!function) {
     LOG(ERROR) << "OnTabDuplicated is empty!!!!";
@@ -718,7 +718,7 @@ ExtensionFunction::ResponseAction TabsGroupFunction::Run() {
 
 void TabsGroupFunction::OnTabGrouped(const base::WeakPtr<TabsGroupFunction>& function,
     int group_id,
-    std::optional<std::string>& error) {
+    const std::optional<std::string>& error) {
   DCHECK(function);
   if (!function) {
     LOG(ERROR) << "OnTabGrouped is empty!!!!";
@@ -783,7 +783,7 @@ ExtensionFunction::ResponseAction TabsHighlightFunction::Run() {
 void TabsHighlightFunction::OnTabHighlighted(
     const base::WeakPtr<TabsHighlightFunction>& function,
     WebExtensionWindow& window,
-    std::optional<std::string>& error) {
+    const std::optional<std::string>& error) {
   DCHECK(function);
   if (!function) {
     LOG(ERROR) << "OnTabHighlighted is empty!!!!";
@@ -855,7 +855,7 @@ ExtensionFunction::ResponseAction TabsMoveFunction::Run() {
 
 void TabsMoveFunction::OnTabMoved(const base::WeakPtr<TabsMoveFunction>& function,
     const std::vector<NWebExtensionTab>& tabs,
-    std::optional<std::string>& error) {
+    const std::optional<std::string>& error) {
   DCHECK(function);
   if (!function) {
     LOG(ERROR) << "OnTabMoved is empty!!!!";
@@ -1030,7 +1030,7 @@ ExtensionFunction::ResponseAction TabsRemoveFunction::Run() {
 
 void TabsRemoveFunction::OnTabRemoved(
     const base::WeakPtr<TabsRemoveFunction>& function,
-    std::optional<std::string>& error) {
+    const std::optional<std::string>& error) {
   DCHECK(function);
   if (!function) {
     LOG(ERROR) << "OnTabRemoved is empty!!!!";
@@ -1176,7 +1176,7 @@ ExtensionFunction::ResponseAction TabsUngroupFunction::Run() {
 }
 
 void TabsUngroupFunction::OnTabUngrouped(const base::WeakPtr<TabsUngroupFunction>& function,
-    std::optional<std::string>& error) {
+    const std::optional<std::string>& error) {
   DCHECK(function);
   if (!function) {
     LOG(ERROR) << "OnTabUngrouped is empty!!!!";
@@ -1198,7 +1198,7 @@ void TabsUngroupFunction::OnTabUngrouped(const base::WeakPtr<TabsUngroupFunction
 void TabsUpdateFunction::OnTabUpdated(
     const base::WeakPtr<TabsUpdateFunction>& function,
     NWebExtensionTab& tab,
-    std::optional<std::string>& error) {
+    const std::optional<std::string>& error) {
   DCHECK(function);
   if (!function) {
     LOG(ERROR) << "OnTabUpdated is empty!!!!";

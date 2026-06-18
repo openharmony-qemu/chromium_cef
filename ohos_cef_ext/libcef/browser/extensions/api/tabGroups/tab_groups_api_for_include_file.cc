@@ -22,7 +22,7 @@ class TabGroupsGetFunction : public ExtensionFunction {
  private:
   static void OnGetTabGroup(const base::WeakPtr<TabGroupsGetFunction>& function,
                             const NWebExtensionTabGroup& tabGroup,
-                            std::optional<std::string>& error);
+                            const std::optional<std::string>& error);
   bool call_get_tab_group_ = false;
   base::WeakPtrFactory<TabGroupsGetFunction> weak_ptr_factory_get_{this};
 };
@@ -36,7 +36,7 @@ class TabGroupsQueryFunction : public ExtensionFunction {
  private:
   static void OnQueryTabGroup(const base::WeakPtr<TabGroupsQueryFunction>& function,
                               const std::vector<NWebExtensionTabGroup>& tabGroups,
-                              std::optional<std::string>& error);
+                              const std::optional<std::string>& error);
   bool call_query_tab_group_ = false;
   base::WeakPtrFactory<TabGroupsQueryFunction> weak_ptr_factory_query_{this};
 };
@@ -50,7 +50,7 @@ class TabGroupsUpdateFunction : public ExtensionFunction {
  private:
   static void OnUpdateTabGroup(const base::WeakPtr<TabGroupsUpdateFunction>& function,
                                const NWebExtensionTabGroup& tabGroup,
-                               std::optional<std::string>& error);
+                               const std::optional<std::string>& error);
   bool call_update_tab_group_ = false;
   base::WeakPtrFactory<TabGroupsUpdateFunction> weak_ptr_factory_update_{this};
 };
@@ -64,7 +64,7 @@ class TabGroupsMoveFunction : public ExtensionFunction {
  private:
   static void OnMoveTabGroup(const base::WeakPtr<TabGroupsMoveFunction>& function,
                              const NWebExtensionTabGroup& tabGroup,
-                             std::optional<std::string>& error);
+                             const std::optional<std::string>& error);
   bool call_move_tab_group_ = false;
   base::WeakPtrFactory<TabGroupsMoveFunction> weak_ptr_factory_move_{this};
 };
