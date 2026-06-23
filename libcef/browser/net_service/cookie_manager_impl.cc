@@ -164,6 +164,9 @@ bool CefCookieManagerImpl::VisitUrlCookies(const CefString& url,
     bool includeHttpOnly,
                                            CefRefPtr<CefCookieVisitor> visitor,
                                            bool is_sync,
+#if BUILDFLAG(ARKWEB_COOKIE)
+                                           bool include_partitioned_cookies,
+#endif
                                            bool is_from_ndk) {
   if (!visitor.get()) {
     return false;
