@@ -44,6 +44,11 @@ class ArkwebFrameExtImpl : public ArkwebFrameExt, public CefFrameImpl {
                   CefRefPtr<CefAIPageCommandCallback> callback) override;
   void GetLiteDom(const CefString& params,
                   CefRefPtr<CefAIPageCommandCallback> callback) override;
+  void AddPageAnnotation(
+      const CefString& params,
+      CefRefPtr<CefAIPageCommandCallback> callback) override;
+  void RemovePageAnnotation(
+      CefRefPtr<CefAIPageCommandCallback> callback) override;
   void LoadHeaderUrl(const CefString& url,
                      const CefString& additionalHttpHeaders) override;
 #endif  // BUILDFLAG(IS_OHOS)
@@ -74,6 +79,17 @@ class ArkwebFrameExtImpl : public ArkwebFrameExt, public CefFrameImpl {
   void ValidateElementId(
       const std::string& element_id,
       cef::mojom::RenderFrame::ValidateElementIdCallback callback)
+      override;
+  void GetAIPageElementRects(
+      const std::string& params,
+      cef::mojom::RenderFrame::GetAIPageElementRectsCallback callback)
+      override;
+  void RenderPageAnnotationOverlay(
+      const std::string& params,
+      cef::mojom::RenderFrame::RenderPageAnnotationOverlayCallback callback)
+      override;
+  void RemovePageAnnotationOverlay(
+      cef::mojom::RenderFrame::RemovePageAnnotationOverlayCallback callback)
       override;
 #endif  // BUILDFLAG(IS_OHOS)
 

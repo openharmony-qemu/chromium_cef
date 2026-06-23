@@ -15,14 +15,21 @@
 
 #include "cef/libcef/browser/frame_host_impl.h"
 
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "arkweb/build/features/features.h"
 #include "arkweb/ohos_nweb/include/nweb_errors.h"
+#include "base/functional/callback.h"
+#include "base/time/time.h"
 #include "cef/include/cef_request.h"
 #include "cef/include/cef_stream.h"
 #include "cef/include/cef_v8.h"
 #include "cef/include/test/cef_test_helpers.h"
 #include "cef/libcef/browser/browser_host_base.h"
 #include "cef/libcef/browser/net_service/browser_urlrequest_impl.h"
+#include "cef/libcef/browser/thread_util.h"
 #include "cef/libcef/common/frame_util.h"
 #include "cef/libcef/common/net/url_util.h"
 #include "cef/libcef/common/process_message_impl.h"
@@ -30,9 +37,11 @@
 #include "cef/libcef/common/request_impl.h"
 #include "cef/libcef/common/string_util.h"
 #include "cef/libcef/common/task_runner_impl.h"
+#include "cef/ohos_cef_ext/libcef/browser/ai_page_annotation_request.h"
 #include "cef/ohos_cef_ext/libcef/browser/ai_page_dom_frame_tree_assembler.h"
 #include "content/browser/renderer_host/frame_tree_node.h"
 #include "content/public/browser/render_process_host.h"
+#include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_view_host.h"
 #include "skia/ext/image_operations.h"
 #include "services/service_manager/public/cpp/interface_provider.h"
@@ -230,6 +239,55 @@ void ArkwebFrameHostExtImpl::GetLiteDomWithResponse(
           params, std::move(response_callback)));
 }
 
+void ArkwebFrameHostExtImpl::GetAIPageElementRectsWithResponse(
+    const std::string& params,
+    cef::mojom::RenderFrame::GetAIPageElementRectsCallback
+        response_callback) {
+  SendToRenderFrame(
+      __FUNCTION__,
+      base::BindOnce(
+          [](const std::string& params,
+             cef::mojom::RenderFrame::GetAIPageElementRectsCallback
+                 response_callback,
+             const RenderFrameType& render_frame) {
+            render_frame->GetAIPageElementRects(
+                params, std::move(response_callback));
+          },
+          params, std::move(response_callback)));
+}
+
+void ArkwebFrameHostExtImpl::RenderPageAnnotationOverlayWithResponse(
+    const std::string& params,
+    cef::mojom::RenderFrame::RenderPageAnnotationOverlayCallback
+        response_callback) {
+  SendToRenderFrame(
+      __FUNCTION__,
+      base::BindOnce(
+          [](const std::string& params,
+             cef::mojom::RenderFrame::RenderPageAnnotationOverlayCallback
+                 response_callback,
+             const RenderFrameType& render_frame) {
+            render_frame->RenderPageAnnotationOverlay(
+                params, std::move(response_callback));
+          },
+          params, std::move(response_callback)));
+}
+
+void ArkwebFrameHostExtImpl::RemovePageAnnotationOverlayWithResponse(
+    cef::mojom::RenderFrame::RemovePageAnnotationOverlayCallback
+        response_callback) {
+  SendToRenderFrame(
+      __FUNCTION__,
+      base::BindOnce(
+          [](cef::mojom::RenderFrame::RemovePageAnnotationOverlayCallback
+                 response_callback,
+             const RenderFrameType& render_frame) {
+            render_frame->RemovePageAnnotationOverlay(
+                std::move(response_callback));
+          },
+          std::move(response_callback)));
+}
+
 void ArkwebFrameHostExtImpl::GetFullDom(
     const CefString& params,
     CefRefPtr<CefAIPageCommandCallback> callback) {
@@ -278,6 +336,20 @@ void ArkwebFrameHostExtImpl::ValidateElementIdWithResponse(
                 element_id, std::move(response_callback));
           },
           element_id, std::move(response_callback)));
+}
+
+void ArkwebFrameHostExtImpl::AddPageAnnotation(
+    const CefString& params,
+    CefRefPtr<CefAIPageCommandCallback> callback) {
+  arkweb::ai_page::RunAddPageAnnotation(
+      GetBrowserInfo(), CefRefPtr<ArkwebFrameHostExtImpl>(this),
+      params.ToString(), callback);
+}
+
+void ArkwebFrameHostExtImpl::RemovePageAnnotation(
+    CefRefPtr<CefAIPageCommandCallback> callback) {
+  arkweb::ai_page::RunRemovePageAnnotation(
+      GetBrowserInfo(), CefRefPtr<ArkwebFrameHostExtImpl>(this), callback);
 }
 
 #if BUILDFLAG(ARKWEB_INPUT_EVENTS)
