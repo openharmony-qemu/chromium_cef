@@ -102,6 +102,7 @@ class CefCookieManager : public virtual CefBaseRefCounted {
                                bool includeHttpOnly,
                                CefRefPtr<CefCookieVisitor> visitor,
                                bool is_sync,
+                               bool include_partitioned_cookies,
                                bool is_from_ndk) = 0;
 
   ///
