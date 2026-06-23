@@ -43,3 +43,21 @@ class SidePanelOpenFunction : public SidePanelApiFunction {
   bool call_on_open_ = false;
   base::WeakPtrFactory<SidePanelOpenFunction> weak_ptr_factory_{this};
 };
+
+class SidePanelCloseFunction : public SidePanelApiFunction {
+ public:
+  DECLARE_EXTENSION_FUNCTION("sidePanel.close", SIDEPANEL_CLOSE)
+  SidePanelCloseFunction() = default;
+  SidePanelCloseFunction(const SidePanelCloseFunction&) = delete;
+  SidePanelCloseFunction& operator=(const SidePanelCloseFunction&) = delete;
+
+ private:
+  ~SidePanelCloseFunction() override = default;
+  ResponseAction RunFunction() override;
+  ResponseAction RunCloseFunctionForInclude(
+      std::optional<api::side_panel::Close::Params>& params);
+  static void OnClose(const base::WeakPtr<SidePanelCloseFunction>& function,
+                      const std::optional<std::string>& error);
+  bool call_on_close_ = false;
+  base::WeakPtrFactory<SidePanelCloseFunction> weak_ptr_factory_{this};
+};
