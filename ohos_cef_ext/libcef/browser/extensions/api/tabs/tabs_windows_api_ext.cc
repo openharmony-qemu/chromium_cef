@@ -40,6 +40,7 @@ void TabsWindowsAPI::TabUpdated(int tab_id,
     // Note: SetTabId method may not exist in Chromium 141
     // The functionality may be handled differently now
     LOG(INFO) << "ActiveTabPermissionGranter available for tab_id: " << tab_id;
+    active_tab_granter->SetTabId(tab_id);
   }
 
   int windowId = tab->windowId;
