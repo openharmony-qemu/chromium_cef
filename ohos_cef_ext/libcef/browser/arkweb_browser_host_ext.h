@@ -469,11 +469,25 @@ class ArkWebBrowserHostExtImpl : public ArkWebBrowserHostExt,
   int32_t ExecuteInputCommand(const std::string& xpath,
                               const std::string& value,
                               const std::string& event_type) override;
+  int32_t ExecuteAIPageInputCommandByXPath(const std::string& xpath,
+                              const std::string& value,
+                              const std::string& input_type) override;
+  int32_t ExecuteAIPageInputCommandById(const std::string& id,
+                                  const std::string& value,
+                                  const std::string& input_type) override;
   int32_t ExecuteSelectCommand(const std::string& xpath,
                                const std::vector<int32_t>& indexes,
                                const std::vector<std::string>& values) override;
   void ValidateElementId(const std::string& element_id,
                          CefRefPtr<CefAIPageCommandCallback> callback) override;
+  int32_t ExecuteSelectCommandById(
+      const std::string& id,
+      const std::vector<int32_t>& indexes,
+      const std::vector<std::string>& values) override;
+  void GetAIPageElementRects(
+      const std::vector<std::string>& element_ids,
+      int max_rects,
+      CefRefPtr<CefAIPageCommandCallback> callback) override;
 #if BUILDFLAG(ARKWEB_SYNC_RENDER)
   void UpdateDrawRect() override;
 #endif

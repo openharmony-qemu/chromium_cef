@@ -154,9 +154,18 @@ void SetIsFling(bool is_fling);
   int32_t ExecuteInputCommand(const std::string& xpath,
                               const std::string& value,
                               const std::string& event_type);
+  int32_t ExecuteAIPageInputCommandByXPath(const std::string& xpath,
+                                           const std::string& value,
+                                           const std::string& input_type);
+  int32_t ExecuteAIPageInputCommandById(const std::string& id,
+                                        const std::string& value,
+                                        const std::string& input_type);
   int32_t ExecuteSelectCommand(const std::string& xpath,
                                const std::vector<int32_t>& indexes,
                                const std::vector<std::string>& values);
+  int32_t ExecuteSelectCommandById(const std::string& id,
+                                   const std::vector<int32_t>& indexes,
+                                   const std::vector<std::string>& values);
 #endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
 
 #if BUILDFLAG(ARKWEB_MEDIA)
@@ -229,8 +238,17 @@ void SetIsFling(bool is_fling);
   void ExecuteInputCommandOnIO(std::shared_ptr<std::promise<int32_t>> result_promise,
       const std::string& xpath, const std::string& value, const std::string& event_type,
       mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote); // only in io thread
+  void ExecuteAIPageInputCommandByXPathOnIO(std::shared_ptr<std::promise<int32_t>> result_promise,
+      const std::string& xpath, std::string value, std::string input_type,
+      mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote); // only in io thread
+void ExecuteAIPageInputCommandByIdOnIO(std::shared_ptr<std::promise<int32_t>> result_promise,
+      const std::string& id, std::string value, std::string input_type,
+      mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote); // only in io thread
   void ExecuteSelectCommandOnIO(std::shared_ptr<std::promise<int32_t>> result_promise,
       const std::string& xpath, const std::vector<int32_t> indexes, const std::vector<std::string> values,
+      mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote); // only in io thread
+  void ExecuteSelectCommandByIdOnIO(std::shared_ptr<std::promise<int32_t>> result_promise,
+      const std::string& id, const std::vector<int32_t> indexes, const std::vector<std::string> values,
       mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote); // only in io thread
   void OnIoRenderFrameDisconnect(); // only in io thread
   mojo::Remote<cef::mojom::RenderFrame> io_thread_render_frame_; // only in io thread

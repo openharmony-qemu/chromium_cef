@@ -1019,6 +1019,44 @@ void ArkwebFrameExtImpl::ExecuteInputCommand(
   std::move(callback).Run(result);
 }
 
+void ArkwebFrameExtImpl::ExecuteAIPageInputCommandByXPath(
+    const std::string& xpath,
+    const std::string& value,
+    const std::string& input_type,
+    cef::mojom::RenderFrame::ExecuteAIPageInputCommandByXPathCallback callback) {
+  LOG(INFO) << "ExecuteAIPageInputCommandByXPath in cef frame";
+  int32_t result =
+      static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::FAILED);
+  auto render_frame = content::RenderFrame::FromWebFrame(frame_);
+  if (!render_frame) {
+    LOG(ERROR) << "ExecuteAIPageInputCommandByXPath: render_frame NULL";
+    std::move(callback).Run(result);
+    return;
+  }
+  result = render_frame->ExecuteAIPageInputCommandByXPath(xpath, value, input_type);
+  LOG(INFO) << "ExecuteAIPageInputCommandByXPath cef frame done. result=" << result;
+  std::move(callback).Run(result);
+}
+
+void ArkwebFrameExtImpl::ExecuteAIPageInputCommandById(
+    const std::string& id,
+    const std::string& value,
+    const std::string& input_type,
+    cef::mojom::RenderFrame::ExecuteAIPageInputCommandByIdCallback callback) {
+  LOG(INFO) << "ExecuteAIPageInputCommandById in cef frame";
+  int32_t result =
+      static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::FAILED);
+  auto render_frame = content::RenderFrame::FromWebFrame(frame_);
+  if (!render_frame) {
+    LOG(ERROR) << "ExecuteAIPageInputCommandById: render_frame NULL";
+    std::move(callback).Run(result);
+    return;
+  }
+  result = render_frame->ExecuteAIPageInputCommandById(id, value, input_type);
+  LOG(INFO) << "ExecuteAIPageInputCommandById cef frame done. result=" << result;
+  std::move(callback).Run(result);
+}
+
 void ArkwebFrameExtImpl::ExecuteSelectCommand(
     const std::string& xpath,
     const std::vector<int32_t>& indexes,
@@ -1034,6 +1072,25 @@ void ArkwebFrameExtImpl::ExecuteSelectCommand(
   }
   result = render_frame->ExecuteSelectCommand(xpath, indexes, values);
   LOG(INFO) << "ExecuteSelectCommand cef frame done. result=" << result;
+  std::move(callback).Run(result);
+}
+
+void ArkwebFrameExtImpl::ExecuteSelectCommandById(
+    const std::string& id,
+    const std::vector<int32_t>& indexes,
+    const std::vector<std::string>& values,
+    cef::mojom::RenderFrame::ExecuteSelectCommandByIdCallback callback) {
+  LOG(INFO) << "ExecuteSelectCommandById in cef frame";
+  int32_t result =
+      static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::FAILED);
+  auto render_frame = content::RenderFrame::FromWebFrame(frame_);
+  if (!render_frame) {
+    LOG(ERROR) << "ExecuteSelectCommandById: render_frame NULL";
+    std::move(callback).Run(result);
+    return;
+  }
+  result = render_frame->ExecuteSelectCommandById(id, indexes, values);
+  LOG(INFO) << "ExecuteSelectCommandById cef frame done. result=" << result;
   std::move(callback).Run(result);
 }
 

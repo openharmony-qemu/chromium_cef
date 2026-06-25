@@ -1012,6 +1012,80 @@ int32_t ArkwebFrameHostExtImpl::ExecuteInputCommand(
   return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::FAILED);
 }
 
+ int32_t ArkwebFrameHostExtImpl::ExecuteAIPageInputCommandByXPath(
+    const std::string& xpath,
+    const std::string& value,
+    const std::string& input_type) {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+  if (is_temporary() || !render_frame_host_) {
+    LOG(ERROR) << "[WebCommandAction] ExecuteAIPageInputCommandByXPath: is_temporary or not render_frame_host_";
+    return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
+  }
+  if (!render_frame_.is_bound()) {
+    LOG(ERROR) << "[WebCommandAction] ExecuteAIPageInputCommandByXPath: render_frame_ not bound";
+    return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
+  }
+
+  auto result_promise = std::make_shared<std::promise<int32_t>>();
+  std::future<int32_t> result_future = result_promise->get_future();
+  mojo::PendingRemote<cef::mojom::RenderFrame> pending_clone;
+  if (!is_io_frame_connected_.load()) {
+    render_frame_->Clone(pending_clone.InitWithNewPipeAndPassReceiver());
+  }
+  CEF_POST_TASK(
+      CEF_IOT,
+      base::BindOnce(&ArkwebFrameHostExtImpl::ExecuteAIPageInputCommandByXPathOnIO,
+                     weak_ptr_factory_.GetWeakPtr(), result_promise, xpath,
+                     value, input_type, std::move(pending_clone)));
+
+  constexpr int32_t kTimeoutMs = 3000;
+  auto status = result_future.wait_for(std::chrono::milliseconds(kTimeoutMs));
+  if (status == std::future_status::ready) {
+    int32_t result = result_future.get();
+    LOG(INFO) << "[WebCommandAction] ExecuteAIPageInputCommandByXPath result from render:" << result;
+    return result;
+  }
+  LOG(ERROR) << "[WebCommandAction] ExecuteAIPageInputCommandByXPath timeout";
+  return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::FAILED);
+}
+
+int32_t ArkwebFrameHostExtImpl::ExecuteAIPageInputCommandById(
+    const std::string& id,
+    const std::string& value,
+    const std::string& input_type) {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+  if (is_temporary() || !render_frame_host_) {
+    LOG(ERROR) << "[WebCommandAction] ExecuteAIPageInputCommandById: is_temporary or not render_frame_host_";
+    return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
+  }
+  if (!render_frame_.is_bound()) {
+    LOG(ERROR) << "[WebCommandAction] ExecuteAIPageInputCommandById: render_frame_ not bound";
+    return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
+  }
+
+  auto result_promise = std::make_shared<std::promise<int32_t>>();
+  std::future<int32_t> result_future = result_promise->get_future();
+  mojo::PendingRemote<cef::mojom::RenderFrame> pending_clone;
+  if (!is_io_frame_connected_.load()) {
+    render_frame_->Clone(pending_clone.InitWithNewPipeAndPassReceiver());
+  }
+  CEF_POST_TASK(
+      CEF_IOT,
+      base::BindOnce(&ArkwebFrameHostExtImpl::ExecuteAIPageInputCommandByIdOnIO,
+                     weak_ptr_factory_.GetWeakPtr(), result_promise, id,
+                     value, input_type, std::move(pending_clone)));
+
+  constexpr int32_t kTimeoutMs = 3000;
+  auto status = result_future.wait_for(std::chrono::milliseconds(kTimeoutMs));
+  if (status == std::future_status::ready) {
+    int32_t result = result_future.get();
+    LOG(INFO) << "[WebCommandAction] ExecuteAIPageInputCommandById result from render:" << result;
+    return result;
+  }
+  LOG(ERROR) << "[WebCommandAction] ExecuteAIPageInputCommandById timeout";
+  return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::FAILED);
+}
+
 int32_t ArkwebFrameHostExtImpl::ExecuteSelectCommand(
     const std::string& xpath,
     const std::vector<int32_t>& indexes,
@@ -1047,6 +1121,43 @@ int32_t ArkwebFrameHostExtImpl::ExecuteSelectCommand(
   return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::FAILED);
 }
 
+int32_t ArkwebFrameHostExtImpl::ExecuteSelectCommandById(
+    const std::string& id,
+    const std::vector<int32_t>& indexes,
+    const std::vector<std::string>& values) {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+  if (is_temporary() || !render_frame_host_) {
+    LOG(ERROR) << "[WebCommandAction] ExecuteSelectCommandById: is_temporary or not render_frame_host_";
+    return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
+  }
+  if (!render_frame_.is_bound()) {
+    LOG(ERROR) << "[WebCommandAction] ExecuteSelectCommandById: render_frame_ not bound";
+    return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
+  }
+
+  auto result_promise = std::make_shared<std::promise<int32_t>>();
+  std::future<int32_t> result_future = result_promise->get_future();
+  mojo::PendingRemote<cef::mojom::RenderFrame> pending_clone;
+  if (!is_io_frame_connected_.load()) {
+    render_frame_->Clone(pending_clone.InitWithNewPipeAndPassReceiver());
+  }
+  CEF_POST_TASK(
+      CEF_IOT,
+      base::BindOnce(&ArkwebFrameHostExtImpl::ExecuteSelectCommandByIdOnIO,
+                     weak_ptr_factory_.GetWeakPtr(), result_promise, id,
+                     indexes, values, std::move(pending_clone)));
+
+  constexpr int32_t kTimeoutMs = 3000;
+  auto status = result_future.wait_for(std::chrono::milliseconds(kTimeoutMs));
+  if (status == std::future_status::ready) {
+    int32_t result = result_future.get();
+    LOG(INFO) << "[WebCommandAction] ExecuteSelectCommandById result from render:" << result;
+    return result;
+  }
+  LOG(ERROR) << "[WebCommandAction] ExecuteSelectCommandById timeout";
+  return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::FAILED);
+}
+
 void ArkwebFrameHostExtImpl::ExecuteInputCommandOnIO(
     std::shared_ptr<std::promise<int32_t>> result_promise,
     const std::string& xpath,
@@ -1079,6 +1190,82 @@ void ArkwebFrameHostExtImpl::ExecuteInputCommandOnIO(
   }
 }
 
+void ArkwebFrameHostExtImpl::ExecuteAIPageInputCommandByXPathOnIO(
+    std::shared_ptr<std::promise<int32_t>> result_promise,
+    const std::string& xpath,
+    std::string value,
+    std::string input_type,
+    mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote) {
+  CEF_REQUIRE_IOT();
+  if (pending_remote.is_valid()) {
+    io_thread_render_frame_.reset();
+    io_thread_render_frame_.Bind(std::move(pending_remote));
+    is_io_frame_connected_.store(true);
+    io_thread_render_frame_.set_disconnect_handler(
+        base::BindOnce(&ArkwebFrameHostExtImpl::OnIoRenderFrameDisconnect,
+                       weak_ptr_factory_.GetWeakPtr()));
+  }
+
+  if (io_thread_render_frame_ && io_thread_render_frame_.is_bound()) {
+    io_thread_render_frame_->ExecuteAIPageInputCommandByXPath(
+        xpath, value, input_type,
+        base::BindOnce(
+            [](std::shared_ptr<std::promise<int32_t>> promise,
+               int32_t result) {
+              if (promise) {
+                promise->set_value(result);
+              }
+            },
+            std::move(result_promise)));
+    return;
+  }
+
+  LOG(ERROR)
+      << "[WebCommandAction] ExecuteAIPageInputCommandByXPathOnIO: io_thread_render_frame_ is not bound";
+  if (result_promise) {
+    result_promise->set_value(static_cast<int32_t>(
+        OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY));
+  }
+}
+
+void ArkwebFrameHostExtImpl::ExecuteAIPageInputCommandByIdOnIO(
+    std::shared_ptr<std::promise<int32_t>> result_promise,
+    const std::string& id,
+    std::string value,
+    std::string input_type,
+    mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote) {
+  CEF_REQUIRE_IOT();
+  if (pending_remote.is_valid()) {
+    io_thread_render_frame_.reset();
+    io_thread_render_frame_.Bind(std::move(pending_remote));
+    is_io_frame_connected_.store(true);
+    io_thread_render_frame_.set_disconnect_handler(
+        base::BindOnce(&ArkwebFrameHostExtImpl::OnIoRenderFrameDisconnect,
+                       weak_ptr_factory_.GetWeakPtr()));
+  }
+
+  if (io_thread_render_frame_ && io_thread_render_frame_.is_bound()) {
+    io_thread_render_frame_->ExecuteAIPageInputCommandById(
+        id, value, input_type,
+        base::BindOnce(
+            [](std::shared_ptr<std::promise<int32_t>> promise,
+               int32_t result) {
+              if (promise) {
+                promise->set_value(result);
+              }
+            },
+            std::move(result_promise)));
+    return;
+  }
+
+  LOG(ERROR)
+      << "[WebCommandAction] ExecuteAIPageInputCommandByIdOnIO: io_thread_render_frame_ is not bound";
+  if (result_promise) {
+    result_promise->set_value(static_cast<int32_t>(
+        OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY));
+  }
+}
+
 void ArkwebFrameHostExtImpl::ExecuteSelectCommandOnIO(
     std::shared_ptr<std::promise<int32_t>> result_promise,
     const std::string& xpath,
@@ -1107,6 +1294,41 @@ void ArkwebFrameHostExtImpl::ExecuteSelectCommandOnIO(
     if (result_promise) {
       result_promise->set_value(
           static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY));
+    }
+  }
+}
+
+void ArkwebFrameHostExtImpl::ExecuteSelectCommandByIdOnIO(
+    std::shared_ptr<std::promise<int32_t>> result_promise,
+    const std::string& id,
+    const std::vector<int32_t> indexes,
+    const std::vector<std::string> values,
+    mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote) {
+  CEF_REQUIRE_IOT();
+  if (pending_remote.is_valid()) {
+    io_thread_render_frame_.reset();
+    io_thread_render_frame_.Bind(std::move(pending_remote));
+    is_io_frame_connected_.store(true);
+    io_thread_render_frame_.set_disconnect_handler(
+        base::BindOnce(&ArkwebFrameHostExtImpl::OnIoRenderFrameDisconnect,
+                       weak_ptr_factory_.GetWeakPtr()));
+  }
+  if (io_thread_render_frame_ && io_thread_render_frame_.is_bound()) {
+    io_thread_render_frame_->ExecuteSelectCommandById(
+        id, indexes, values,
+        base::BindOnce(
+            [](std::shared_ptr<std::promise<int32_t>> promise,
+               int32_t result) {
+              if (promise) {
+                promise->set_value(result);
+              }
+            },
+            std::move(result_promise)));
+  } else {
+    LOG(ERROR) << "[WebCommandAction] ExecuteSelectCommandByIdOnIO: io_thread_render_frame_ is not bound";
+    if (result_promise) {
+      result_promise->set_value(static_cast<int32_t>(
+          OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY));
     }
   }
 }

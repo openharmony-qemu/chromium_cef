@@ -18,13 +18,22 @@
 #include "cef/ohos_cef_ext/libcef/browser/arkweb_browser_host_ext.h"
 #endif
 
+#include <chrono>
+#include <future>
+#include <memory>
+#include <set>
 #include <tuple>
+#include <utility>
 
 #include "arkweb/build/features/features.h"
+#include "base/functional/bind.h"
+#include "base/functional/callback.h"
 #if BUILDFLAG(IS_ARKWEB_EXT)
 #include "arkweb/ohos_nweb_ex/build/features/features.h"
 #endif
+#include "base/json/json_writer.h"
 #include "base/logging.h"
+#include "base/values.h"
 #include "cef/libcef/browser/browser_info_manager.h"
 #include "cef/libcef/browser/browser_platform_delegate.h"
 #include "cef/libcef/browser/context.h"
@@ -61,6 +70,8 @@
 #include "ohos_cef_ext/libcef/browser/autofill/oh_autofill_client.h"
 #endif
 #include "libcef/browser/arkweb_browser_host_ext.h"
+#include "cef/ohos_cef_ext/include/arkweb_frame_ext.h"
+#include "cef/ohos_cef_ext/libcef/browser/ai_page_element_rect_resolver.h"
 #include "ui/base/resource/resource_scale_factor.h"
 #include "ui/gfx/image/image_skia.h"
 #include "ui/shell_dialogs/select_file_policy.h"
@@ -215,6 +226,71 @@ using OhPasswordManagerClient = ChromePasswordManagerClient;
 const char kNWebId[] = "nweb_id";
 #endif
 namespace {
+
+#if BUILDFLAG(ARKWEB_INPUT_EVENTS)
+base::Value::List BuildStringList(const std::set<std::string>& values) {
+  base::Value::List list;
+  for (const std::string& value : values) {
+    list.Append(value);
+  }
+  return list;
+}
+
+std::string BuildAIPageElementRectsHostResult(
+    arkweb::ai_page::AIPageElementRectResolveResult resolve_result) {
+  base::Value::Dict result;
+  result.Set("ok", true);
+  result.Set("requestedCount", resolve_result.requested_count);
+  result.Set("resolvedRectCount", resolve_result.resolved_rect_count);
+  result.Set("truncated", resolve_result.truncated);
+  result.Set("timedOut", resolve_result.timed_out);
+  result.Set("items", std::move(resolve_result.items));
+  result.Set("missingElementIds",
+             BuildStringList(resolve_result.missing_element_ids));
+  result.Set("invalidElementIds",
+             BuildStringList(resolve_result.invalid_element_ids));
+  std::string json;
+  base::JSONWriter::Write(result, &json);
+  return json;
+}
+
+constexpr int32_t kAIPageBrowserHostUiHopTimeoutMs = 4000;
+
+int32_t PostAIPageIntCommandToUiAndWait(base::OnceCallback<int32_t()> command) {
+  if (CEF_CURRENTLY_ON_UIT()) {
+    return std::move(command).Run();
+  }
+
+  if (CEF_CURRENTLY_ON_IOT()) {
+    LOG(ERROR) << "[AIPageCmd] sync browser host command cannot hop from IO thread";
+    return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::FAILED);
+  }
+
+  auto result_promise = std::make_shared<std::promise<int32_t>>();
+  std::future<int32_t> result_future = result_promise->get_future();
+
+  CEF_POST_TASK(
+      CEF_UIT,
+      base::BindOnce(
+          [](std::shared_ptr<std::promise<int32_t>> promise,
+             base::OnceCallback<int32_t()> command) {
+            if (promise) {
+              promise->set_value(std::move(command).Run());
+            }
+          },
+          result_promise, std::move(command)));
+
+  auto status = result_future.wait_for(
+      std::chrono::milliseconds(kAIPageBrowserHostUiHopTimeoutMs));
+  if (status == std::future_status::ready) {
+    return result_future.get();
+  }
+
+  LOG(ERROR) << "[AIPageCmd] browser host UI hop timeout";
+  return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::FAILED);
+}
+#endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
+
 
 #if BUILDFLAG(ARKWEB_INPUT_EVENTS)
 static float DEFAULT_MIN_ZOOM_FACTOR = 0.01f;
@@ -1675,10 +1751,65 @@ int32_t ArkWebBrowserHostExtImpl::ExecuteInputCommand(
   return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
 }
 
+int32_t ArkWebBrowserHostExtImpl::ExecuteAIPageInputCommandByXPath(
+    const std::string& xpath,
+    const std::string& value,
+    const std::string& input_type) {
+  if (!CEF_CURRENTLY_ON_UIT()) {
+    CefRefPtr<ArkWebBrowserHostExtImpl> self(this);
+    return PostAIPageIntCommandToUiAndWait(base::BindOnce(
+        [](CefRefPtr<ArkWebBrowserHostExtImpl> self, std::string xpath,
+           std::string value, std::string input_type) {
+          return self->ExecuteAIPageInputCommandByXPath(xpath, value,
+                                                        input_type);
+        },
+        self, xpath, value, input_type));
+  }
+
+  auto frame = GetMainFrame();
+  if (frame && frame->IsValid()) {
+    return static_cast<ArkwebFrameHostExtImpl*>(frame.get())
+        ->ExecuteAIPageInputCommandByXPath(xpath, value, input_type);
+  }
+  LOG(ERROR) << "ExecuteAIPageInputCommandByXPath: main frame is null or invalid";
+  return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
+}
+
+int32_t ArkWebBrowserHostExtImpl::ExecuteAIPageInputCommandById(
+    const std::string& id,
+    const std::string& value,
+    const std::string& input_type) {
+  if (!CEF_CURRENTLY_ON_UIT()) {
+    CefRefPtr<ArkWebBrowserHostExtImpl> self(this);
+    return PostAIPageIntCommandToUiAndWait(base::BindOnce(
+        [](CefRefPtr<ArkWebBrowserHostExtImpl> self, std::string id,
+           std::string value, std::string input_type) {
+          return self->ExecuteAIPageInputCommandById(id, value, input_type);
+        },
+        self, id, value, input_type));
+  }
+  auto frame = GetMainFrame();
+  if (frame && frame->IsValid()) {
+    return static_cast<ArkwebFrameHostExtImpl*>(frame.get())
+        ->ExecuteAIPageInputCommandById(id, value, input_type);
+  }
+  LOG(ERROR) << "ExecuteAIPageInputCommandById: main frame is null or invalid";
+  return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
+}
+
 int32_t ArkWebBrowserHostExtImpl::ExecuteSelectCommand(
     const std::string& xpath,
     const std::vector<int32_t>& indexes,
     const std::vector<std::string>& values) {
+  if (!CEF_CURRENTLY_ON_UIT()) {
+    CefRefPtr<ArkWebBrowserHostExtImpl> self(this);
+    return PostAIPageIntCommandToUiAndWait(base::BindOnce(
+        [](CefRefPtr<ArkWebBrowserHostExtImpl> self, std::string xpath,
+           std::vector<int32_t> indexes, std::vector<std::string> values) {
+          return self->ExecuteSelectCommand(xpath, indexes, values);
+        },
+        self, xpath, indexes, values));
+  }
   auto frame = GetMainFrame();
   if (frame && frame->IsValid()) {
     return static_cast<ArkwebFrameHostExtImpl*>(frame.get())
@@ -1781,6 +1912,68 @@ void ArkWebBrowserHostExtImpl::ValidateElementId(
   target_frame->ValidateElementIdWithResponse(
       element_id,
       base::BindOnce(&ResolveValidateElementIdCallback, callback));
+}
+
+int32_t ArkWebBrowserHostExtImpl::ExecuteSelectCommandById(
+    const std::string& id,
+    const std::vector<int32_t>& indexes,
+    const std::vector<std::string>& values) {
+  if (!CEF_CURRENTLY_ON_UIT()) {
+    CefRefPtr<ArkWebBrowserHostExtImpl> self(this);
+    return PostAIPageIntCommandToUiAndWait(base::BindOnce(
+        [](CefRefPtr<ArkWebBrowserHostExtImpl> self, std::string id,
+           std::vector<int32_t> indexes, std::vector<std::string> values) {
+          return self->ExecuteSelectCommandById(id, indexes, values);
+        },
+        self, id, indexes, values));
+  }
+ 
+  auto frame = GetMainFrame();
+  if (frame && frame->IsValid()) {
+    return static_cast<ArkwebFrameHostExtImpl*>(frame.get())
+        ->ExecuteSelectCommandById(id, indexes, values);
+  }
+  LOG(ERROR) << "ExecuteSelectCommandById: main frame is null or invalid";
+  return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
+}
+ 
+void ArkWebBrowserHostExtImpl::GetAIPageElementRects(
+    const std::vector<std::string>& element_ids,
+    int max_rects,
+    CefRefPtr<CefAIPageCommandCallback> callback) {
+  if (!CEF_CURRENTLY_ON_UIT()) {
+    CefRefPtr<ArkWebBrowserHostExtImpl> self(this);
+    CEF_POST_TASK(
+        CEF_UIT,
+        base::BindOnce(
+            [](CefRefPtr<ArkWebBrowserHostExtImpl> self,
+               std::vector<std::string> element_ids, int max_rects,
+               CefRefPtr<CefAIPageCommandCallback> callback) {
+              self->GetAIPageElementRects(element_ids, max_rects, callback);
+            },
+            self, element_ids, max_rects, callback));
+    return;
+  }
+ 
+  auto frame = GetMainFrame();
+  if (!frame || !frame->IsValid()) {
+    LOG(ERROR) << "GetAIPageElementRects: main frame is null or invalid";
+    if (callback) {
+      callback->OnResult("{\"ok\":false,\"error\":\"main frame is not available\"}");
+    }
+    return;
+  }
+  arkweb::ai_page::AIPageElementRectResolver::Resolve(
+      browser_info(), static_cast<ArkwebFrameHostExtImpl*>(frame.get()),
+      element_ids, max_rects,
+      base::BindOnce(
+          [](CefRefPtr<CefAIPageCommandCallback> callback,
+             arkweb::ai_page::AIPageElementRectResolveResult result) {
+            if (callback) {
+              callback->OnResult(BuildAIPageElementRectsHostResult(std::move(result)));
+            }
+          },
+          callback));
 }
 
 void ArkWebBrowserHostExtImpl::SetOverscrollMode(int overscrollMode) {

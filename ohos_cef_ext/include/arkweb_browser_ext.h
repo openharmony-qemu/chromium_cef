@@ -70,6 +70,7 @@
 #endif
 
 class CefClient;
+class CefAIPageCommandCallback;
 
 ///
 /// Interface to implement to be notified of asynchronous completion via
@@ -1153,6 +1154,18 @@ class ArkWebBrowserHostExt : public virtual CefBrowserHost,
                                       const std::string& value,
                                       const std::string& event_type) = 0;
 
+  /// Execute input ai page command by xpath.
+  ///
+  virtual int32_t ExecuteAIPageInputCommandByXPath(const std::string& xpath,
+                                      const std::string& value,
+                                      const std::string& input_type) { return 11; }
+
+  /// Execute input ai page command by id.
+  ///
+  virtual int32_t ExecuteAIPageInputCommandById(const std::string& id,
+                                          const std::string& value,
+                                          const std::string& input_type) { return 11; }
+
   /// Execute select command by xpath.
   ///
   virtual int32_t ExecuteSelectCommand(const std::string& xpath,
@@ -1164,6 +1177,20 @@ class ArkWebBrowserHostExt : public virtual CefBrowserHost,
   virtual void ValidateElementId(
       const std::string& element_id,
       CefRefPtr<CefAIPageCommandCallback> callback) = 0;
+
+  /// Execute select command by id.
+  ///
+  virtual int32_t ExecuteSelectCommandById(
+      const std::string& id,
+      const std::vector<int32_t>& indexes,
+      const std::vector<std::string>& values) { return 11; }
+
+  /// Get ai page element rects.
+  ///
+  virtual void GetAIPageElementRects(
+      const std::vector<std::string>& element_ids,
+      int max_rects,
+      CefRefPtr<CefAIPageCommandCallback> callback) {}
 
   ///
   /// Set whether the soft keyboard is displayed.
