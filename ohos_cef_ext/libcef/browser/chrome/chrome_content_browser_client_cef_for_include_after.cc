@@ -169,38 +169,6 @@ void BindFallbackProxy(
 void ArkWebInnerConfigureNetworkContextParamsBefore(
     content::BrowserContext* context,
     network::mojom::NetworkContextParams* network_context_params) {
-#if BUILDFLAG(ARKWEB_CACHE)
-  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
-          switches::kHttpCacheMaxSize)) {
-    if (base::CommandLine::ForCurrentProcess()->HasSwitch(
-            switches::kEnableNwebEx)) {
-      // In order to make better use of cache, we use the same strategy as
-      // chromium for httpcache.
-      // Determined by DiskCache itself.
-      network_context_params->http_cache_max_size = 0;
-    } else {
-#if BUILDFLAG(ARKWEB_MAX_CACHE_SIZE)
-      int64_t totalDiskSpace =
-          base::SysInfo::AmountOfTotalDiskSpace(base::FilePath(WEB_CACHE_PATH));
-      if (totalDiskSpace >= LARGE_CAPACITY_DEVICE_THRESHOLD) {
-        LOG(DEBUG)
-            << "Set http cache max size to 100MB for large capacity device.";
-        network_context_params->http_cache_max_size =
-            LARGE_CAPACITY_DEVICE_CACHE_SIZE;
-      } else {
-        LOG(DEBUG)
-            << "Set http cache max size to 20MB for samll capacity device.";
-        network_context_params->http_cache_max_size =
-            SMALL_CAPACITY_DEVICE_CACHE_SIZE;
-      }
-#else
-      network_context_params->http_cache_max_size =
-          LARGE_CAPACITY_DEVICE_CACHE_SIZE;
-#endif
-    }
-  }
-#endif  // BUILDFLAG(ARKWEB_CACHE)
-
 #if BUILDFLAG(ARKWEB_COOKIE)
   mojo::PendingRemote<network::mojom::CookieManager> cookie_manager_remote;
   network_context_params->cookie_manager =
@@ -227,6 +195,41 @@ void ArkWebInnerConfigureNetworkContextParamsBefore(
 void ArkWebInnerConfigureNetworkContextParamsAfter(
     content::BrowserContext* context,
     network::mojom::NetworkContextParams* network_context_params) {
+#if BUILDFLAG(ARKWEB_CACHE)
+  // Restore http_cache_max_size after ProfileNetworkContextService
+  // overwrites it with prefs:kDiskCacheSize
+  if (!context->IsOffTheRecord() &&
+      base::CommandLine::ForCurrentProcess()->HasSwitch(
+          switches::kHttpCacheMaxSize)) {
+    if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+            switches::kEnableNwebEx)) {
+      // In order to make better use of cache, we use the same strategy as
+      // chromium for httpcache.
+      // Determined by DiskCache itself (PreferredCacheSize).
+      network_context_params->http_cache_max_size = 0;
+    } else {
+#if BUILDFLAG(ARKWEB_MAX_CACHE_SIZE)
+      int64_t totalDiskSpace =
+          base::SysInfo::AmountOfTotalDiskSpace(base::FilePath(WEB_CACHE_PATH));
+      if (totalDiskSpace >= LARGE_CAPACITY_DEVICE_THRESHOLD) {
+        LOG(DEBUG)
+            << "Set http cache max size to 100MB for large capacity device.";
+        network_context_params->http_cache_max_size =
+            LARGE_CAPACITY_DEVICE_CACHE_SIZE;
+      } else {
+        LOG(DEBUG)
+            << "Set http cache max size to 20MB for small capacity device.";
+        network_context_params->http_cache_max_size =
+            SMALL_CAPACITY_DEVICE_CACHE_SIZE;
+      }
+#else
+      network_context_params->http_cache_max_size =
+          LARGE_CAPACITY_DEVICE_CACHE_SIZE;
+#endif
+    }
+  }
+#endif // BUILDFLAG(ARKWEB_CACHE)
+
 #if BUILDFLAG(ARKWEB_INCOGNITO_MODE)
   network_context_params->file_paths =
       ::network::mojom::NetworkContextFilePaths::New();
