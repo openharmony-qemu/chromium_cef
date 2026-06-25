@@ -235,11 +235,9 @@ void PermissionsRequestFunction::OnShowPrompt(int action,
   if (action == static_cast<int>(DialogAction::kAutoConfirm)) {
     OnInstallPromptDone(ExtensionInstallPrompt::DoneCallbackPayload(
         ExtensionInstallPrompt::Result::ACCEPTED));
-  } else if (action == static_cast<int>(DialogAction::kAutoReject)) {
+  } else {
     OnInstallPromptDone(ExtensionInstallPrompt::DoneCallbackPayload(
         ExtensionInstallPrompt::Result::USER_CANCELED));
-  } else {
-    LOG(INFO) << "no support action " << action << ",error is " << error;
   }
 }
 
