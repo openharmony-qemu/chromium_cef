@@ -45,7 +45,7 @@ class UserAdblockRulesetManager
 
   std::vector<base::FilePath> last_user_easylist_;
   scoped_refptr<base::SequencedTaskRunner> sequenced_task_runner_ =
-      base::ThreadPool::CreateSequencedTaskRunner({base::MayBlock()});
+      base::ThreadPool::CreateSequencedTaskRunner({base::MayBlock(), base::TaskPriority::USER_VISIBLE});
 };
 
 }  // namespace subresource_filter
