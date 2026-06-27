@@ -886,9 +886,8 @@ void OhosPrintManager::SetupScriptedPrintPreview(
 
 void OhosPrintManager::ShowScriptedPrintPreview(bool source_is_modifiable) {}
 
-void OhosPrintManager::UpdatePrintSettings(
-    base::Value::Dict job_settings,
-    UpdatePrintSettingsCallback callback) {}
+void OhosPrintManager::GetPrintPreviewParams(
+    GetPrintPreviewParamsCallback callback) {}
 
 void OhosPrintManager::SetRfhId(content::GlobalRenderFrameHostId rfhId) {
   rfh_id_ = rfhId;
