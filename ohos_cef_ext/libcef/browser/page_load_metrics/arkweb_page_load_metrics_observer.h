@@ -12,6 +12,7 @@
 #include "net/nqe/effective_connection_type.h"
 #if BUILDFLAG(ARKWEB_NETWORK_DFX)
 #include "ohos_nweb/src/sysevent/oh_web_performance_timing.h"
+#include "content/browser/web_contents/web_contents_impl.h"
 #endif
 
 namespace network {
@@ -113,6 +114,11 @@ class OhPageLoadMetricsObserver
 #endif
 
  private:
+#if BUILDFLAG(ARKWEB_NWEB_EX) && BUILDFLAG(ARKWEB_NETWORK_DFX)
+  content::WebContentsImpl* GetWebContentsImpl();
+  void RecordPageLoadReportMetrics();
+#endif
+
   int64_t navigation_id_ = -1;
 
   raw_ptr<network::NetworkQualityTracker> network_quality_tracker_ = nullptr;
@@ -136,6 +142,38 @@ class OhPageLoadMetricsObserver
   // cache.
   std::vector<ukm::SourceId> back_forward_cache_navigation_ids_;
 #endif
+
+#if BUILDFLAG(ARKWEB_NWEB_EX) && BUILDFLAG(ARKWEB_NETWORK_DFX)
+ public:
+  struct PageLoadReportMetrics {
+    PageLoadReportMetrics();
+    PageLoadReportMetrics(const PageLoadReportMetrics&);
+
+    GURL url;
+    bool hit_dns_cache = false;
+    bool did_use_quic = false;
+    bool hit_cache = false;
+    bool is_client_redirect = false;
+    int64_t navigation_start_tick = -1;
+    int64_t request_start = -1;
+    int64_t dns_duration = -1;
+    int64_t connect_duration = -1;
+    int64_t render_process_start = -1;
+    int64_t response_start = -1;
+    int64_t response_end = -1;
+    int64_t first_visually_non_empty_paint = -1;
+    int64_t dom_content_loaded_event_start = -1;
+    int64_t first_contentful_paint = -1;
+    int64_t largest_contentful_paint = -1;
+    int64_t load_event_start = -1;
+    int64_t on_page_finished = -1;
+    int64_t on_progress_changed_done = -1;
+    bool did_use_accelerate_proxy = false;
+  };
+
+ private:
+  PageLoadReportMetrics page_load_report_metrics_;
+#endif  // ARKWEB_NWEB_EX && ARKWEB_NETWORK_DFX
 };
 
 #endif  // CEF_LIBCEF_BROWSER_PAGE_LOAD_METRICS_OH_PAGE_LOAD_METRICS_OBSERVER_H_

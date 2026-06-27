@@ -22,6 +22,7 @@
 #include "base/functional/bind.h"
 #include "base/functional/callback.h"
 #include "net/base/proxy_string_util.h"
+#include "net/base/url_util.h"
 
 namespace fallback_proxy {
 FallbackProxyConfig::FallbackProxyConfig() : enabled_(false) {}
@@ -35,6 +36,8 @@ void FallbackProxyConfig::WriteCurrentConfigToLog() {
     << "; hw_codes_size = " << safe_browsing_hw_codes_.size()
     << "; malicious_types_size = "
     << safe_browsing_malicious_types_.size()
+    << "; direct_proxy_host_list_size = "
+    << direct_proxy_host_list_.size()
     << "; proxy_tunnel_timeout = " << proxy_tunnel_timeout_
     << "; proxy_connect_timeout = " << proxy_connect_timeout_
     << "; malicious_url_check_wait_time = "
@@ -50,11 +53,16 @@ void FallbackProxyConfig::SetFallbackProxyConfigData(
       config_data.safe_browsing_hw_code_list;
   std::vector<int> safe_browsing_malicious_types =
       config_data.safe_browsing_malicious_type_list;
+  std::vector<std::string> direct_proxy_host_list =
+      config_data.direct_proxy_host_list;
   int restart_proxy_internal = config_data.restart_proxy_internal;
   int proxy_tunnel_timeout = config_data.proxy_tunnel_timeout;
   int proxy_connect_timeout = config_data.proxy_connect_timeout;
   int malicious_url_check_wait_time = config_data.malicious_url_check_wait_time;
   std::string proxy_server = config_data.fallback_server;
+  std::string accelerate_proxy_server = config_data.accelerate_proxy_server;
+  std::vector<std::string> accelerate_host_list =
+ 	    config_data.accelerate_host_list;
 
   UpdateFallbackProxyServerConfig(config_enabled_, proxy_server);
   if (restart_proxy_internal != restart_proxy_internal_) {
@@ -63,18 +71,43 @@ void FallbackProxyConfig::SetFallbackProxyConfigData(
               << ", restart_proxy_internal_after " << restart_proxy_internal;
     restart_proxy_internal_ = restart_proxy_internal;
   }
+  if (accelerate_proxy_server != accelerate_proxy_server_ ||
+      accelerate_host_list != accelerate_host_list_) {
+    LOG(INFO) << "ActiveProxyAccelerate config data is changed"
+              << ", accelerate_proxy_server_before "
+              << url::LogUtils::ConvertUrlWithMask(accelerate_proxy_server_)
+              << ", accelerate_proxy_server_after "
+              << url::LogUtils::ConvertUrlWithMask(accelerate_proxy_server)
+              << ", accelerate_host_list_size_before "
+              << accelerate_host_list_.size()
+              << ", accelerate_host_list_size_after "
+              << accelerate_host_list.size();
+    accelerate_proxy_server_ = accelerate_proxy_server;
+    accelerate_host_list_ = accelerate_host_list;
+  }
   if (using_proxy_error_codes != using_proxy_error_codes_ ||
       safe_browsing_hw_codes != safe_browsing_hw_codes_ ||
       safe_browsing_malicious_types != safe_browsing_malicious_types_ ||
+      direct_proxy_host_list != direct_proxy_host_list_ ||
       proxy_tunnel_timeout != proxy_tunnel_timeout_ ||
       proxy_connect_timeout != proxy_connect_timeout_ ||
       malicious_url_check_wait_time != malicious_url_check_wait_time_) {
     using_proxy_error_codes_ = using_proxy_error_codes;
     safe_browsing_hw_codes_ = safe_browsing_hw_codes;
     safe_browsing_malicious_types_ = safe_browsing_malicious_types;
+    direct_proxy_host_list_ = direct_proxy_host_list;
     proxy_tunnel_timeout_ = proxy_tunnel_timeout;
     proxy_connect_timeout_ = proxy_connect_timeout;
     malicious_url_check_wait_time_ = malicious_url_check_wait_time;
+
+    bypass_rules_.Clear();
+    for (const std::string& host : direct_proxy_host_list_) {
+      if (!net::IsCanonicalizedHostCompliant(host) ||
+          !bypass_rules_.AddRuleFromString(host)) {
+        LOG(WARNING) << "Fallback proxy config direct proxy host skipped, invalid host";
+      }
+    }
+
     LOG(INFO) << "Fallback proxy config data is changed";
     WriteCurrentConfigToLog();
     if (proxy_info_updated_callback_) {
@@ -99,8 +132,8 @@ std::vector<net::ProxyServer> FallbackProxyConfig::GetProxyServers() const {
   return proxy_servers_;
 }
 
-const net::ProxyHostMatchingRules& FallbackProxyConfig::GetHostMatchingRules() {
-  return host_matching_rules_;
+const net::ProxyHostMatchingRules& FallbackProxyConfig::GetBypassRules() {
+  return bypass_rules_;
 }
 
 const std::vector<int>& FallbackProxyConfig::GetUsingProxyErrorCodes() const {
@@ -147,6 +180,14 @@ void FallbackProxyConfig::UpdateProxyToken(const std::string& token,
   }
 }
 
+const std::string& FallbackProxyConfig::GetAccelerateProxyServer() const {
+  return accelerate_proxy_server_;
+}
+
+const std::vector<std::string>& FallbackProxyConfig::GetAccelerateHostList() const {
+  return accelerate_host_list_;
+}
+
 void FallbackProxyConfig::InitializeEnableParamsForTesting(
     const std::string& proxy_url,
     const std::string& header) {
@@ -164,7 +205,7 @@ void FallbackProxyConfig::InitializeDisableParamsForTesting() {
 }
 
 void FallbackProxyConfig::SetBypassRulesForTesting(const std::string& pattern) {
-  host_matching_rules_.ParseFromString(pattern);
+  bypass_rules_.ParseFromString(pattern);
 }
 
 void FallbackProxyConfig::UpdateProxyServer() {

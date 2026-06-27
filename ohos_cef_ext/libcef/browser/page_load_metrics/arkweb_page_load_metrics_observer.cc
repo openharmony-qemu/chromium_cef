@@ -27,7 +27,14 @@
 #include "url/gurl.h"
 #if BUILDFLAG(ARKWEB_NETWORK_DFX)
 #include "ohos_nweb/src/sysevent/event_reporter.h"
-#endif
+#if BUILDFLAG(ARKWEB_NWEB_EX)
+#include "net/http/http_connection_info.h"
+#include "arkweb/ohos_nweb_ex/overrides/cef/libcef/browser/page_load_metrics/nweb_page_load_metrics_shim.h"
+#if BUILDFLAG(ARKWEB_EX_FALLBACK_PROXY)
+#include "libcef/browser/fallback_proxy/fallback_proxy_detector.h"
+#endif  // ARKWEB_EX_FALLBACK_PROXY
+#endif  // ARKWEB_NWEB_EX
+#endif  // ARKWEB_NETWORK_DFX
 
 #if BUILDFLAG(ARKWEB_NETWORK_DFX)
 #if BUILDFLAG(ARKWEB_CRASHPAD)
@@ -51,6 +58,30 @@ int64_t OhPageLoadMetricsObserver::render_init_block_ = -1;
 // TODO: ARKWEB_REPORT_SYS_EVENT
 // int64_t OhPageLoadMetricsObserver::navigation_start_timestamp_ = -1;
 #endif
+
+namespace {
+
+#if BUILDFLAG(ARKWEB_NWEB_EX) && BUILDFLAG(ARKWEB_NETWORK_DFX)
+int64_t GetRelativeMilliseconds(base::TimeTicks ticks1,
+                                base::TimeTicks ticks2) {
+  return (ticks1 - ticks2).InMilliseconds();
+}
+
+bool IsQuicOrHttp3(net::HttpConnectionInfo info) {
+  if (info == net::HttpConnectionInfo::kQUIC_UNKNOWN_VERSION) {
+    return true;
+  }
+
+  if (info >= net::HttpConnectionInfo::kQUIC_32 &&
+      info <= net::HttpConnectionInfo::kQUIC_2_DRAFT_8) {
+    return true;
+  }
+
+  return false;
+}
+#endif  // ARKWEB_NWEB_EX && ARKWEB_NETWORK_DFX
+
+}  // namespace
 
 static int64_t GetCurrentTimestampMS() {
   auto currentTime = std::chrono::system_clock::now().time_since_epoch();
@@ -87,6 +118,14 @@ OhPageLoadMetricsObserver::ObservePolicy OhPageLoadMetricsObserver::OnStart(
       << " startedInForeground:" << started_in_foreground
       << " currentCommittedUrl:"
       << url::LogUtils::ConvertUrlWithMask(currently_committed_url.spec());
+#endif
+
+#if BUILDFLAG(ARKWEB_NWEB_EX) && BUILDFLAG(ARKWEB_NETWORK_DFX)
+  page_load_report_metrics_.url = navigation_handle->GetURL();
+  if (navigation_handle->GetPageTransition() &
+      ui::PAGE_TRANSITION_CLIENT_REDIRECT) {
+    page_load_report_metrics_.is_client_redirect = true;
+  }
 #endif
 
   return CONTINUE_OBSERVING;
@@ -168,6 +207,23 @@ OhPageLoadMetricsObserver::OnCommit(
       << "PageCommit navigationId:" << navigation_id_
       << " currentNavigationId:" << navigation_handle->GetNavigationId();
 #endif
+
+#if BUILDFLAG(ARKWEB_NWEB_EX) && BUILDFLAG(ARKWEB_NETWORK_DFX)
+  net::HttpConnectionInfo connection_info = 
+      navigation_handle->GetConnectionInfo();
+  page_load_report_metrics_.did_use_quic = IsQuicOrHttp3(connection_info);
+
+#if BUILDFLAG(ARKWEB_EX_FALLBACK_PROXY)
+  fallback_proxy::AccelerateProxyUserData* user_data =
+      fallback_proxy::AccelerateProxyUserData::GetForNavigationHandle(
+          *navigation_handle);
+  if (user_data) {
+    page_load_report_metrics_.did_use_accelerate_proxy =
+        user_data->is_accelerate_proxy();
+  }
+#endif  // ARKWEB_EX_FALLBACK_PROXY
+#endif  // ARKWEB_NWEB_EX && ARKWEB_NETWORK_DFX
+
   return CONTINUE_OBSERVING;
 }
 
@@ -485,6 +541,11 @@ void OhPageLoadMetricsObserver::OnLoadedResource(
             ? -1
             : (timing.receive_headers_start - navigation_start)
                   .InMilliseconds();
+
+#if BUILDFLAG(ARKWEB_NWEB_EX)
+    page_load_report_metrics_.hit_cache =
+        extra_request_complete_info.was_cached;
+#endif
   }
 }
 
@@ -498,6 +559,11 @@ void OhPageLoadMetricsObserver::OnFirstPaintInPage(
 }
 
 void OhPageLoadMetricsObserver::ReportPerformanceTiming() {
+#if BUILDFLAG(ARKWEB_NWEB_EX)
+  RecordPageLoadReportMetrics();
+  NwebPageLoadMetricsShim::MaybeReportPageLoadMetrics(page_load_report_metrics_);
+#endif
+
 #if BUILDFLAG(ARKWEB_CRASHPAD)
     web_performance_timing_.render_init_block = render_init_block_.load(std::memory_order_relaxed);
     ReportPageLoadTimeStats(web_performance_timing_);
@@ -644,3 +710,97 @@ void OhPageLoadMetricsObserver::OnPrimaryPageRenderProcessGone() {
       << "PagePrimaryPageRenderProcessGone navigationId:" << navigation_id_;
 #endif
 }
+
+#if BUILDFLAG(ARKWEB_NWEB_EX) && BUILDFLAG(ARKWEB_NETWORK_DFX)
+content::WebContentsImpl* OhPageLoadMetricsObserver::GetWebContentsImpl() {
+  auto web_contents = GetDelegate().GetWebContents();
+  if (!web_contents) {
+    return nullptr;
+  }
+  return static_cast<content::WebContentsImpl*>(web_contents);
+}
+
+void OhPageLoadMetricsObserver::RecordPageLoadReportMetrics() {
+  content::WebContentsImpl* web_contents_impl = GetWebContentsImpl();
+  auto navigation_start = GetDelegate().GetNavigationStart();
+
+  page_load_report_metrics_.navigation_start_tick = web_performance_timing_.navigation_start;
+  page_load_report_metrics_.request_start = web_performance_timing_.request_start;
+  page_load_report_metrics_.dns_duration =
+      web_performance_timing_.domain_lookup_end - web_performance_timing_.domain_lookup_start;
+  page_load_report_metrics_.connect_duration =
+      web_performance_timing_.connect_end - web_performance_timing_.connect_start;
+  if (web_contents_impl && web_contents_impl->GetRenderViewHost() &&
+      web_contents_impl->GetRenderViewHost()->GetProcess()) {
+    auto process_start_time =
+        web_contents_impl->GetRenderViewHost()->GetProcess()->GetChildProcessStartTime();
+    if (!process_start_time.is_null() && process_start_time >= navigation_start) {
+      page_load_report_metrics_.render_process_start =
+          GetRelativeMilliseconds(process_start_time, navigation_start);
+    }
+  }
+  page_load_report_metrics_.response_start = web_performance_timing_.response_start;
+  page_load_report_metrics_.response_end = web_performance_timing_.response_end;
+  page_load_report_metrics_.dom_content_loaded_event_start =
+      web_performance_timing_.dom_content_loaded_event_start;
+  page_load_report_metrics_.first_contentful_paint =
+      web_performance_timing_.first_contentful_paint;
+  page_load_report_metrics_.largest_contentful_paint =
+      web_performance_timing_.largest_contentful_paint;
+  page_load_report_metrics_.load_event_start = web_performance_timing_.load_event_start;
+
+  if (!web_contents_impl) {
+    return;
+  }
+
+  auto* web_contents_ext = web_contents_impl->AsWebContentsImplExt();
+  if (web_contents_ext) {
+    auto first_viruall_non_empty_paint = web_contents_ext
+        ->FirstVisuallyNonEmptyPaintTime(page_load_report_metrics_.url);
+    if (!first_viruall_non_empty_paint.is_null()) {
+      page_load_report_metrics_.first_visually_non_empty_paint =
+          GetRelativeMilliseconds(first_viruall_non_empty_paint,
+                                  navigation_start);
+    }
+
+    auto page_finished_time = web_contents_ext
+        ->PageFinishedTime(page_load_report_metrics_.url);
+    if (!page_finished_time.is_null()) {
+      page_load_report_metrics_.on_page_finished =
+          GetRelativeMilliseconds(page_finished_time, navigation_start);
+    }
+
+    auto full_loading_progress = web_contents_ext
+        ->GetFullLoadingProgressTime(page_load_report_metrics_.url);
+    if (!full_loading_progress.is_null()) {
+      page_load_report_metrics_.on_progress_changed_done =
+          GetRelativeMilliseconds(full_loading_progress, navigation_start);
+    }
+  }
+}
+
+OhPageLoadMetricsObserver::PageLoadReportMetrics::PageLoadReportMetrics() = default;
+OhPageLoadMetricsObserver::PageLoadReportMetrics::PageLoadReportMetrics(
+    const PageLoadReportMetrics& metrics) {
+  url = metrics.url;
+  hit_dns_cache = metrics.hit_dns_cache;
+  did_use_quic = metrics.did_use_quic;
+  hit_cache = metrics.hit_cache;
+  is_client_redirect = metrics.is_client_redirect;
+  navigation_start_tick = metrics.navigation_start_tick;
+  request_start = metrics.request_start;
+  dns_duration = metrics.dns_duration;
+  connect_duration = metrics.connect_duration;
+  render_process_start = metrics.render_process_start;
+  response_start = metrics.response_start;
+  response_end = metrics.response_end;
+  first_visually_non_empty_paint = metrics.first_visually_non_empty_paint;
+  dom_content_loaded_event_start = metrics.dom_content_loaded_event_start;
+  first_contentful_paint = metrics.first_contentful_paint;
+  largest_contentful_paint = metrics.largest_contentful_paint;
+  load_event_start = metrics.load_event_start;
+  on_page_finished = metrics.on_page_finished;
+  on_progress_changed_done = metrics.on_progress_changed_done;
+  did_use_accelerate_proxy = metrics.did_use_accelerate_proxy;
+}
+#endif  // ARKWEB_NWEB_EX && ARKWEB_NETWORK_DFX
