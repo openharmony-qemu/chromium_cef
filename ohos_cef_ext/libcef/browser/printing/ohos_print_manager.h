@@ -102,8 +102,7 @@ class OhosPrintManager : public printing::PrintManager,
   void SetupScriptedPrintPreview(
       SetupScriptedPrintPreviewCallback callback) override;
   void ShowScriptedPrintPreview(bool source_is_modifiable) override;
-  void UpdatePrintSettings(base::Value::Dict job_settings,
-                           UpdatePrintSettingsCallback callback) override;
+  void GetPrintPreviewParams(GetPrintPreviewParamsCallback callback) override;
   void SetRfhId(content::GlobalRenderFrameHostId rfhId);
   content::GlobalRenderFrameHostId GetRfhId();
 
