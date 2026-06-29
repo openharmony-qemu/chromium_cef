@@ -88,6 +88,7 @@
 #include "chrome/browser/profiles/profile.h"
 #include "ohos_nweb/src/capi/nweb_devtools_message_handler.h"
 #include "chrome/browser/devtools/devtools_window.h"
+#include "content/browser/web_contents/web_contents_impl.h"
 #endif // BUILDFLAG(ARKWEB_DEVTOOLS)
 
 namespace {
@@ -973,6 +974,14 @@ void CefDevToolsFrontend::HandleMessageFromDevToolsFrontend(
                                      ui::PAGE_TRANSITION_LINK, false);
     if (inspected_contents_ != nullptr) {
       inspected_contents_->OpenURL(urlParams, {});
+    } else {
+      if (content::WebContentsImpl::GetAllWebContents().empty()) {
+        return;
+      }
+      content::WebContents* contents = content::WebContentsImpl::GetAllWebContents().back();
+      if (contents) {
+        contents->OpenURL(urlParams, {});
+      }
     }
     return;
   } else if (*method == "addFileSystem") {
