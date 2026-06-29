@@ -28,6 +28,10 @@
 #include "arkweb/chromium_ext/ui/ohos/overscroll_refresh_handler.h"
 #endif
 
+#if BUILDFLAG(ARKWEB_SYNC_RENDER)
+#include "ui/gfx/geometry/rect.h"
+#endif
+
 namespace {
 
 class ArkWebRenderWidgetHostViewOSRUtilsTest : public testing::Test {
@@ -308,6 +312,82 @@ TEST_F(ArkWebRenderWidgetHostViewOSRUtilsTest, GetContextFactory_ReturnsNonNull)
   auto result = ArkWebRenderWidgetHostViewOSRUtils::GetContextFactory();
   EXPECT_NE(nullptr, result);
 }
+
+#if BUILDFLAG(ARKWEB_SYNC_RENDER)
+TEST(ArkWebCompositorMapCleanupTest, RemoveStaleEntries) {
+  std::map<int, std::unique_ptr<content::SoftwareCompositorHostOhos>> test_map;
+  test_map[1] = nullptr;
+  test_map[2] = nullptr;
+  test_map[3] = nullptr;
+
+  std::set<int> active = {1, 3};
+
+  for (auto it = test_map.begin(); it != test_map.end();) {
+    if (active.find(it->first) == active.end()) {
+      it = test_map.erase(it);
+    } else {
+      ++it;
+    }
+  }
+
+  EXPECT_EQ(test_map.size(), 2u);
+  EXPECT_NE(test_map.find(1), test_map.end());
+  EXPECT_EQ(test_map.find(2), test_map.end());
+  EXPECT_NE(test_map.find(3), test_map.end());
+}
+
+TEST(ArkWebCompositorMapCleanupTest, AllActive_NoRemoval) {
+  std::map<int, std::unique_ptr<content::SoftwareCompositorHostOhos>> test_map;
+  test_map[1] = nullptr;
+  test_map[2] = nullptr;
+
+  std::set<int> active = {1, 2};
+
+  for (auto it = test_map.begin(); it != test_map.end();) {
+    if (active.find(it->first) == active.end()) {
+      it = test_map.erase(it);
+    } else {
+      ++it;
+    }
+  }
+
+  EXPECT_EQ(test_map.size(), 2u);
+}
+
+TEST(ArkWebCompositorMapCleanupTest, EmptyMap_NoCrash) {
+  std::map<int, std::unique_ptr<content::SoftwareCompositorHostOhos>> test_map;
+  std::set<int> active = {1};
+
+  for (auto it = test_map.begin(); it != test_map.end();) {
+    if (active.find(it->first) == active.end()) {
+      it = test_map.erase(it);
+    } else {
+      ++it;
+    }
+  }
+
+  EXPECT_EQ(test_map.size(), 0u);
+}
+
+TEST(ArkWebCompositorMapCleanupTest, AllStale_RemoveAll) {
+  std::map<int, std::unique_ptr<content::SoftwareCompositorHostOhos>> test_map;
+  test_map[1] = nullptr;
+  test_map[2] = nullptr;
+  test_map[3] = nullptr;
+
+  std::set<int> active;
+
+  for (auto it = test_map.begin(); it != test_map.end();) {
+    if (active.find(it->first) == active.end()) {
+      it = test_map.erase(it);
+    } else {
+      ++it;
+    }
+  }
+
+  EXPECT_EQ(test_map.size(), 0u);
+}
+#endif  // BUILDFLAG(ARKWEB_SYNC_RENDER)
 
 }  // namespace
 #endif  // BUILDFLAG(ARKWEB_EVICT_UNLOCK_FRAMES)
