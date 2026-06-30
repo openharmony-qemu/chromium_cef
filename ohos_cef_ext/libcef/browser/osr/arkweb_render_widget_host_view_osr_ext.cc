@@ -2779,6 +2779,13 @@ void ArkWebRenderWidgetHostViewOSRExt::PullToRefreshUpdate(float x_delta,
   }
   pull_to_refresh_offset_x_ += x_delta;
   pull_to_refresh_offset_y_ += y_delta;
+  if (pull_to_refresh_offset_y_ < 0.0) {
+    LOG(DEBUG) << "[pulltorefresh] The page has been scrolled to the top and cannot be moved upward further,"
+               << " pull_to_refresh_offset_y:" << pull_to_refresh_offset_y_
+               << " ,y_delta:" << y_delta;
+    GetRootLayer()->SetTransform(root_layer_transform_);
+    return;
+  }
   browser_impl_->GetClient()->AsArkWebClient()->OnPullToRefreshPull(
       pull_to_refresh_offset_x_, pull_to_refresh_offset_y_);
 
