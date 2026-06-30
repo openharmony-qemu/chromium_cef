@@ -27,6 +27,9 @@
 #endif
 
 #if BUILDFLAG(ARKWEB_INPUT_EVENTS) && !defined(COMPONENT_BUILD)
+#include "arkweb/chromium_ext/base/ohos/sys_info_utils_ext.h"
+#include "arkweb/chromium_ext/ui/events/features_ext.h"
+#include "base/feature_list.h"
 #include "ui/events/keycodes/keyboard_code_conversion_x.h"
 #include "ui/events/keycodes/keyboard_code_conversion_xkb.h"
 #endif
@@ -290,6 +293,18 @@ ui::KeyEvent CefBrowserPlatformDelegateNativeLinux::TranslateUiKeyEvent(
   ui::DomKey dom_key = ui::XKeySymToDomKey(keysym, character);
 #else
   ui::DomKey dom_key = ui::DomKey::NONE;
+#endif
+
+#if BUILDFLAG(ARKWEB_INPUT_EVENTS) && !defined(COMPONENT_BUILD)
+  if (base::FeatureList::IsEnabled(features::kArkWebImeProcessKeyDomKeyFix) &&
+      key_code == ui::VKEY_PROCESSKEY) {
+    if (base::ohos::IsPcDevice()) {
+      dom_key = ui::DomKey::PROCESS;
+    } else if (dom_key == ui::DomKey::NONE ||
+               dom_key == ui::DomKey::FromCharacter(0)) {
+      dom_key = ui::DomKey::UNIDENTIFIED;
+    }
+  }
 #endif
 
   return ui::KeyEvent(type, key_code, dom_code, flags, dom_key, time_stamp);
