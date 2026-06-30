@@ -765,6 +765,7 @@ typedef struct _cef_browser_settings_t {
 
 #if BUILDFLAG(ARKWEB_ERROR_PAGE)
   bool error_page_enabled;
+  bool subframe_error_page_enabled;
 #endif
 
 #if BUILDFLAG(ARKWEB_SCROLLBAR_AVOID_CORNER)
