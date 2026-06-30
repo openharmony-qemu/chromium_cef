@@ -111,6 +111,7 @@ static inline void setForInclude(const struct_type* src,
 
 #if BUILDFLAG(ARKWEB_ERROR_PAGE)
   target->error_page_enabled = src->error_page_enabled;
+  target->subframe_error_page_enabled = src->subframe_error_page_enabled;
 #endif
 
 #if BUILDFLAG(ARKWEB_CLIPBOARD)
