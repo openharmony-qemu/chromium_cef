@@ -792,7 +792,7 @@ index 12a7161d08..f194bb01c8 100644
          ->set_system_crash_reporter_forwarding(crashpad::TriState::kDisabled);
    }
 diff --git a/src/components/crash/core/app/crashpad_linux.cc b/src/components/crash/core/app/crashpad_linux.cc
-index eab514f313..5c900a57e9 100644
+index 5d9b3bd538..e5aee47e19 100644
 --- a/src/components/crash/core/app/crashpad_linux.cc
 +++ b/src/components/crash/core/app/crashpad_linux.cc
 @@ -23,6 +23,7 @@
@@ -851,7 +851,7 @@ index eab514f313..5c900a57e9 100644
  
  #if BUILDFLAG(IS_CHROMEOS_DEVICE)
      // Chromium OS: save board and builder path for 'tast symbolize'.
-@@ -242,6 +255,12 @@ bool PlatformCrashpadInitialization(
+@@ -239,6 +252,12 @@ bool PlatformCrashpadInitialization(
      }
  #endif
  
@@ -1058,7 +1058,7 @@ index 6d48cd769c..f1cf9b4d48 100644
  }
  
 diff --git a/src/components/embedder_support/user_agent_utils.cc b/src/components/embedder_support/user_agent_utils.cc
-index 7972a6b4b5..6c6617e777 100644
+index a1f64afe60..70fad5a3b7 100644
 --- a/src/components/embedder_support/user_agent_utils.cc
 +++ b/src/components/embedder_support/user_agent_utils.cc
 @@ -28,6 +28,7 @@
@@ -2779,7 +2779,7 @@ index 7ca0065467..a3fabf867c 100644
    DCHECK(context_params->cors_origin_access_list.empty())
        << "NetworkContextParams::cors_origin_access_list should be populated "
 diff --git a/src/content/browser/web_contents/web_contents_impl.cc b/src/content/browser/web_contents/web_contents_impl.cc
-index 83702dae24..97e70c1f94 100644
+index 9341fc4116..911052e130 100644
 --- a/src/content/browser/web_contents/web_contents_impl.cc
 +++ b/src/content/browser/web_contents/web_contents_impl.cc
 @@ -4088,6 +4088,12 @@ void WebContentsImpl::Init(const WebContents::CreateParams& params,
@@ -2829,7 +2829,7 @@ index 83702dae24..97e70c1f94 100644
    // Check whether there is an available prerendered page for this navigation if
    // this is not for guest. If it exists, take WebContents pre-created for
    // hosting the prerendered page instead of creating new WebContents.
-@@ -10012,6 +10031,9 @@ void WebContentsImpl::SetFocusedFrame(FrameTreeNode* node,
+@@ -10034,6 +10053,9 @@ void WebContentsImpl::SetFocusedFrame(FrameTreeNode* node,
    }
  
    CloseListenerManager::DidChangeFocusedFrame(this);
@@ -2839,7 +2839,7 @@ index 83702dae24..97e70c1f94 100644
  }
  
  FrameTree* WebContentsImpl::GetOwnedPictureInPictureFrameTree() {
-@@ -10662,6 +10684,11 @@ void WebContentsImpl::Resize(const gfx::Rect& new_bounds) {
+@@ -10684,6 +10706,11 @@ void WebContentsImpl::Resize(const gfx::Rect& new_bounds) {
    OPTIONAL_TRACE_EVENT0("content", "WebContentsImpl::Resize");
  #if defined(USE_AURA)
    aura::Window* window = GetNativeView();
@@ -2851,7 +2851,7 @@ index 83702dae24..97e70c1f94 100644
    window->SetBounds(gfx::Rect(window->bounds().origin(), new_bounds.size()));
  #elif BUILDFLAG(IS_ANDROID)
    content::RenderWidgetHostView* view = GetRenderWidgetHostView();
-@@ -10674,6 +10701,11 @@ void WebContentsImpl::Resize(const gfx::Rect& new_bounds) {
+@@ -10696,6 +10723,11 @@ void WebContentsImpl::Resize(const gfx::Rect& new_bounds) {
  gfx::Size WebContentsImpl::GetSize() {
  #if defined(USE_AURA)
    aura::Window* window = GetNativeView();
@@ -4195,7 +4195,7 @@ new file mode 100644
 index 0000000000..30b4b813dd
 --- /dev/null
 +++ b/src/ohos/adapter/web_entry/cef/cef_loader.cc
-@@ -0,0 +1,102 @@
+@@ -0,0 +1,73 @@
 +// Copyright (c) 2024 Huawei Device Co., Ltd. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -4264,37 +4264,8 @@ index 0000000000..30b4b813dd
 +  return entry_point;
 +}
 +
-+const std::vector<std::string> CefLoader::GetEntryArgs() {
-+  std::vector<std::string> args = {
-+      "cef",
-+      "--use-gl=egl",
-+      "--enable-features=UseOzonePlatform",
-+      "--ozone-platform=ohos",
-+      "--enable-logging",
-+      "--ozone-dump-file=/data/storage/el2/base/cache/",
-+      "--no-zygote",
-+      "--user-data-dir=/data/storage/el2/base/files/",
-+      "--disable-gpu-watchdog",
-+      "--enable-print-preview",
-+      "--lang=zh-CN",
-+  };
-+  ohos::adapter::device_info::DeviceType device_type =
-+      ohos::adapter::device_info::DeviceInfo::GetInstance().GetDeviceType();
-+  // pad not support gpu process
-+  if (device_type == ohos::adapter::device_info::DeviceType::_TABLET) {
-+    if (ohos::adapter::device_info::DeviceInfo::SdkApi() <
-+        ohos::adapter::device_info::SDK_VERSION_19) {
-+          args.emplace_back("--js-flags=--jitless");
-+    }
-+    args.push_back("--in-process-gpu");
-+  }
-+  if (ShouldDisableJit()) {
-+    args.emplace_back("--js-flags=--jitless");
-+  }
-+  for (const auto& command : GetDevCommandLines()) {
-+    args.emplace_back(command);
-+  }
-+  return args;
++JSBIND_GLOBAL() {
++  JSBIND_FUNCTION(ShouldDisableJit);
 +}
 +
 +}  // namespace ohos::adapter::web_entry
@@ -4303,7 +4274,7 @@ new file mode 100644
 index 0000000000..6a7cfa2044
 --- /dev/null
 +++ b/src/ohos/adapter/web_entry/cef/cef_loader.h
-@@ -0,0 +1,19 @@
+@@ -0,0 +1,18 @@
 +// Copyright (c) 2024 Huawei Device Co., Ltd. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -4319,7 +4290,6 @@ index 0000000000..6a7cfa2044
 +  CefLoader(const std::string& lib_path) : BasicLoader(lib_path) {}
 +
 +  std::string GetEntryPoint(int process_type) override;
-+  const std::vector<std::string> GetEntryArgs() override;
 +};
 +
 +}  // namespace ohos::adapter::web_entry
@@ -4358,7 +4328,7 @@ index cf6a2b7b16..7c28909f2c 100644
      if (commands[i].find("--type") != std::string::npos) {
        auto pos = commands[i].find_last_of("=");
 diff --git a/src/ohos/adapter/web_entry/web_loader.cc b/src/ohos/adapter/web_entry/web_loader.cc
-index 9087bc3678..8429af6c53 100644
+index a8b7d1f872..469780d312 100644
 --- a/src/ohos/adapter/web_entry/web_loader.cc
 +++ b/src/ohos/adapter/web_entry/web_loader.cc
 @@ -10,6 +10,9 @@ namespace ohos::adapter::web_entry {
@@ -4371,9 +4341,9 @@ index 9087bc3678..8429af6c53 100644
  bool BasicLoader::Initialize() { return true; }
  
  __attribute__((no_sanitize("cfi", "cfi-icall")))
-@@ -32,6 +35,9 @@ int BasicLoader::StartMainProcess(const std::vector<std::string>& args) {
-       argv_cstr.push_back(const_cast<char*>(arg.c_str()));
-     }
+@@ -28,6 +31,9 @@ int BasicLoader::StartMainProcess(const std::vector<std::string>& args) {
+   if (fn != nullptr) {
+     std::vector<const char*> argv_cstr;
      for (const auto& arg : args) {
 +      if (arg.empty()) {
 +        continue;
@@ -4382,7 +4352,7 @@ index 9087bc3678..8429af6c53 100644
      }
      return fn(argv_cstr.size(), argv_cstr.data());
 diff --git a/src/ohos/adapter/web_entry/web_loader.h b/src/ohos/adapter/web_entry/web_loader.h
-index d7b8b7409b..63e7a6e404 100644
+index d64d372a2f..1309fb4d6f 100644
 --- a/src/ohos/adapter/web_entry/web_loader.h
 +++ b/src/ohos/adapter/web_entry/web_loader.h
 @@ -20,6 +20,7 @@ using OnLoaderCallback = std::function<void(int error_code)>;
@@ -4761,10 +4731,10 @@ index e2713a2779..8008dc9058 100644
 +/src/main/resources/resfile
 \ No newline at end of file
 diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/ability/WebBaseAbility.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/ability/WebBaseAbility.ets
-index 4f1fd1591a..a38b2b4867 100644
+index 091a906e2f..71101454d7 100644
 --- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/ability/WebBaseAbility.ets
 +++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/ability/WebBaseAbility.ets
-@@ -1,180 +1,181 @@
+@@ -1,185 +1,186 @@
 -// Copyright (c) 2024 Huawei Device Co., Ltd. All rights reserved.
 -// Use of this source code is governed by a BSD-style license that can be
 -// found in the LICENSE file.
@@ -4782,6 +4752,7 @@ index 4f1fd1591a..a38b2b4867 100644
 -import { common } from '@kit.AbilityKit';
 -import { BusinessError } from '@kit.BasicServicesKit';
 -import { WebAbilityStage } from '../application/WebAbilityStage';
+-import { CmdArgsHelper } from '../utils/CmdArgsHelper';
 -
 -const TAG: string = 'WebBaseAbility';
 -
@@ -4799,6 +4770,7 @@ index 4f1fd1591a..a38b2b4867 100644
 -  protected appId: string = '';
 -  protected deviceModeChangeEvent: ChangeEventType | undefined = undefined;
 -  protected initStatus: WindowStatus = WindowStatus.FLOATING;
+-  protected cmdArgs: Array<string> = [];
 -
 -  private initParameters(want: Want) {
 -    if (want && want.parameters) {
@@ -4823,6 +4795,9 @@ index 4f1fd1591a..a38b2b4867 100644
 -      if (want.parameters["initStatus"] !== undefined) {
 -        this.initStatus = want.parameters['initStatus'] as WindowStatus;
 -      }
+-
+-      let args = want.parameters['cmdArgs'];
+-      this.cmdArgs = CmdArgsHelper.getCmdArgs(args);
 -    }
 -
 -    if (want["uri"]) {
@@ -4962,6 +4937,7 @@ index 4f1fd1591a..a38b2b4867 100644
 +import { common } from '@kit.AbilityKit';
 +import { BusinessError } from '@kit.BasicServicesKit';
 +import { WebAbilityStage } from '../application/WebAbilityStage';
++import { CmdArgsHelper } from '../utils/CmdArgsHelper';
 +
 +const TAG: string = 'WebBaseAbility';
 +
@@ -4980,6 +4956,7 @@ index 4f1fd1591a..a38b2b4867 100644
 +  protected appId: string = '';
 +  protected deviceModeChangeEvent: ChangeEventType | undefined = undefined;
 +  protected initStatus: WindowStatus = WindowStatus.FLOATING;
++  protected cmdArgs: Array<string> = [];
 +
 +  private initParameters(want: Want) {
 +    if (want && want.parameters) {
@@ -5004,6 +4981,9 @@ index 4f1fd1591a..a38b2b4867 100644
 +      if (want.parameters["initStatus"] !== undefined) {
 +        this.initStatus = want.parameters['initStatus'] as WindowStatus;
 +      }
++
++      let args = want.parameters['cmdArgs'];
++      this.cmdArgs = CmdArgsHelper.getCmdArgs(args);
 +    }
 +
 +    if (want["uri"]) {
@@ -5169,412 +5149,6 @@ index 4c01dc1b22..590e39fbf6 100644
        moduleName: this.moduleName,
        abilityName: "EntryAbility",
        parameters: {
-diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebEmbeddedWindow.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebEmbeddedWindow.ets
-index d74caeb6ae..a52c2bd748 100644
---- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebEmbeddedWindow.ets
-+++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebEmbeddedWindow.ets
-@@ -1,163 +1,163 @@
--// Copyright (c) 2024 Huawei Device Co., Ltd. All rights reserved.
--// Use of this source code is governed by a BSD-style license that can be
--// found in the LICENSE file.
--
--import { NativeContext, WindowBound } from '../interface/CommonInterface';
--import lazy { DragDropAdapter } from '../adapter/DragDropAdapter';
--import LogUtil from '../utils/LogUtil';
--import { CommandType, ConfigData, ContextType, PanAction } from '../common/Constants';
--import Inject from '../common/InjectModule';
--import JsBindingUtils from '../utils/JsBindingUtils';
--import { MultiInputAdapter } from '../adapter/MultiInputAdapter';
--import { DragParamManager } from '../common/DragParamManager';
--import { UIExtensionContentSession } from '@kit.AbilityKit';
--import { window } from '@kit.ArkUI';
--
--@Component
--export struct WebEmbeddedWindow {
--  private static TAG: string = 'WebEmbeddedWindow';
--  @LocalStorageLink('xcomponentId') xComponentId: string = '';
--  @LocalStorageLink('startUri') startUri: string = '';
--  @LocalStorageLink('session') session: UIExtensionContentSession | undefined = undefined;
--  @LocalStorageLink('userData') userData: string = '';
--  @LocalStorageLink('window') embeddedWindow: window.Window | undefined = undefined;
--  private LIBRARY_NAME: string = 'adapter';
--  private XCOMPONENT_NAME: string = 'xcomponent';
--  private MODULE_NAME: string = this.xComponentId + ':' + this.XCOMPONENT_NAME;
--  private dragDropAdapter: DragDropAdapter = Inject.get(DragDropAdapter);
--  private nativeContext: NativeContext = JsBindingUtils.getNativeContext(ContextType.kMainProcess);
--  private multiInputAdapter: MultiInputAdapter = Inject.get(MultiInputAdapter);
--  private dragParamManager = Inject.get(DragParamManager);
--
--  aboutToAppear(): void {
--    this.dragParamManager.addDragContextData({
--      id: this.xComponentId,
--      uiContext: this.getUIContext(),
--    });
--  }
--
--  aboutToDisappear(): void {
--    this.dragParamManager.removeDragContextData(this.xComponentId);
--  }
--
--  build() {
--    XComponent({
--      id: this.MODULE_NAME,
--      type: XComponentType.SURFACE,
--      libraryname: this.LIBRARY_NAME
--    })
--      .focusable(true)
--      .defaultFocus(true)
--      .backgroundColor(Color.White)
--      .gesture(
--        PanGesture({ direction: PanDirection.Vertical | PanDirection.Horizontal })
--          .onActionStart((event: GestureEvent) => {
--            this.multiInputAdapter.OnPanEvent(PanAction.kStart, this.xComponentId, event);
--          })
--          .onActionUpdate((event: GestureEvent) => {
--            this.multiInputAdapter.OnPanEvent(PanAction.kUpdate, this.xComponentId, event);
--          })
--          .onActionEnd((event: GestureEvent) => {
--            this.multiInputAdapter.OnPanEvent(PanAction.kEnd, this.xComponentId, event);
--          })
--          .onActionCancel(() => {
--            this.multiInputAdapter.OnPanEvent(PanAction.kCancel, this.xComponentId, undefined);
--          })
--      )
--      .gesture(
--        PinchGesture()
--          .onActionStart((event: GestureEvent) => {
--            this.multiInputAdapter.OnPinchEvent("start", this.xComponentId, event);
--          })
--          .onActionUpdate((event: GestureEvent) => {
--            this.multiInputAdapter.OnPinchEvent("update", this.xComponentId, event);
--          })
--          .onActionEnd((event: GestureEvent) => {
--            this.multiInputAdapter.OnPinchEvent("end", this.xComponentId, event);
--          })
--      )
--      .onDragEnter((event?: DragEvent) => {
--        this.dragDropAdapter.dragEnterData(this.xComponentId, (event as DragEvent).getSummary());
--      })
--      .onDragMove((event?: DragEvent) => {
--        let windowX = event?.getWindowX();
--        let windowY = event?.getWindowY();
--        windowX = vp2px(windowX);
--        windowY = vp2px(windowY);
--        this.dragDropAdapter.dragMove(this.xComponentId, windowX, windowY);
--      })
--      .onDragLeave(() => {
--        this.dragDropAdapter.dragLeave(this.xComponentId);
--      })
--      .onDrop((event?: DragEvent) => {
--        if (!event) {
--          LogUtil.error(WebEmbeddedWindow.TAG, 'OhosDrag WebWindow DragDrop onDrop event is null');
--          return;
--        }
--        let dragData: UnifiedData = (event as DragEvent).getData() as UnifiedData;
--        this.dragDropAdapter.dropData(this.xComponentId, dragData);
--      })
--      .onLoad(() => {
--        LogUtil.info(WebEmbeddedWindow.TAG, 'onLoad xComponentId:' + this.xComponentId);
--        if (this.xComponentId === ConfigData.DEFAULT_WINDOW_ID) {
--          this.setDefaultBounds();
--          let vec_args = this.buildArgs();
--          this.nativeContext.runBrowser(vec_args);
--        } else {
--          this.nativeContext.ExecuteCommand(
--            CommandType.kNewWidget,
--            {
--              url: this.startUri,
--              user_data: this.userData,
--            });
--        }
--      })
--      .id(this.XCOMPONENT_NAME)
--      .renderFit(RenderFit.TOP_LEFT)
--  }
--
--  private setDefaultBounds() {
--    if (this.xComponentId !== ConfigData.DEFAULT_WINDOW_ID) {
--      return;
--    }
--
--    let windowProxy = this.session?.getUIExtensionWindowProxy();
--    let prop = windowProxy?.properties;
--    if (prop) {
--      let windowRect: WindowBound = {
--        left: prop.uiExtensionHostWindowProxyRect.left,
--        top: prop.uiExtensionHostWindowProxyRect.top,
--        width: prop.uiExtensionHostWindowProxyRect.width,
--        height: prop.uiExtensionHostWindowProxyRect.height
--      }
--
--      let drawableRect: WindowBound = {
--        left: 0,
--        top: 0,
--        width: prop.uiExtensionHostWindowProxyRect.width,
--        height: prop.uiExtensionHostWindowProxyRect.height
--      }
--
--      let displayId = ConfigData.INVALID_DISPLAY_ID;
--      try {
--        let windowProp = this.embeddedWindow?.getWindowProperties();
--        if (windowProp && windowProp.displayId) {
--          displayId = windowProp.displayId;
--        }
--        this.nativeContext.OnWindowInitSize(windowRect, drawableRect, displayId);
--      } catch (error) {
--        LogUtil.error(WebEmbeddedWindow.TAG, 'get display fail, error:' + JSON.stringify(error));
--      }
--    }
--  }
--
--  private buildArgs(): string[] {
--    let default_uri = '';
--    if (this.startUri.length !== 0) {
--      default_uri = this.startUri;
--    }
--    let resDir = '--bundle-installation-dir=' + getContext().resourceDir;
--    let vec_args = [resDir, default_uri];
--    return vec_args;
--  }
--}
-+// Copyright (c) 2024 Huawei Device Co., Ltd. All rights reserved.
-+// Use of this source code is governed by a BSD-style license that can be
-+// found in the LICENSE file.
-+
-+import { NativeContext, WindowBound } from '../interface/CommonInterface';
-+import lazy { DragDropAdapter } from '../adapter/DragDropAdapter';
-+import LogUtil from '../utils/LogUtil';
-+import { CommandType, ConfigData, ContextType, PanAction } from '../common/Constants';
-+import Inject from '../common/InjectModule';
-+import JsBindingUtils from '../utils/JsBindingUtils';
-+import { MultiInputAdapter } from '../adapter/MultiInputAdapter';
-+import { DragParamManager } from '../common/DragParamManager';
-+import { UIExtensionContentSession } from '@kit.AbilityKit';
-+import { window } from '@kit.ArkUI';
-+
-+@Component
-+export struct WebEmbeddedWindow {
-+  private static TAG: string = 'WebEmbeddedWindow';
-+  @LocalStorageLink('xcomponentId') xComponentId: string = '';
-+  @LocalStorageLink('startUri') startUri: string = '';
-+  @LocalStorageLink('session') session: UIExtensionContentSession | undefined = undefined;
-+  @LocalStorageLink('userData') userData: string = '';
-+  @LocalStorageLink('window') embeddedWindow: window.Window | undefined = undefined;
-+  private LIBRARY_NAME: string = 'adapter';
-+  private XCOMPONENT_NAME: string = 'xcomponent';
-+  private MODULE_NAME: string = this.xComponentId + ':' + this.XCOMPONENT_NAME;
-+  private dragDropAdapter: DragDropAdapter = Inject.get(DragDropAdapter);
-+  private nativeContext: NativeContext = JsBindingUtils.getNativeContext(ContextType.kMainProcess);
-+  private multiInputAdapter: MultiInputAdapter = Inject.get(MultiInputAdapter);
-+  private dragParamManager = Inject.get(DragParamManager);
-+
-+  aboutToAppear(): void {
-+    this.dragParamManager.addDragContextData({
-+      id: this.xComponentId,
-+      uiContext: this.getUIContext(),
-+    });
-+  }
-+
-+  aboutToDisappear(): void {
-+    this.dragParamManager.removeDragContextData(this.xComponentId);
-+  }
-+
-+  build() {
-+    XComponent({
-+      id: this.MODULE_NAME,
-+      type: XComponentType.SURFACE,
-+      libraryname: this.LIBRARY_NAME
-+    })
-+      .focusable(true)
-+      .defaultFocus(true)
-+      .backgroundColor(Color.White)
-+      .gesture(
-+        PanGesture({ direction: PanDirection.Vertical | PanDirection.Horizontal })
-+          .onActionStart((event: GestureEvent) => {
-+            this.multiInputAdapter.OnPanEvent(PanAction.kStart, this.xComponentId, event);
-+          })
-+          .onActionUpdate((event: GestureEvent) => {
-+            this.multiInputAdapter.OnPanEvent(PanAction.kUpdate, this.xComponentId, event);
-+          })
-+          .onActionEnd((event: GestureEvent) => {
-+            this.multiInputAdapter.OnPanEvent(PanAction.kEnd, this.xComponentId, event);
-+          })
-+          .onActionCancel(() => {
-+            this.multiInputAdapter.OnPanEvent(PanAction.kCancel, this.xComponentId, undefined);
-+          })
-+      )
-+      .gesture(
-+        PinchGesture()
-+          .onActionStart((event: GestureEvent) => {
-+            this.multiInputAdapter.OnPinchEvent("start", this.xComponentId, event);
-+          })
-+          .onActionUpdate((event: GestureEvent) => {
-+            this.multiInputAdapter.OnPinchEvent("update", this.xComponentId, event);
-+          })
-+          .onActionEnd((event: GestureEvent) => {
-+            this.multiInputAdapter.OnPinchEvent("end", this.xComponentId, event);
-+          })
-+      )
-+      .onDragEnter((event?: DragEvent) => {
-+        this.dragDropAdapter.dragEnterData(this.xComponentId, (event as DragEvent).getSummary());
-+      })
-+      .onDragMove((event?: DragEvent) => {
-+        let windowX = event?.getWindowX();
-+        let windowY = event?.getWindowY();
-+        windowX = vp2px(windowX);
-+        windowY = vp2px(windowY);
-+        this.dragDropAdapter.dragMove(this.xComponentId, windowX, windowY);
-+      })
-+      .onDragLeave(() => {
-+        this.dragDropAdapter.dragLeave(this.xComponentId);
-+      })
-+      .onDrop((event?: DragEvent) => {
-+        if (!event) {
-+          LogUtil.error(WebEmbeddedWindow.TAG, 'OhosDrag WebWindow DragDrop onDrop event is null');
-+          return;
-+        }
-+        let dragData: UnifiedData = (event as DragEvent).getData() as UnifiedData;
-+        this.dragDropAdapter.dropData(this.xComponentId, dragData);
-+      })
-+      .onLoad(() => {
-+        LogUtil.info(WebEmbeddedWindow.TAG, 'onLoad xComponentId:' + this.xComponentId);
-+        if (this.xComponentId === ConfigData.DEFAULT_WINDOW_ID) {
-+          this.setDefaultBounds();
-+          let vec_args = this.buildArgs();
-+          this.nativeContext.runBrowser(vec_args);
-+        } else {
-+          this.nativeContext.ExecuteCommand(
-+            CommandType.kNewWidget,
-+            {
-+              url: this.startUri,
-+              user_data: this.userData,
-+            });
-+        }
-+      })
-+      .id(this.XCOMPONENT_NAME)
-+      .renderFit(RenderFit.TOP_LEFT)
-+  }
-+
-+  private setDefaultBounds() {
-+    if (this.xComponentId !== ConfigData.DEFAULT_WINDOW_ID) {
-+      return;
-+    }
-+
-+    let windowProxy = this.session?.getUIExtensionWindowProxy();
-+    let prop = windowProxy?.properties;
-+    if (prop) {
-+      let windowRect: WindowBound = {
-+        left: prop.uiExtensionHostWindowProxyRect.left,
-+        top: prop.uiExtensionHostWindowProxyRect.top,
-+        width: prop.uiExtensionHostWindowProxyRect.width,
-+        height: prop.uiExtensionHostWindowProxyRect.height
-+      }
-+
-+      let drawableRect: WindowBound = {
-+        left: 0,
-+        top: 0,
-+        width: prop.uiExtensionHostWindowProxyRect.width,
-+        height: prop.uiExtensionHostWindowProxyRect.height
-+      }
-+
-+      let displayId = ConfigData.INVALID_DISPLAY_ID;
-+      try {
-+        let windowProp = this.embeddedWindow?.getWindowProperties();
-+        if (windowProp && windowProp.displayId) {
-+          displayId = windowProp.displayId;
-+        }
-+        this.nativeContext.OnWindowInitSize(windowRect, drawableRect, displayId);
-+      } catch (error) {
-+        LogUtil.error(WebEmbeddedWindow.TAG, 'get display fail, error:' + JSON.stringify(error));
-+      }
-+    }
-+  }
-+
-+  private buildArgs(): string[] {
-+    let default_uri = '--url=https://ams.haitaibrowser.com:8000/ohcef/ohindex.html';
-+    if (this.startUri.length !== 0) {
-+      default_uri = this.startUri;
-+    }
-+    let resDir = '--bundle-installation-dir=' + getContext().resourceDir;
-+    let vec_args = [resDir, default_uri];
-+    return vec_args;
-+  }
-+}
-diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebNodeHandleWindow.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebNodeHandleWindow.ets
-index d908f9fe3f..9a097d9f8a 100644
---- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebNodeHandleWindow.ets
-+++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebNodeHandleWindow.ets
-@@ -99,12 +99,31 @@ export struct WebNodeHandleWindow {
-   }
-  
-   private buildArgs(): string[] {
--    let default_uri = '';
-+    let default_uri = '--url=https://ams.haitaibrowser.com:8000/ohcef/ohindex.html';
-     if (this.startUri.length !== 0) {
-       default_uri = this.startUri;
-     }
-     let resDir = '--bundle-installation-dir=' + getContext().resourceDir;
-     let vec_args = [resDir, default_uri, this.appId];
-+
-+    let ut = true;
-+    ut = false;
-+    if (ut) {
-+      // Add for ceftests used.
-+      vec_args.push("--use-views");
-+      vec_args.push("--use-alloy-style");
-+      // vec_args.push("--gtest_filter=AudioOutputTest.*");
-+      // 保存结果
-+      let out_file = "--gtest_output=json:/data/storage/el2/base/temp/result.json";
-+      vec_args.push(out_file);
-+    } else {
-+      // Add for cefsimple used.
-+      // vec_args.push("--use-alloy-style");
-+      vec_args.push("--force-renderer-accessibility=complete");
-+      vec_args.push("--enable-media-stream=true");
-+      vec_args.push("--enable-speech-input=true");
-+    }
-+
-     return vec_args;
-   }
- }
-\ No newline at end of file
-diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebWindow.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebWindow.ets
-index 676d36168d..1d2df49872 100644
---- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebWindow.ets
-+++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/components/WebWindow.ets
-@@ -161,12 +161,31 @@ export struct WebWindow {
-   }
- 
-   private buildArgs(): string[] {
--    let default_uri = '';
-+    let default_uri = '--url=https://ams.haitaibrowser.com:8000/ohcef/ohindex.html';
-     if (this.startUri.length !== 0) {
-       default_uri = this.startUri;
-     }
-     let resDir = '--bundle-installation-dir=' + getContext().resourceDir;
-     let vec_args = [resDir, default_uri, this.appId];
-+
-+    let ut = true;
-+    ut = false;
-+    if (ut) {
-+      // Add for ceftests used.
-+      vec_args.push("--use-views");
-+      vec_args.push("--use-alloy-style");
-+      // vec_args.push("--gtest_filter=AudioOutputTest.*");
-+      // 保存结果
-+      let out_file = "--gtest_output=json:/data/storage/el2/base/temp/result.json";
-+      vec_args.push(out_file);
-+    } else {
-+      // Add for cefsimple used.
-+      // vec_args.push("--use-alloy-style");
-+      vec_args.push("--force-renderer-accessibility=complete");
-+      vec_args.push("--enable-media-stream=true");
-+      vec_args.push("--enable-speech-input=true");
-+    }
-+
-     return vec_args;
-   }
- }
 diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/jsbindings/AppWindowAdapterBind.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/jsbindings/AppWindowAdapterBind.ets
 index 171f4aaa55..f971acbed1 100644
 --- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/jsbindings/AppWindowAdapterBind.ets
@@ -5598,6 +5172,76 @@ index 171f4aaa55..f971acbed1 100644
      JsBindingUtils.bindFunction("AppWindow.SetFullscreen", setFullscreen);
      JsBindingUtils.bindFunction("AppWindow.SetBounds", setBounds);
      JsBindingUtils.bindFunction("AppWindow.SetEnabled", setEnabled);
+diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets
+index 0d32f97570..274fec5b08 100644
+--- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets
++++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets
+@@ -28,6 +28,7 @@
+  */
+ import LogUtil from "./LogUtil";
+ import { deviceInfo } from '@kit.BasicServicesKit';
++import { i18n } from '@kit.LocalizationKit';
+ import { NativeContext } from "../interface/CommonInterface";
+ import JsBindingUtils from "./JsBindingUtils";
+ import { ContextType } from "../common/Constants";
+@@ -65,10 +66,48 @@ export class CmdArgsHelper {
+     return JsBindingUtils.getNativeContext(ContextType.kMainProcess);
+   }
+ 
++  /**
++   * 获取系统语言设置
++   * @returns 系统语言代码，如 "zh-CN", "en-US" 等
++   */
++  private static getSystemLanguage(): string {
++    try {
++      // 获取系统语言列表
++      const systemLanguage = i18n.getSystemLanguage();
++      LogUtil.info(TAG, `System language: ${systemLanguage}`);
++      return systemLanguage;
++    } catch (error) {
++      LogUtil.error(TAG, `Failed to get system language: ${JSON.stringify(error)}`);
++      // 如果获取失败，返回默认值
++      return "en-US";
++    }
++  }
++
+   public static buildArgs(startUri: string, userInputArgs?: string[], appId?: string): string[] {
+     // 添加默认参数
+     let vec_args = CmdArgsHelper.DEFAULT_ARGS;
+ 
++    let ut = true;
++    ut = false;
++    if (ut) {
++      // Add for ceftests used.
++      vec_args.push("--use-views");
++      vec_args.push("--use-alloy-style");
++      // vec_args.push("--gtest_filter=AudioOutputTest.*");
++      // 保存结果
++      let out_file = "--gtest_output=json:/data/storage/el2/base/temp/result.json";
++      vec_args.push(out_file);
++    } else {
++      // Add for cefsimple used.
++      // vec_args.push("--use-alloy-style");
++      // 从系统环境获取语言设置
++      const systemLanguage = CmdArgsHelper.getSystemLanguage();
++      vec_args.push(`--lang=${systemLanguage}`);
++      vec_args.push("--force-renderer-accessibility=complete");
++      vec_args.push("--enable-media-stream=true");
++      vec_args.push("--enable-speech-input=true");
++    }
++
+     // pad添加 --in-process-gpu
+     if (deviceInfo.deviceType === 'tablet') {
+       vec_args.push("--in-process-gpu");
+@@ -80,7 +119,7 @@ export class CmdArgsHelper {
+ 
+     let resDir = '--bundle-installation-dir=' + getContext().resourceDir;
+     vec_args.push(resDir);
+-    vec_args.push(startUri);
++    vec_args.push(startUri.length !== 0 ? startUri : "--url=https://ams.haitaibrowser.com:8000/ohcef/ohindex.html");
+     if (appId !== undefined) {
+       vec_args.push(appId);
+     }
 diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/KVStore.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/KVStore.ets
 index 5a2fbb1921..83bc01b87f 100644
 --- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/KVStore.ets
