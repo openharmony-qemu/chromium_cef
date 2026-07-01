@@ -136,6 +136,8 @@ class AlloyScreenCaptureAccessRequest : public CefScreenCaptureAccessRequest {
   void SetCaptureMode(int32_t mode) override;
   void SetCaptureSourceId(int32_t sourceId) override;
   void ReportRequestResult(bool allowed) override;
+  static media::mojom::DisplayMediaInformationPtr
+      BuildDisplayMediaInfoFromDesktopMediaID(const content::DesktopMediaID& media_id);
 
  private:
   CefRefPtr<CefBrowserHostBase> browser_;
