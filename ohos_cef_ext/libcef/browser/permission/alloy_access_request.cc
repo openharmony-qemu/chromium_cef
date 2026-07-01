@@ -19,6 +19,7 @@
 
 namespace {
   constexpr int32_t kSystemAudioSourceId = -2;
+  constexpr int32_t kDefaultInitialZoomLevel = 100;
 }
 
 AlloyAccessRequest::AlloyAccessRequest(const CefString& origin,
@@ -250,6 +251,20 @@ AlloyScreenCaptureAccessRequest::~AlloyScreenCaptureAccessRequest() {
   }
 }
 
+media::mojom::DisplayMediaInformationPtr AlloyScreenCaptureAccessRequest::
+BuildDisplayMediaInfoFromDesktopMediaID(const content::DesktopMediaID& media_id) {
+  media::mojom::DisplayCaptureSurfaceType surface =
+      (media_id.type == content::DesktopMediaID::TYPE_WINDOW)
+          ? media::mojom::DisplayCaptureSurfaceType::WINDOW
+          : media::mojom::DisplayCaptureSurfaceType::MONITOR;
+  return media::mojom::DisplayMediaInformation::New(
+      /*display_surface=*/surface,
+      /*logical_surface=*/true,
+      /*cursor=*/media::mojom::CursorCaptureType::ALWAYS,
+      /*capture_handle=*/nullptr,
+      /*initial_zoom_level=*/kDefaultInitialZoomLevel);
+}
+
 CefString AlloyScreenCaptureAccessRequest::Origin() {
   return request_.security_origin.spec();
 }
@@ -339,7 +354,13 @@ void AlloyScreenCaptureAccessRequest::ReportRequestResult(bool allowed) {
   }
   stream_devices.video_device = blink::MediaStreamDevice(
       request_.video_type, media_id.ToString(), "Screen");
+  stream_devices.video_device->display_media_info =
+      BuildDisplayMediaInfoFromDesktopMediaID(media_id);
   bool has_audio = stream_devices.audio_device.has_value();
+  if (has_audio) {
+    stream_devices.audio_device->display_media_info =
+        BuildDisplayMediaInfoFromDesktopMediaID(media_id);
+  }
   if (browser_) {
   auto media_stream_ui =
         browser_->GetMediaStreamRegistrar()->MaybeCreateMediaStreamUI(

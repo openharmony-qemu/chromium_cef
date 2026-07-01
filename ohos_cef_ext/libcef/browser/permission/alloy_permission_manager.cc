@@ -467,6 +467,8 @@ PermissionStatus AlloyPermissionManager::GetPermissionStatus(
         LOG(WARNING) << __FUNCTION__ << ", requesting_origin is not in camera permission map";
         return PermissionStatus::ASK;
       }
+  } else if (permission_type == PermissionType::DISPLAY_CAPTURE) {
+      return PermissionStatus::ASK; 
 #endif // BUILDFLAG(ARKWEB_WEBRTC)
 #if BUILDFLAG(ARKWEB_NETWORK_LOAD)
   } else if (permission_type == PermissionType::LOCAL_NETWORK_ACCESS) {
