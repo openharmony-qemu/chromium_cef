@@ -46,7 +46,7 @@ void LoadCookies(const CefBrowserContext::Getter& browser_context_getter,
                  const network::ResourceRequest& request,
 #if BUILDFLAG(ARKWEB_NETWORK_LOAD)
                  const std::optional<GURL>& new_url,
-                 const std::optional<std::string>& new_method,
+                 const std::optional<net::RedirectInfo>& redirect_info,
                  bool is_off_the_record,
                  const net::IsolationInfo& isolation_info,
 #endif

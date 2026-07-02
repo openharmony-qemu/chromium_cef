@@ -26,6 +26,9 @@
 #if BUILDFLAG(ARKWEB_COOKIE) || BUILDFLAG(ARKWEB_ARKWEB_EXTENSIONS)
 #include "libcef/browser/net_service/cookie_manager_impl_ext.h"
 #endif
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+#include "cef/libcef/browser/net_service/proxy_url_loader_factory.h"
+#endif
 
 namespace net_service::cookie_helper {
 
@@ -288,7 +291,7 @@ void LoadCookies(const CefBrowserContext::Getter& browser_context_getter,
                  const network::ResourceRequest& request,
 #if BUILDFLAG(ARKWEB_NETWORK_LOAD)
                  const std::optional<GURL>& new_url,
-                 const std::optional<std::string>& new_method,
+                 const std::optional<net::RedirectInfo>& redirect_info,
                  bool is_off_the_record,
                  const net::IsolationInfo& isolation_info,
 #endif
@@ -319,18 +322,41 @@ void LoadCookies(const CefBrowserContext::Getter& browser_context_getter,
 
   net::CookiePartitionKeyCollection partition_key_collection;
 #if BUILDFLAG(ARKWEB_NETWORK_LOAD)
-  if (!isolation_info.IsEmpty()) {
+  // For redirect scenarios, create isolation_info based on the redirect URL
+  // to ensure partitioned cookies are correctly loaded.
+  std::optional<std::string> new_method = {};
+  network::ResourceRequest modified_request = request;
+  const net::IsolationInfo& effective_isolation_info =
+    (new_url.has_value() && modified_request.trusted_params.has_value() &&
+     !modified_request.trusted_params->isolation_info.IsEmpty())
+      ? modified_request.trusted_params->isolation_info.CreateForRedirect(
+        url::Origin::Create(new_url.value()))
+      : isolation_info;
+  if (redirect_info.has_value()) {
+    modified_request.site_for_cookies = redirect_info->new_site_for_cookies;
+    if (base::FeatureList::IsEnabled(kEnableSyncMethodOnRedirect)) {
+      LOG(DEBUG) << "Update new_method to " << redirect_info->new_method;
+      new_method = redirect_info->new_method;
+    }
+  }
+  if (!effective_isolation_info.IsEmpty()) {
+    partition_key_collection = net::CookiePartitionKeyCollection(
+        net::CookiePartitionKey::FromNetworkIsolationKey(
+            effective_isolation_info.network_isolation_key(), modified_request.site_for_cookies,
+            net::SchemefulSite(new_url.value_or(modified_request.url)),
+            effective_isolation_info.IsMainFrameRequest()));
+  }
 #else
   if (request.trusted_params.has_value() &&
       !request.trusted_params->isolation_info.IsEmpty()) {
     const auto& isolation_info = request.trusted_params->isolation_info;
-#endif
     partition_key_collection = net::CookiePartitionKeyCollection(
         net::CookiePartitionKey::FromNetworkIsolationKey(
             isolation_info.network_isolation_key(), request.site_for_cookies,
             net::SchemefulSite(request.url),
             isolation_info.IsMainFrameRequest()));
   }
+#endif
 
 #if BUILDFLAG(ARKWEB_COOKIE)
 #if !BUILDFLAG(ARKWEB_EXT_EXCEPTION_LIST)
@@ -339,12 +365,12 @@ void LoadCookies(const CefBrowserContext::Getter& browser_context_getter,
 #endif
   if (cookie_manager && cookie_manager->SupportAsyncThreadCookieLoad()) {
     cookie_manager->LoadCookiesOnAsyncThread(
-        new_url.value_or(request.url),
+        new_url.value_or(modified_request.url),
 #if BUILDFLAG(ARKWEB_ARKWEB_EXTENSIONS)
-        GetCookieOptions(request, /*for_loading_cookies=*/true, new_url,
+        GetCookieOptions(modified_request, /*for_loading_cookies=*/true, new_url,
                          new_method, is_off_the_record),
 #else
-        GetCookieOptions(request, /*for_loading_cookies=*/true, new_url, new_method),
+        GetCookieOptions(modified_request, /*for_loading_cookies=*/true, new_url, new_method),
 #endif
         std::move(partition_key_collection),
         base::BindOnce(GetCookieListCallback, allow_cookie_callback,
@@ -357,12 +383,12 @@ void LoadCookies(const CefBrowserContext::Getter& browser_context_getter,
       base::BindOnce(
           LoadCookiesOnUIThread, browser_context_getter,
 #if BUILDFLAG(ARKWEB_NETWORK_LOAD)
-          new_url.value_or(request.url),
+          new_url.value_or(modified_request.url),
 #if BUILDFLAG(ARKWEB_ARKWEB_EXTENSIONS)
-          GetCookieOptions(request, /*for_loading_cookies=*/true, new_url,
+          GetCookieOptions(modified_request, /*for_loading_cookies=*/true, new_url,
                            new_method, is_off_the_record),
 #else
-          GetCookieOptions(request, /*for_loading_cookies=*/true, new_url, new_method),
+          GetCookieOptions(modified_request, /*for_loading_cookies=*/true, new_url, new_method),
 #endif
 #else
           request.url, GetCookieOptions(request, /*for_loading_cookies=*/true),
