@@ -131,6 +131,48 @@ bool ArkWebExtensionIsNotTabId(content::WebContents* web_contents, int tab_id) {
   return false;
 }
 
+content::WebContents* GetWebContentByTabId(int tab_id,
+                                           Profile* profile,
+                                           bool include_incognito) {
+  if (tab_id < 0) {
+    LOG(INFO) << "GetWebContentByTabId error: tab_id =" << tab_id;
+    return nullptr;
+  }
+
+  for (const auto& browser_info :
+       CefBrowserInfoManager::GetInstance()->GetBrowserInfoList()) {
+    CefRefPtr<AlloyBrowserHostImpl> current_browser =
+        browser_info->browser()
+            ? browser_info->browser()->AsAlloyBrowserHostImpl()
+            : nullptr;
+    if (!current_browser) {
+      continue;
+    }
+
+    Profile* current_profile =
+        Profile::FromBrowserContext(current_browser->GetBrowserContext());
+    if (current_profile != profile &&
+        !(include_incognito && profile->IsSameOrParent(current_profile))) {
+      continue;
+    }
+
+    CefRefPtr<AlloyBrowserHostImplExt> ext =
+        current_browser->AsAlloyBrowserHostImplExt();
+    if (!ext || ext->ExtensionGetTabId() != tab_id) {
+      continue;
+    }
+
+    content::WebContents* web_contents = current_browser->web_contents();
+    if (!web_contents) {
+      continue;
+    }
+
+    return web_contents;
+  }
+
+  return nullptr;
+}
+
 bool GetAlloyTabById(int tab_id,
                      Profile* profile,
                      bool include_incognito,
@@ -180,7 +222,16 @@ bool GetAlloyTabById(int tab_id,
       return true;
     }
   }
- 
+
+  content::WebContents* web_contents =
+      GetWebContentByTabId(tab_id, profile, include_incognito);
+  if (web_contents) {
+    if (contents) {
+      *contents = web_contents;
+    }
+    return true;
+  }
+
   return false;
 }
 #endif // ARKWEB_ARKWEB_EXTENSIONS

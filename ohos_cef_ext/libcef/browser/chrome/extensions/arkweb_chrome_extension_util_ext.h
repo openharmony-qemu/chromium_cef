@@ -24,6 +24,10 @@ content::WebContents* GetWebContentBySessionId(int browser_id);
 content::WebContents* GetWebContentByTabIdOrSessionId(int id);
 
 bool ArkWebExtensionIsNotTabId(content::WebContents* web_contents, int tab_id);
+
+content::WebContents* GetWebContentByTabId(int tab_id,
+                                           Profile* profile,
+                                           bool include_incognito);
 #endif
 
 }  // namespace cef
