@@ -4845,6 +4845,44 @@ index f9de0220f6..90d94e5cdb 100644
    @LogMethod
    showWindow(id: number) {
      LogUtil.info(TAG, `[ohoswindow] in AppWindowAdapter showWindow, id is ${id}`);
+diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/FilePickerAdapter.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/FilePickerAdapter.ets
+index ab84a154f7..156a8df8bc 100644
+--- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/FilePickerAdapter.ets
++++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/FilePickerAdapter.ets
+@@ -117,7 +117,11 @@ export class FilePickerAdapter extends BaseAdapter {
+   showSaveAsDocumentViewPicker(params: SaveAsDialogParams, callback: (path: string) => void) {
+     let DocumentSaveOptions = new picker.DocumentSaveOptions();
+     DocumentSaveOptions.newFileNames = [`${params.file_name}`];
+-    DocumentSaveOptions.defaultFilePathUri = FilePickerAdapter.PREFIX + params.dir_name;
++
++      let defaultFilePathUri = this.getDefaultFilePathUri(params.dir_name);
++      if (defaultFilePathUri.length > 0) {
++        DocumentSaveOptions.defaultFilePathUri = defaultFilePathUri;
++      }
+     const context = this.ctxAdapter.getContext();
+     let allFileDescription = context.resourceManager.getStringSync(this.allFIleDescriptionId);
+     if (params.extensions.length > 0) {
+@@ -196,6 +200,20 @@ export class FilePickerAdapter extends BaseAdapter {
+     return copy;
+   }
+ 
++  private getDefaultFilePathUri(dirName: string): string {
++    if (!dirName || dirName === ".") {
++      return "";
++    }
++    if (dirName.startsWith(FilePickerAdapter.PREFIX)) {
++      return dirName;
++    }
++    if (dirName.startsWith("/")) {
++      LogUtil.info(TAG, `Ignore unsupported save-as default dir: ${dirName}`);
++      return "";
++    }
++    return FilePickerAdapter.PREFIX + "/" + dirName;
++  }
++
+   private getFilterArray(filters: Array<Array<string>>, descriptions: Array<string>): Array<string> {
+     const context = this.ctxAdapter.getContext();
+     let defaultDescription = context.resourceManager.getStringSync(this.defaultDescriptionId);
 diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/WebAppAdapter.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/WebAppAdapter.ets
 index ac3b56264d..7edd226b15 100644
 --- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/WebAppAdapter.ets
@@ -4895,10 +4933,39 @@ index bc80f9ada2..1747e1277d 100644
      JsBindingUtils.bindFunction("AppWindow.SetBounds", setBounds);
      JsBindingUtils.bindFunction("AppWindow.SetEnabled", setEnabled);
 diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets
-index 0d32f97570..0564196a12 100644
+index 0d32f97570..3f4f6277a8 100644
 --- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets
 +++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets
-@@ -69,6 +69,27 @@ export class CmdArgsHelper {
+@@ -28,6 +28,7 @@
+  */
+ import LogUtil from "./LogUtil";
+ import { deviceInfo } from '@kit.BasicServicesKit';
++import { i18n } from '@kit.LocalizationKit';
+ import { NativeContext } from "../interface/CommonInterface";
+ import JsBindingUtils from "./JsBindingUtils";
+ import { ContextType } from "../common/Constants";
+@@ -65,10 +66,48 @@ export class CmdArgsHelper {
+     return JsBindingUtils.getNativeContext(ContextType.kMainProcess);
+   }
+ 
++  /**
++   * 获取系统语言设置
++   * @returns 系统语言代码，如 "zh-CN", "en-US" 等
++   */
++  private static getSystemLanguage(): string {
++    try {
++      // 获取系统语言列表
++      const systemLanguage = i18n.getSystemLanguage();
++      LogUtil.info(TAG, `System language: ${systemLanguage}`);
++      return systemLanguage;
++    } catch (error) {
++      LogUtil.error(TAG, `Failed to get system language: ${JSON.stringify(error)}`);
++      // 如果获取失败，返回默认值
++      return "en-US";
++    }
++  }
++
+   public static buildArgs(startUri: string, userInputArgs?: string[], appId?: string): string[] {
      // 添加默认参数
      let vec_args = CmdArgsHelper.DEFAULT_ARGS;
  
@@ -4914,11 +4981,11 @@ index 0d32f97570..0564196a12 100644
 +      vec_args.push(out_file);
 +    } else {
 +      // Add for cefsimple used.
-+      // vec_args.push("--use-alloy-style");
-+      let default_uri = '--url=https://ams.haitaibrowser.com:8000/ohcef/ohindex.html';
-+      if (startUri.length === 0) {
-+        startUri = default_uri;
-+      }
++      vec_args.push("--use-alloy-style");
++      // 从系统环境获取语言设置
++      const systemLanguage = CmdArgsHelper.getSystemLanguage();
++      vec_args.push(`--lang=${systemLanguage}`);
++      vec_args.push("--force-renderer-accessibility=complete");
 +      vec_args.push("--enable-media-stream=true");
 +      vec_args.push("--enable-speech-input=true");
 +    }
@@ -4926,6 +4993,15 @@ index 0d32f97570..0564196a12 100644
      // pad添加 --in-process-gpu
      if (deviceInfo.deviceType === 'tablet') {
        vec_args.push("--in-process-gpu");
+@@ -80,7 +119,7 @@ export class CmdArgsHelper {
+ 
+     let resDir = '--bundle-installation-dir=' + getContext().resourceDir;
+     vec_args.push(resDir);
+-    vec_args.push(startUri);
++    vec_args.push(startUri.length !== 0 ? startUri : "--url=https://ams.haitaibrowser.com:8000/ohcef/ohindex.html");
+     if (appId !== undefined) {
+       vec_args.push(appId);
+     }
 diff --git a/src/ohos/build/build.sh b/src/ohos/build/build.sh
 index 2dd5f939e6..2db60ca4b6 100755
 --- a/src/ohos/build/build.sh
@@ -6617,6 +6693,90 @@ index 416c1bb550..a6705c94c0 100644
      mojo::MakeSelfOwnedReceiver(
          std::make_unique<remote_cocoa::SelectFileDialogBridge>(ns_window),
          std::move(receiver));
+diff --git a/src/ui/shell_dialogs/select_file_dialog_ohos.cc b/src/ui/shell_dialogs/select_file_dialog_ohos.cc
+index e9166b4be1..836f1b8233 100644
+--- a/src/ui/shell_dialogs/select_file_dialog_ohos.cc
++++ b/src/ui/shell_dialogs/select_file_dialog_ohos.cc
+@@ -77,6 +77,7 @@ bool SelectFileDialogOHOS::IsRunning(gfx::NativeWindow parent_window) const {
+ }
+ 
+ void SelectFileDialogOHOS::ListenerDestroyed() {
++  weak_ptr_factory_.InvalidateWeakPtrs();
+   listener_ = nullptr;
+ }
+ 
+@@ -96,12 +97,11 @@ void SelectFileDialogOHOS::SelectFileImpl(
+     gfx::NativeWindow owning_window,
+     const GURL* caller) {
+   bool multi_files = (type == Type::SELECT_OPEN_MULTI_FILE) ? true : false;
+-  auto callback = [this, multi_files](const std::string& path) {
+-    std::vector<ui::SelectedFileInfo> paths = ConvertJSONToStringArray(path);
+-    auto task = paths.size() ?
+-                  base::BindOnce(&SelectFileDialogOHOS::CompleteOpen, this, paths, multi_files) :
+-                  base::BindOnce(&SelectFileDialogOHOS::CancelOpen, this);
+-    base::TaskRunnerOHOS::GetUIThreadTaskRunner()->PostTask(FROM_HERE, std::move(task));
++  auto weak_this = weak_ptr_factory_.GetWeakPtr();
++  auto callback = [weak_this, multi_files](const std::string& path) {
++    base::TaskRunnerOHOS::GetUIThreadTaskRunner()->PostTask(
++        FROM_HERE, base::BindOnce(&SelectFileDialogOHOS::SelectFileDoneOnUIThread,
++                                  weak_this, path, multi_files));
+   };
+   std::vector<std::string> descriptions;
+   for (const std::u16string& u16_description :
+@@ -146,6 +146,21 @@ void SelectFileDialogOHOS::SelectFileImpl(
+ 
+ void SelectFileDialogOHOS::UnparentOnMainThread() {}
+ 
++void SelectFileDialogOHOS::SelectFileDoneOnUIThread(const std::string& path,
++                                                    bool multi_files) {
++  if (completed_) {
++    return;
++  }
++  completed_ = true;
++
++  std::vector<ui::SelectedFileInfo> paths = ConvertJSONToStringArray(path);
++  if (paths.empty()) {
++    CancelOpen();
++  } else {
++    CompleteOpen(paths, multi_files);
++  }
++}
++
+ std::vector<ui::SelectedFileInfo> SelectFileDialogOHOS::ConvertJSONToStringArray(
+     const std::string& json) {
+   Json::Reader reader;
+diff --git a/src/ui/shell_dialogs/select_file_dialog_ohos.h b/src/ui/shell_dialogs/select_file_dialog_ohos.h
+index 21c47ab0b5..3879d84fbc 100644
+--- a/src/ui/shell_dialogs/select_file_dialog_ohos.h
++++ b/src/ui/shell_dialogs/select_file_dialog_ohos.h
+@@ -35,6 +35,7 @@
+ #include <set>
+ 
+ #include "base/memory/raw_ptr.h"
++#include "base/memory/weak_ptr.h"
+ #include "base/task/sequenced_task_runner.h"
+ #include "third_party/abseil-cpp/absl/types/optional.h"
+ #include "ui/aura/window.h"
+@@ -99,6 +100,8 @@ class SHELL_DIALOGS_EXPORT SelectFileDialogOHOS : public SelectFileDialog {
+   void SetType(Type type) { type_ = type; }
+ 
+  private:
++  void SelectFileDoneOnUIThread(const std::string& path, bool multi_files);
++
+   std::vector<ui::SelectedFileInfo> ConvertJSONToStringArray(const std::string& json);
+ 
+   // Removes the DialogInfo parent. Must be called on the UI task runner.
+@@ -115,6 +118,10 @@ class SHELL_DIALOGS_EXPORT SelectFileDialogOHOS : public SelectFileDialog {
+ 
+   // The type of dialog we are showing the user.
+   Type type_ = SELECT_NONE;
++
++  bool completed_ = false;
++
++  base::WeakPtrFactory<SelectFileDialogOHOS> weak_ptr_factory_{this};
+ };
+ 
+ }  // namespace ui
 diff --git a/src/ui/shell_dialogs/select_file_dialog_win.cc b/src/ui/shell_dialogs/select_file_dialog_win.cc
 index e3bd03f336..afc421d991 100644
 --- a/src/ui/shell_dialogs/select_file_dialog_win.cc

@@ -439,7 +439,7 @@ void CefFileDialogManager::RunSelectFile(
   // intercepted by CefFileDialogManager::RunFileChooser.
   base::FilePath ohos_path = default_path;
   std::string dirName = ohos_path.DirName().value();
-  if (dirName.empty() || dirName == ".") {
+  if ((dirName.empty() || dirName == ".") && !default_path.IsAbsolute()) {
     base::PathService::Get(chrome::DIR_DEFAULT_DOWNLOADS, &ohos_path);
     ohos_path = ohos_path.Append(default_path);
   }
