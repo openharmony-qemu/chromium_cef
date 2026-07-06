@@ -4449,6 +4449,15 @@ void ArkWebBrowserHostExtImpl::EnableReaderMode(bool enabled) {
   GetWebContents()->EnableReaderMode(enabled);
 }
 
+void ArkWebBrowserHostExtImpl::EnableCustomReaderMode(bool enabled) {
+  auto web_contents = GetWebContents();
+  if (!web_contents) {
+    LOG(ERROR) << "ArkWebBrowserHostExtImpl::EnableCustomReaderMode web_contents is null";
+    return;
+  }
+  GetWebContents()->EnableCustomReaderMode(enabled);
+}
+
 void ArkWebBrowserHostExtImpl::Distill(uint64_t request_id, const DistillOptions& distill_options,
   CefRefPtr<CefDistillCallback> callback) {
   auto web_contents = GetWebContents();
