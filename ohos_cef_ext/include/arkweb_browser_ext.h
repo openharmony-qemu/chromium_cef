@@ -1677,6 +1677,14 @@ class ArkWebBrowserHostExt : public virtual CefBrowserHost,
       const DownloadUrlParameters& input_params) {}
 #endif
 
+#if BUILDFLAG(ARKWEB_MEDIA_HLS)
+  ///
+  /// Set whether to enable hls media network proxy.
+  ///
+  /*--cef()--*/
+  virtual void PutWebMediaNetworkProxyEnabled(bool enable) {}
+#endif // ARKWEB_MEDIA_HLS
+
 };
 
 #endif  // ARKWEB_INCLUDE_CEF_BROWSER_H_
