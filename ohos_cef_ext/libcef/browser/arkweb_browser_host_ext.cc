@@ -223,6 +223,10 @@ static float DEFAULT_MAX_ZOOM_FACTOR = 100.0f;
 enum class WebScrollType : int { UNKNOWN = -1, EVENT = 0 };
 #endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
 
+#if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
+const float DEFAULT_BACK_TO_TOP_OFFSET = 0.0;
+#endif // BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
+
 const int32_t kFrameIdMinLength = 3;
 
 bool CheckUrlPath(base::FilePath url_path, CefString& path) {
@@ -2151,6 +2155,19 @@ void ArkWebBrowserHostExtImpl::ScrollToWithAnime(float x,
     static_cast<ArkwebFrameHostExtImpl*>(frame.get())
         ->ScrollToWithAnime(x, y, duration);
   }
+
+  #if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
+    if (x == DEFAULT_BACK_TO_TOP_OFFSET && y == DEFAULT_BACK_TO_TOP_OFFSET) {
+      auto* web_contents = static_cast<content::WebContentsImpl*>(GetWebContents());
+      if (web_contents == nullptr) {
+        LOG(DEBUG) << "ScrollToWithAnime web contents is nullptr.";
+        return;
+      }
+      auto constraints_state = web_contents->AsWebContentsImplExt()->GetBrowserControlState();
+      web_contents->UpdateBrowserControlsState(constraints_state, cc::BrowserControlsState::kShown,
+                                              false, std::nullopt);
+    }
+  #endif
 }
 
 void ArkWebBrowserHostExtImpl::ScrollByWithAnime(float delta_x,
