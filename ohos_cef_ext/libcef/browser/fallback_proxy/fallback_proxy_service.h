@@ -21,6 +21,7 @@
 
 #include "arkweb/chromium_ext/net/base/fallback_proxy_constants.h"
 #include "arkweb/chromium_ext/servieces/network/public/mojom/network_config_ohos.mojom.h"
+#include "base/functional/callback.h"
 #include "base/no_destructor.h"
 #include "cef/ohos_cef_ext/libcef/browser/arkweb_global_list_config.h"
 #include "fallback_proxy_config.h"
@@ -93,7 +94,21 @@ class FallbackProxyService
   // Should be called whenever there is a possible change to the custom proxy
   // config.
   void UpdateCustomProxyConfig(
-      const std::vector<net::ProxyServer>& proxy_servers);
+      const std::vector<net::ProxyServer>& proxy_servers,
+      base::OnceClosure callback = base::DoNothing(),
+      bool active_only_mode = false);
+
+  void UpdateCustomProxyConfig(
+      network::mojom::CustomProxyConfigPtr config,
+      base::OnceClosure callback = base::DoNothing(),
+      bool active_only_mode = false);
+
+  // Update proxy settings according to the URL, switching to the
+  // accelerated proxy or restoring the original one.
+  void UpdateProxyConfigForURL(
+      const GURL& url, bool& should_defer_navigation,
+      bool& is_accelerate_proxy,
+      base::OnceClosure callback = base::DoNothing());
 
   // 以下函数提供给测试用例所用:
   // Called after custom proxy config client added
@@ -138,6 +153,20 @@ class FallbackProxyService
   // notify NetworkServiceProxyDelegate to update the status of the fallback
   // proxy.
   void UpdateFallbackProxyStatus(net::FallbackProxyStatus status);
+
+  // Check if switching the proxy server is required.
+  bool ShouldChangeProxyServer(bool in_accelerate_list) const;
+ 
+  // Get the accelerated proxy configuration.
+  network::mojom::CustomProxyConfigPtr GetProxyConfigForAccelerate(
+      const std::vector<std::string>& accelerate_host_list) const;
+ 
+  // Get the fallback proxy configuration.
+  network::mojom::CustomProxyConfigPtr GetProxyConfigForFallback() const;
+ 
+  // Verify the validity of the proxy server.
+  bool ValidateProxyServer(const std::string& address,
+                           net::ProxyServer& result) const;
 
   // Creates a config of proxy server that can be sent to
   // NetworkServiceProxyDelegate.

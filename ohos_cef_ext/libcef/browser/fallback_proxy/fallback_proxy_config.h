@@ -67,7 +67,7 @@ class FallbackProxyConfig {
   // 获取云控配置的proxy_servers
   std::vector<net::ProxyServer> GetProxyServers() const;
   // 获取bypass_rules，默认为空，测试用例执行时，可能非空
-  const net::ProxyHostMatchingRules& GetHostMatchingRules();
+  const net::ProxyHostMatchingRules& GetBypassRules();
   // 获取云控配置的错误码列表
   const std::vector<int>& GetUsingProxyErrorCodes() const;
   // 获取云控配置的HwCode列表
@@ -87,6 +87,10 @@ class FallbackProxyConfig {
   // 更新token信息
   void UpdateProxyToken(const std::string& token,
                         const std::string& token_info);
+  // 获取加速代理服务器
+  const std::string& GetAccelerateProxyServer() const;
+  // 获取加速域名列表
+  const std::vector<std::string>& GetAccelerateHostList() const;
 
   // For test，用于使能fallback proxy
   void InitializeEnableParamsForTesting(const std::string& proxy_url,
@@ -118,6 +122,8 @@ class FallbackProxyConfig {
 
   std::vector<int> safe_browsing_malicious_types_;
 
+  std::vector<std::string> direct_proxy_host_list_;
+
   // 等待多久重新启用代理服务时间，单位为秒.
   int restart_proxy_internal_ = 300;
 
@@ -131,11 +137,17 @@ class FallbackProxyConfig {
   int malicious_url_check_wait_time_ = 0;
 
   // Rules for using the Fallback Proxy.
-  net::ProxyHostMatchingRules host_matching_rules_;
+  net::ProxyHostMatchingRules bypass_rules_;
 
   // The token used to for tunner headers which used to setup the connect
   // tunnel.
   std::string auth_token_;
+
+  // 加速代理服务器地址
+  std::string accelerate_proxy_server_;
+
+  // 加速域名列表
+  std::vector<std::string> accelerate_host_list_;
 
   base::RepeatingClosure proxy_server_updated_callback_;
 

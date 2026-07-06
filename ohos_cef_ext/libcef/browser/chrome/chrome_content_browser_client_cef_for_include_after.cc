@@ -38,6 +38,13 @@
 #include "libcef/browser/ohos_safe_browsing/ohos_url_trust_list_navigation_throttle.h"
 #endif
 
+#if BUILDFLAG(ARKWEB_EX_FALLBACK_PROXY)
+#include "cef/ohos_cef_ext/libcef/browser/fallback_proxy/fallback_proxy_detector.h"
+#if BUILDFLAG(IS_ARKWEB_EXT)
+#include "arkweb/ohos_nweb_ex/overrides/cef/libcef/browser/alloy/alloy_fallback_proxy_config.h"
+#endif
+#endif
+
 #if BUILDFLAG(ARKWEB_ACTIVITY_STATE)
 #include "components/performance_manager/embedder/binders.h"
 #endif
@@ -282,6 +289,13 @@ void ArkWebInnerCreateThrottlesForNavigation(
 #if BUILDFLAG(ARKWEB_URL_TRUST_LIST)
   registry.AddThrottle(
       ohos_safe_browsing::UrlTrustListNavigationThrottle::Create(registry));
+#endif
+
+#if BUILDFLAG(ARKWEB_EX_FALLBACK_PROXY) && BUILDFLAG(IS_ARKWEB_EXT)
+  if (nweb_ex::AlloyFallbackProxyConfig::GetInstance()->HasAccelerateProxyServer()) {
+    registry.AddThrottle(
+        fallback_proxy::FallbackProxyDetector::Create(registry));
+  }
 #endif
 }
 

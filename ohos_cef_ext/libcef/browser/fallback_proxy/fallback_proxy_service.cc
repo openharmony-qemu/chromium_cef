@@ -19,6 +19,8 @@
 #include "arkweb/ohos_nweb_ex/overrides/net/proxy_resolution/fallback_proxy_utils.h"
 #endif
 #include "arkweb/chromium_ext/net/proxy_resolution/fallback_proxy_config.h"
+#include "arkweb/chromium_ext/net/base/host_utils.h"
+#include "arkweb/chromium_ext/url/ohos/log_utils.h"
 #include "base/functional/bind.h"
 #include "base/functional/callback.h"
 #include "base/task/thread_pool.h"
@@ -26,6 +28,8 @@
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/network_service_instance.h"
 #include "arkweb/ohos_nweb/src/nweb_fallback_proxy.h"
+#include "net/base/proxy_string_util.h"
+#include "net/base/url_util.h"
 
 namespace fallback_proxy {
 namespace {
@@ -143,7 +147,7 @@ net::ProxyConfig FallbackProxyService::CreateProxyConfig(
     return net::ProxyConfig::CreateDirect();
   }
 
-  config.proxy_rules().bypass_rules = config_->GetHostMatchingRules();
+  config.proxy_rules().bypass_rules = config_->GetBypassRules();
   config.proxy_rules().reverse_bypass = true;
   return config;
 }
@@ -168,12 +172,27 @@ FallbackProxyService::CreateCustomProxyConfig(
 }
 
 void FallbackProxyService::UpdateCustomProxyConfig(
-    const std::vector<net::ProxyServer>& proxy_servers) {
+    const std::vector<net::ProxyServer>& proxy_servers,
+    base::OnceClosure callback, bool active_only_mode) {
   network::mojom::CustomProxyConfigPtr config =
       CreateCustomProxyConfig(proxy_servers);
+  UpdateCustomProxyConfig(
+      std::move(config), std::move(callback), active_only_mode);
+}
+
+void FallbackProxyService::UpdateCustomProxyConfig(
+    network::mojom::CustomProxyConfigPtr config,
+    base::OnceClosure callback, bool active_only_mode) {
   for (auto& client : proxy_config_clients_) {
-    client->OnCustomProxyConfigUpdated(config->Clone(), base::DoNothing());
+    if (callback) {
+      client->OnCustomProxyConfigUpdated(config->Clone(), std::move(callback));
+      callback = base::OnceClosure();
+    } else {
+      client->OnCustomProxyConfigUpdated(config->Clone(), base::DoNothing());
+    }
   }
+
+  net::FallbackProxyConfigStatus::SetActiveOnlyMode(active_only_mode);
 }
 
 network::mojom::FallbackProxyInfoConfigPtr
@@ -360,6 +379,157 @@ void FallbackProxyService::Disable(DisabledReason reason, int reason_code) {
     net::ReportProxyExceptionReason(reason_code);
   }
 #endif
+}
+
+bool FallbackProxyService::ShouldChangeProxyServer(bool in_accelerate_list) const {
+  bool is_active_only_mode = net::FallbackProxyConfigStatus::IsActiveOnlyMode();
+  LOG(INFO) << "ActiveProxyAccelerate ShouldChangeProxyServer, in_accelerate_list: "
+            << in_accelerate_list << ", is_active_only_mode: " << is_active_only_mode
+            << ", is enable: " << is_enabled_;
+
+  if (in_accelerate_list &&
+      (is_active_only_mode || !is_enabled_)) {
+    return false;
+  }
+
+  if (!in_accelerate_list && !is_active_only_mode) {
+    return false;
+  }
+
+  return true;
+}
+
+bool FallbackProxyService::ValidateProxyServer(
+    const std::string& address,
+    net::ProxyServer& result) const {
+  GURL proxy_url(address);
+  if (!proxy_url.is_valid() || proxy_url.scheme() != url::kHttpsScheme) {
+    LOG(WARNING) << "ActiveProxyAccelerate update proxy config, "
+                 << "invalid accelerate proxy server: "
+                 << url::LogUtils::ConvertUrlWithMask(proxy_url.spec());
+    return false;
+  }
+
+  result = net::ProxyServer(
+      net::GetSchemeFromUriScheme(proxy_url.scheme()),
+      net::HostPortPair::FromURL(proxy_url));
+
+  if (!result.is_valid()) {
+    LOG(WARNING) << "ActiveProxyAccelerate update proxy config, "
+                 << "invalid accelerate proxy server: "
+                 << url::LogUtils::ConvertUrlWithMask(result.GetHost());
+    return false;
+  }
+
+  return true;
+}
+
+network::mojom::CustomProxyConfigPtr
+FallbackProxyService::GetProxyConfigForAccelerate(
+    const std::vector<std::string>& accelerate_host_list) const {
+  LOG(INFO) << "ActiveProxyAccelerate update proxy config, url in accelerate list, "
+            << "using accelerate proxy.";
+
+  const std::string& accelerate_proxy_server = config_->GetAccelerateProxyServer();
+  net::ProxyServer proxy_server;
+  if (!ValidateProxyServer(accelerate_proxy_server, proxy_server)) {
+    return network::mojom::CustomProxyConfigPtr();
+  }
+
+  if (proxy_config_clients_.empty()) {
+    LOG(WARNING) << "ActiveProxyAccelerate update proxy config, no proxy config client.";
+    return network::mojom::CustomProxyConfigPtr();
+  }
+
+  auto config = network::mojom::CustomProxyConfig::New();
+  config->should_override_existing_config = false;
+  config->allow_non_idempotent_methods = false;
+
+  net::ProxyConfig::ProxyRules rules;
+  rules.type = net::ProxyConfig::ProxyRules::Type::PROXY_LIST;
+  rules.single_proxies.AddProxyServer(proxy_server);
+
+  // 添加加速域名到 bypass rules（reverse_bypass 模式）
+  for (const auto& accelerate_host : accelerate_host_list) {
+    if (net::HostUtils::IsValidIP(accelerate_host)) {
+      rules.bypass_rules.AddRuleFromString(accelerate_host);
+    } else if (net::HostUtils::IsValidDomain(accelerate_host)) {
+      rules.bypass_rules.AddRuleFromString(accelerate_host);
+      std::string wildcard_host = base::StrCat({"*.", accelerate_host});
+      rules.bypass_rules.AddRuleFromString(wildcard_host);
+    } else {
+      LOG(WARNING) << "ActiveProxyAccelerate update proxy config, "
+                   << "invalid accelerate domain for bypass rules: "
+                   << url::LogUtils::ConvertUrlWithMask(accelerate_host);
+    }
+  }
+  rules.reverse_bypass = true;
+  config->rules = rules;
+
+  std::string header(net::kFallbackProxyTunnelHeaderKey);
+  header.append(":");
+  header.append(config_->GetProxyToken());
+  net::HttpRequestHeaders tunnel_header;
+  tunnel_header.AddHeadersFromString(header);
+  config->connect_tunnel_headers = tunnel_header;
+  config->is_accelerate_proxy = true;
+
+  return config;
+}
+
+network::mojom::CustomProxyConfigPtr
+FallbackProxyService::GetProxyConfigForFallback() const {
+  LOG(INFO) << "ActiveProxyAccelerate skipping proxy config, url not in accelerate list, "
+            << "using original fallback proxy.";
+  auto config = CreateCustomProxyConfig(proxy_servers_);
+  config->is_accelerate_proxy = false;
+  return config;
+}
+
+void FallbackProxyService::UpdateProxyConfigForURL(const GURL& url,
+                                                   bool& should_defer_navigation,
+                                                   bool& is_accelerate_proxy,
+                                                   base::OnceClosure callback) {
+  if (!url.is_valid()) {
+    LOG(WARNING) << "ActiveProxyAccelerate skipping proxy config, invalid url: "
+                 << url::LogUtils::ConvertUrlWithMask(url.spec());
+    should_defer_navigation = false;
+    return;
+  }
+
+  std::string host = url.GetHost();
+  const std::vector<std::string>& accelerate_host_list =
+      config_->GetAccelerateHostList();
+  bool in_accelerate_list =
+      net::HostUtils::IsHostMatchInList(host, accelerate_host_list);
+
+  is_accelerate_proxy = net::FallbackProxyConfigStatus::IsActiveOnlyMode();
+  if (!ShouldChangeProxyServer(in_accelerate_list)) {
+    should_defer_navigation = false;
+    return;
+  }
+
+  network::mojom::CustomProxyConfigPtr config;
+  if (in_accelerate_list) {
+    config = GetProxyConfigForAccelerate(accelerate_host_list);
+  } else {
+    config = GetProxyConfigForFallback();
+  }
+
+  if (config.is_null()) {
+    LOG(INFO) << "ActiveProxyAccelerate get config failed, skip.";
+    should_defer_navigation = false;
+    return;
+  }
+
+  should_defer_navigation = true;
+  is_accelerate_proxy = in_accelerate_list;
+  UpdateCustomProxyConfig(
+      std::move(config), std::move(callback), in_accelerate_list);
+
+  LOG(INFO) << "ActiveProxyAccelerate update proxy config succeed, "
+            << (in_accelerate_list ? "switched to accelerate proxy"
+                                   : "restored to original fallback proxy");
 }
 
 void FallbackProxyService::SaveURLMaliciousTypeAndHwCode(const std::string& url,
