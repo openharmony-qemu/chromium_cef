@@ -264,6 +264,22 @@ void ArkwebFrameHostExtImpl::GetLiteDom(
           callback));
 }
 
+void ArkwebFrameHostExtImpl::ValidateElementIdWithResponse(
+    const std::string& element_id,
+    cef::mojom::RenderFrame::ValidateElementIdCallback response_callback) {
+  SendToRenderFrame(
+      __FUNCTION__,
+      base::BindOnce(
+          [](const std::string& element_id,
+             cef::mojom::RenderFrame::ValidateElementIdCallback
+                 response_callback,
+             const RenderFrameType& render_frame) {
+            render_frame->ValidateElementId(
+                element_id, std::move(response_callback));
+          },
+          element_id, std::move(response_callback)));
+}
+
 #if BUILDFLAG(ARKWEB_INPUT_EVENTS)
 void ArkwebFrameHostExtImpl::SetInitialScale(float scale) {
   SendToRenderFrame(__FUNCTION__,

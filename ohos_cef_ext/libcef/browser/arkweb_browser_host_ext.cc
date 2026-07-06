@@ -1687,6 +1687,101 @@ int32_t ArkWebBrowserHostExtImpl::ExecuteSelectCommand(
   return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
 }
 
+std::optional<std::string> ExtractFrameTokenFromElementId(
+    const std::string& element_id) {
+  static constexpr std::string_view kLocalPrefix = "local:";
+  size_t dom_separator = element_id.rfind('|');
+  if (dom_separator == std::string::npos ||
+      dom_separator + 1 >= element_id.size()) {
+    return std::nullopt;
+  }
+  size_t document_separator = element_id.rfind('|', dom_separator - 1);
+  if (document_separator == std::string::npos || document_separator == 0 ||
+      document_separator + 1 == dom_separator) {
+    return std::nullopt;
+  }
+
+  std::string target_frame_token = element_id.substr(0, document_separator);
+  if (target_frame_token.rfind(kLocalPrefix, 0) == 0) {
+    target_frame_token = target_frame_token.substr(kLocalPrefix.size());
+  }
+  return target_frame_token;
+}
+
+void ResolveValidateElementIdCallback(
+    CefRefPtr<CefAIPageCommandCallback> callback,
+    const std::string& result) {
+  if (callback) {
+    callback->OnResult(result);
+  }
+}
+
+CefRefPtr<ArkwebFrameHostExtImpl> FindFrameByToken(
+    ArkWebBrowserHostExtImpl* browser_host,
+    const std::string& target_frame_token) {
+  std::vector<CefString> frame_identifiers;
+  browser_host->GetFrameIdentifiers(frame_identifiers);
+
+  for (const CefString& ident : frame_identifiers) {
+    auto frame = browser_host->GetFrameByIdentifier(ident);
+    if (!frame) {
+      continue;
+    }
+    auto cef_frame = frame->AsCefFrameHostImpl();
+    if (!cef_frame) {
+      continue;
+    }
+    auto frame_token_opt = cef_frame->frame_token();
+    if (!frame_token_opt) {
+      continue;
+    }
+    if (frame_token_opt->frame_token.ToString() == target_frame_token) {
+      return static_cast<ArkwebFrameHostExtImpl*>(frame.get());
+    }
+  }
+  return nullptr;
+}
+
+void ArkWebBrowserHostExtImpl::ValidateElementId(
+    const std::string& element_id,
+    CefRefPtr<CefAIPageCommandCallback> callback) {
+  if (!CEF_CURRENTLY_ON_UIT()) {
+    CefRefPtr<ArkWebBrowserHostExtImpl> self(this);
+    CEF_POST_TASK(
+        CEF_UIT,
+        base::BindOnce(
+            [](CefRefPtr<ArkWebBrowserHostExtImpl> self,
+               std::string element_id,
+               CefRefPtr<CefAIPageCommandCallback> callback) {
+              self->ValidateElementId(element_id, callback);
+            },
+            self, element_id, callback));
+    return;
+  }
+
+  auto frame_token_opt = ExtractFrameTokenFromElementId(element_id);
+  if (!frame_token_opt) {
+    LOG(ERROR) << "ValidateElementId: invalid element_id format";
+    ResolveValidateElementIdCallback(callback,
+        "{\"ok\":false,\"error\":\"invalid frameToken format\"}");
+    return;
+  }
+
+  const std::string& target_frame_token = *frame_token_opt;
+  CefRefPtr<ArkwebFrameHostExtImpl> target_frame = FindFrameByToken(this, target_frame_token);
+
+  if (!target_frame) {
+    LOG(ERROR) << "ValidateElementId: no frame found with frame_token=" << target_frame_token;
+    ResolveValidateElementIdCallback(callback,
+        "{\"ok\":false,\"error\":\"frameToken not match\"}");
+    return;
+  }
+
+  target_frame->ValidateElementIdWithResponse(
+      element_id,
+      base::BindOnce(&ResolveValidateElementIdCallback, callback));
+}
+
 void ArkWebBrowserHostExtImpl::SetOverscrollMode(int overscrollMode) {
   auto frame = GetMainFrame();
   if (frame && frame->IsValid()) {

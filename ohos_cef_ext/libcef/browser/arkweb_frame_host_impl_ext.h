@@ -168,6 +168,9 @@ void SetIsFling(bool is_fling);
   void GetLiteDomWithResponse(
       const std::string& params,
       cef::mojom::RenderFrame::GetLiteDomCallback response_callback);
+  void ValidateElementIdWithResponse(
+      const std::string& element_id,
+      cef::mojom::RenderFrame::ValidateElementIdCallback response_callback);
 
 #if BUILDFLAG(ARKWEB_PAGE_UP_DOWN)
   void ScrollPageUpDown(bool is_up, bool is_half, float view_height);
