@@ -4,11 +4,13 @@
 
 #include "cef/libcef/browser/download_manager_delegate_impl.h"
 
+#include <functional>
 #include <tuple>
 
 #include "base/files/file_util.h"
 #include "base/functional/bind.h"
 #include "base/logging.h"
+#include "base/memory/ref_counted.h"
 #include "base/path_service.h"
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
@@ -25,7 +27,9 @@
 
 #if BUILDFLAG(IS_OHOS)
 #include <accesstoken/ability_access_control.h>
+#include "ohos/adapter/file_picker/file_select_picker.h"
 #include "ohos/adapter/permission_manager/permission_manager_adapter.h"
+#include "ui/base/text/bytes_formatting.h"
 #endif
 
 using content::DownloadManager;
@@ -51,6 +55,21 @@ void RunDownloadTargetCallback(download::DownloadTargetCallback callback,
   target_info.intermediate_path = path;
   std::move(callback).Run(std::move(target_info));
 }
+
+#if BUILDFLAG(IS_OHOS)
+bool IsInstallationPackage(const base::FilePath& path) {
+  static constexpr const char* kInstallationPackageExtensions[] = {
+      ".apk", ".exe", ".msi", ".msix", ".dmg", ".pkg", ".deb"};
+  const std::string path_value = path.value();
+  for (const char* extension : kInstallationPackageExtensions) {
+    if (base::EndsWith(path_value, extension,
+                       base::CompareCase::INSENSITIVE_ASCII)) {
+      return true;
+    }
+  }
+  return false;
+}
+#endif
 
 // CefBeforeDownloadCallback implementation.
 class CefBeforeDownloadCallbackImpl : public CefBeforeDownloadCallback {
@@ -170,16 +189,19 @@ class CefBeforeDownloadCallbackImpl : public CefBeforeDownloadCallback {
             params,
             base::BindOnce(
                 &CefBeforeDownloadCallbackImpl::ChooseDownloadPathCallback,
-                std::move(callback)));
+                manager, download_id, std::move(callback)));
       }
     }
 
     if (!handled) {
-      RunDownloadTargetCallback(std::move(callback), suggested_path);
+      MaybeConfirmInstallationPackage(manager, download_id, suggested_path,
+                                      std::move(callback));
     }
   }
 
   static void ChooseDownloadPathCallback(
+      base::WeakPtr<DownloadManager> manager,
+      uint32_t download_id,
       download::DownloadTargetCallback callback,
       const std::vector<base::FilePath>& file_paths) {
     DCHECK_LE(file_paths.size(), (size_t)1);
@@ -190,8 +212,58 @@ class CefBeforeDownloadCallbackImpl : public CefBeforeDownloadCallback {
     }
 
     // The download will be cancelled if |path| is empty.
+    MaybeConfirmInstallationPackage(manager, download_id, path,
+                                    std::move(callback));
+  }
+
+  static void MaybeConfirmInstallationPackage(
+      base::WeakPtr<DownloadManager> manager,
+      uint32_t download_id,
+      const base::FilePath& path,
+      download::DownloadTargetCallback callback) {
+#if BUILDFLAG(IS_OHOS)
+    if (!path.empty() && IsInstallationPackage(path) && manager) {
+      DownloadItem* item = manager->GetDownload(download_id);
+      if (item && item->GetState() == DownloadItem::IN_PROGRESS) {
+        scoped_refptr<base::RefCountedData<download::DownloadTargetCallback>>
+            callback_holder =
+                base::MakeRefCounted<
+                    base::RefCountedData<download::DownloadTargetCallback>>(
+                    std::move(callback));
+        std::function<void(bool)> confirm_callback =
+            [path, callback_holder](bool continue_download) {
+              CEF_POST_TASK(
+                  CEF_UIT,
+                  base::BindOnce(&CefBeforeDownloadCallbackImpl::
+                                     OnInstallationPackageDialogClosed,
+                                 path, callback_holder, continue_download));
+            };
+        ohos::adapter::file_select_picker::FileSelectPicker::GetInstance()
+            .ShowInstallationPackageDialog(
+                path.BaseName().value(),
+                base::UTF16ToUTF8(ui::FormatBytes(item->GetTotalBytes())),
+                confirm_callback);
+        return;
+      }
+    }
+#endif
     RunDownloadTargetCallback(std::move(callback), path);
   }
+
+#if BUILDFLAG(IS_OHOS)
+  static void OnInstallationPackageDialogClosed(
+      const base::FilePath& path,
+      scoped_refptr<base::RefCountedData<download::DownloadTargetCallback>>
+          callback_holder,
+      bool continue_download) {
+    if (callback_holder->data.is_null()) {
+      return;
+    }
+
+    RunDownloadTargetCallback(std::move(callback_holder->data),
+                              continue_download ? path : base::FilePath());
+  }
+#endif
 
   base::WeakPtr<DownloadManager> manager_;
   uint32_t download_id_;
