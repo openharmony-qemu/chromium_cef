@@ -468,6 +468,8 @@ class ArkWebBrowserHostExtImpl : public ArkWebBrowserHostExt,
   int32_t ExecuteSelectCommand(const std::string& xpath,
                                const std::vector<int32_t>& indexes,
                                const std::vector<std::string>& values) override;
+  void ValidateElementId(const std::string& element_id,
+                         CefRefPtr<CefAIPageCommandCallback> callback) override;
 #if BUILDFLAG(ARKWEB_SYNC_RENDER)
   void UpdateDrawRect() override;
 #endif

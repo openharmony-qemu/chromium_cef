@@ -41,6 +41,8 @@ libcef_arkweb_sources = [
   "//cef/ohos_cef_ext/libcef/renderer/ai_page_dom_capture_controller.h",
   "//cef/ohos_cef_ext/libcef/renderer/ai_page_dom_collector.cc",
   "//cef/ohos_cef_ext/libcef/renderer/ai_page_dom_collector.h",
+  "//cef/ohos_cef_ext/libcef/renderer/ai_page_element_validator_controller.cc",
+  "//cef/ohos_cef_ext/libcef/renderer/ai_page_element_validator_controller.h",
   "//cef/ohos_cef_ext/libcef/renderer/arkweb_content_settings_client.cc",
   "//cef/ohos_cef_ext/libcef/renderer/arkweb_content_settings_client.h",
   "//cef/ohos_cef_ext/libcef/renderer/arkweb_frame_impl_ext.cc",

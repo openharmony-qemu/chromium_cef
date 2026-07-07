@@ -71,6 +71,10 @@ class ArkwebFrameExtImpl : public ArkwebFrameExt, public CefFrameImpl {
   void GetLiteDom(const std::string& params,
                   cef::mojom::RenderFrame::GetLiteDomCallback callback)
       override;
+  void ValidateElementId(
+      const std::string& element_id,
+      cef::mojom::RenderFrame::ValidateElementIdCallback callback)
+      override;
 #endif  // BUILDFLAG(IS_OHOS)
 
 #if BUILDFLAG(ARKWEB_INPUT_EVENTS)

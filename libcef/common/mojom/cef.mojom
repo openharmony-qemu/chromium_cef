@@ -129,6 +129,9 @@ interface RenderFrame {
   [EnableIf=is_ohos]
   GetLiteDom(string params) => (string result);
 
+  [EnableIf=is_ohos]
+  ValidateElementId(string element_id) => (string result);
+
   [EnableIf=arkweb_input_events]
   SetInitialScale(float initialScale);
 

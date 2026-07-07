@@ -89,6 +89,7 @@
 #include "third_party/skia/include/core/SkBitmap.h"
 #endif  // BUILDFLAG(ARKWEB_CLIPBOARD)
 #include "cef/ohos_cef_ext/libcef/renderer/ai_page_dom_capture_controller.h"
+#include "cef/ohos_cef_ext/libcef/renderer/ai_page_element_validator_controller.h"
 #include "cef/ohos_cef_ext/libcef/renderer/arkweb_frame_impl_ext.h"
 #include "third_party/blink/renderer/platform/runtime_enabled_features.h"
 
@@ -537,6 +538,21 @@ void ArkwebFrameExtImpl::GetLiteDom(
                     std::move(callback)));
           },
           params, std::move(callback)));
+}
+
+void ArkwebFrameExtImpl::ValidateElementId(
+    const std::string& element_id,
+    cef::mojom::RenderFrame::ValidateElementIdCallback callback) {
+  ExecuteOnLocalFrame(
+      __FUNCTION__,
+      base::BindOnce(
+          [](const std::string& element_id,
+             cef::mojom::RenderFrame::ValidateElementIdCallback callback,
+             blink::WebLocalFrame* frame) {
+            std::move(callback).Run(
+                arkweb::ai_page::ValidateElementIdResult(frame, element_id));
+          },
+          element_id, std::move(callback)));
 }
 #endif  // BUILDFLAG(IS_OHOS)
 
