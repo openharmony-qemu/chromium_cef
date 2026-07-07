@@ -71,6 +71,9 @@ class CefBrowserPlatformDelegateOsr
   void EvictFrameBackBuffersWhenNWebWasHidden() override;
   void SetIsOfflineWebComponent() override;
 #endif
+#if BUILDFLAG(ARKWEB_DELEGATE_COMPOSITING)
+  void DiscardCompositingResources() override;
+#endif
   void NotifyScreenInfoChanged() override;
   void Invalidate(cef_paint_element_type_t type) override;
   void SendExternalBeginFrame() override;

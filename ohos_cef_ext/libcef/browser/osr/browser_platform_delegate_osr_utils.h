@@ -51,6 +51,10 @@ public:
     void EvictFrameBackBuffersWhenNWebWasHidden();
     void SetIsOfflineWebComponent();
 #endif
+
+#if BUILDFLAG(ARKWEB_DELEGATE_COMPOSITING)
+    void DiscardCompositingResources();
+#endif
 };
  
 #endif  // CEF_OHOS_CEF_EXT_LIBCEF_BROWSER_OSR_BROWSER_PLATFORM_DELEGATE_OSR_UTILS_H_

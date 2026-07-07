@@ -110,6 +110,10 @@ class AlloyBrowserHostImpl : public ArkWebBrowserHostExtImpl,
   void SetIsOfflineWebComponent() override;
 #endif
 
+#if BUILDFLAG(ARKWEB_DELEGATE_COMPOSITING)
+  void DiscardCompositingResources() override;
+#endif
+
 #if BUILDFLAG(ARKWEB_OCCLUDED_OPT)
   void SetEnableHalfFrameRate(bool enabled) override;
 #endif

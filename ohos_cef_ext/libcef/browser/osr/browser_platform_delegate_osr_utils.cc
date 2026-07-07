@@ -263,3 +263,18 @@ void CefBrowserPlatformDelegateOsrUtils::SetIsOfflineWebComponent() {
   }
 }
 #endif
+
+#if BUILDFLAG(ARKWEB_DELEGATE_COMPOSITING)
+void CefBrowserPlatformDelegateOsrUtils::DiscardCompositingResources() {
+  LOG(DEBUG) << "CefBrowserPlatformDelegateOsrUtils::DiscardCompositingResources";
+  if (cefBrowserPlatformDelegateOsr == nullptr) {
+    return;
+  }
+  // The WebContentsImpl will notify the OSR view.
+  content::WebContentsImpl* web_contents =
+    static_cast<content::WebContentsImpl*>(cefBrowserPlatformDelegateOsr->web_contents_);
+  if (web_contents) {
+    web_contents->DiscardCompositingResources();
+  }
+}
+#endif
