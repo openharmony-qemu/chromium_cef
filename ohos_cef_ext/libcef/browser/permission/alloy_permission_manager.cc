@@ -322,8 +322,15 @@ void AlloyPermissionManager::RequestPermissionByType(
 #else
     case PermissionType::NOTIFICATIONS:
 #endif
-    case PermissionType::DURABLE_STORAGE:
+#if BUILDFLAG(ARKWEB_NETWORK_BASE)
     case PermissionType::BACKGROUND_SYNC:
+      pending_request_raw->SetPermissionStatus(permission_type,
+                                               PermissionStatus::GRANTED);
+      break;
+#else
+    case PermissionType::BACKGROUND_SYNC:
+#endif
+    case PermissionType::DURABLE_STORAGE:
     case PermissionType::PAYMENT_HANDLER:
     case PermissionType::BACKGROUND_FETCH:
     case PermissionType::IDLE_DETECTION:
@@ -480,7 +487,11 @@ PermissionStatus AlloyPermissionManager::GetPermissionStatus(
     // permission auto-granted.
     return PermissionStatus::GRANTED;
 #endif // ARKWEB_SCREEN_LOCK
+#if BUILDFLAG(ARKWEB_NETWORK_BASE)
+  } else if (permission_type == PermissionType::BACKGROUND_SYNC) {
+    return PermissionStatus::GRANTED;
   }
+#endif
   return PermissionStatus::DENIED;
 }
 content::PermissionResult AlloyPermissionManager::GetPermissionResultForWorker(
