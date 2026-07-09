@@ -4462,11 +4462,11 @@ void ArkWebBrowserHostExtImpl::RunJavaScriptInFrames(const std::string& jsString
     callback->OnJavaScriptExeResult(data);
     return;
   } else {
-    targetFrame = static_cast<content::WebContentsImpl*>(web_contents)->AsWebContentsImplExt()
-                  ->GetTargetFramesIncludingPending(routingId);
+    targetFrame = content::RenderFrameHost::FromID(
+      content::GlobalRenderFrameHostId(childId, routingId));
   }
 
-  if (!targetFrame) {
+  if (!targetFrame || !targetFrame->IsRenderFrameLive()) {
     LOG(ERROR) << "rootFrame id can not find frame.";
     CefRefPtr<CefValue> data = CefValue::Create();
     std::u16string err_name = base::UTF8ToUTF16(std::string("RunJavaScriptInFrames"));
