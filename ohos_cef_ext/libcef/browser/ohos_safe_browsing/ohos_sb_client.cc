@@ -139,6 +139,7 @@ void SbClient::ShowBlockingPage() {
   std::string lang = base::i18n::GetConfiguredLocale();
 
   bool is_unprocessed = false;
+  bool is_in_allowlist = false;
   int onceprocessed_code = -1;
   int onceprocessed_policy = -1;
   for (auto& url : redirect_chain) {
@@ -181,6 +182,7 @@ void SbClient::ShowBlockingPage() {
           MaliciousAllowlist::GetInstance().IsInAllowlist(
               std::string(url.has_host() ? url.host() : url.spec()), incognito_mode_)) {
         LOG(WARNING) << "SafeBrowsing in malicious allowlist.";
+        is_in_allowlist = true;        
         break;
       }
 
@@ -202,8 +204,10 @@ void SbClient::ShowBlockingPage() {
       OHSBThreatType::THREAT_UNPROCESSED);
   } else {
     NotifySafeBrowsingCheckFinish(OHSBThreatType::THREAT_NONE);
-    NotifySafeBrowsingCheckDetail(onceprocessed_code, onceprocessed_policy, 
+    if(!is_in_allowlist){
+      NotifySafeBrowsingCheckDetail(onceprocessed_code, onceprocessed_policy, 
         OHSBThreatType::THREAT_NONE);
+    }
   }
 }
 
