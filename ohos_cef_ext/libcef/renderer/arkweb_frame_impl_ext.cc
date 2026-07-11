@@ -88,6 +88,7 @@
 #include "skia/ext/image_operations.h"
 #include "third_party/skia/include/core/SkBitmap.h"
 #endif  // BUILDFLAG(ARKWEB_CLIPBOARD)
+#include "cef/ohos_cef_ext/libcef/renderer/ai_page_annotation_controller.h"
 #include "cef/ohos_cef_ext/libcef/renderer/ai_page_dom_capture_controller.h"
 #include "cef/ohos_cef_ext/libcef/renderer/ai_page_element_validator_controller.h"
 #include "cef/ohos_cef_ext/libcef/renderer/arkweb_frame_impl_ext.h"
@@ -492,6 +493,26 @@ void ArkwebFrameExtImpl::GetLiteDom(
           params.ToString(), callback));
 }
 
+void ArkwebFrameExtImpl::AddPageAnnotation(
+    const CefString& params,
+    CefRefPtr<CefAIPageCommandCallback> callback) {
+  (void)params;
+  NOTREACHED()
+      << "AddPageAnnotation cannot be called from the renderer process";
+  if (callback) {
+    callback->OnResult("{\"ok\":false,\"error\":\"unsupported_process\"}");
+  }
+}
+
+void ArkwebFrameExtImpl::RemovePageAnnotation(
+    CefRefPtr<CefAIPageCommandCallback> callback) {
+  NOTREACHED()
+      << "RemovePageAnnotation cannot be called from the renderer process";
+  if (callback) {
+    callback->OnResult("{\"ok\":false,\"error\":\"unsupported_process\"}");
+  }
+}
+
 void ArkwebFrameExtImpl::GetFullDom(
     const std::string& params,
     cef::mojom::RenderFrame::GetFullDomCallback callback) {
@@ -553,6 +574,51 @@ void ArkwebFrameExtImpl::ValidateElementId(
                 arkweb::ai_page::ValidateElementIdResult(frame, element_id));
           },
           element_id, std::move(callback)));
+}
+
+void ArkwebFrameExtImpl::GetAIPageElementRects(
+    const std::string& params,
+    cef::mojom::RenderFrame::GetAIPageElementRectsCallback callback) {
+  ExecuteOnLocalFrame(
+      __FUNCTION__,
+      base::BindOnce(
+          [](const std::string& params,
+             cef::mojom::RenderFrame::GetAIPageElementRectsCallback callback,
+             blink::WebLocalFrame* frame) {
+            std::move(callback).Run(
+                arkweb::ai_page::BuildAIPageElementRectsResult(frame, params));
+          },
+          params, std::move(callback)));
+}
+
+void ArkwebFrameExtImpl::RenderPageAnnotationOverlay(
+    const std::string& params,
+    cef::mojom::RenderFrame::RenderPageAnnotationOverlayCallback callback) {
+  ExecuteOnLocalFrame(
+      __FUNCTION__,
+      base::BindOnce(
+          [](const std::string& params,
+             cef::mojom::RenderFrame::RenderPageAnnotationOverlayCallback
+                 callback,
+             blink::WebLocalFrame* frame) {
+            std::move(callback).Run(
+                arkweb::ai_page::RenderPageAnnotationOverlay(frame, params));
+          },
+          params, std::move(callback)));
+}
+
+void ArkwebFrameExtImpl::RemovePageAnnotationOverlay(
+    cef::mojom::RenderFrame::RemovePageAnnotationOverlayCallback callback) {
+  ExecuteOnLocalFrame(
+      __FUNCTION__,
+      base::BindOnce(
+          [](cef::mojom::RenderFrame::RemovePageAnnotationOverlayCallback
+                 callback,
+             blink::WebLocalFrame* frame) {
+            std::move(callback).Run(
+                arkweb::ai_page::RemovePageAnnotationOverlay(frame));
+          },
+          std::move(callback)));
 }
 #endif  // BUILDFLAG(IS_OHOS)
 

@@ -132,6 +132,21 @@ class ArkwebFrameExt : public virtual CefBaseRefCounted {
   /*--cef(optional_param=params)--*/
   virtual void GetLiteDom(const CefString& params,
                           CefRefPtr<CefAIPageCommandCallback> callback) = 0;
+
+  ///
+  /// Adds page annotations using JSON-formatted |params|.
+  ///
+  /*--cef(optional_param=params)--*/
+  virtual void AddPageAnnotation(
+      const CefString& params,
+      CefRefPtr<CefAIPageCommandCallback> callback) = 0;
+
+  ///
+  /// Removes page annotations.
+  ///
+  /*--cef()--*/
+  virtual void RemovePageAnnotation(
+      CefRefPtr<CefAIPageCommandCallback> callback) = 0;
 #endif  // BUILDFLAG(IS_OHOS)
 };
 #endif  // CEF_INCLUDE_CEF_FRAME_H_

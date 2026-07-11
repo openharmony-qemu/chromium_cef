@@ -61,6 +61,11 @@ class ArkwebFrameHostExtImpl : public ArkwebFrameExt, public CefFrameHostImpl {
                   CefRefPtr<CefAIPageCommandCallback> callback) override;
   void GetLiteDom(const CefString& params,
                   CefRefPtr<CefAIPageCommandCallback> callback) override;
+  void AddPageAnnotation(
+      const CefString& params,
+      CefRefPtr<CefAIPageCommandCallback> callback) override;
+  void RemovePageAnnotation(
+      CefRefPtr<CefAIPageCommandCallback> callback) override;
 
 #if BUILDFLAG(ARKWEB_SYNC_RENDER)
   void UpdateDrawRect() override;
@@ -171,6 +176,17 @@ void SetIsFling(bool is_fling);
   void ValidateElementIdWithResponse(
       const std::string& element_id,
       cef::mojom::RenderFrame::ValidateElementIdCallback response_callback);
+  void GetAIPageElementRectsWithResponse(
+      const std::string& params,
+      cef::mojom::RenderFrame::GetAIPageElementRectsCallback
+          response_callback);
+  void RenderPageAnnotationOverlayWithResponse(
+      const std::string& params,
+      cef::mojom::RenderFrame::RenderPageAnnotationOverlayCallback
+          response_callback);
+  void RemovePageAnnotationOverlayWithResponse(
+      cef::mojom::RenderFrame::RemovePageAnnotationOverlayCallback
+          response_callback);
 
 #if BUILDFLAG(ARKWEB_PAGE_UP_DOWN)
   void ScrollPageUpDown(bool is_up, bool is_half, float view_height);
