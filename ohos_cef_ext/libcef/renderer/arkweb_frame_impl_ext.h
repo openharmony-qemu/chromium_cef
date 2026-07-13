@@ -191,10 +191,25 @@ std::string OverrideErrorPage(const CefString& url,
                            const std::string& value,
                            const std::string& event_type,
                            cef::mojom::RenderFrame::ExecuteInputCommandCallback callback) override;
+  void ExecuteAIPageInputCommandByXPath(
+      const std::string& xpath,
+      const std::string& value,
+      const std::string& input_type,
+      cef::mojom::RenderFrame::ExecuteAIPageInputCommandByXPathCallback callback) override;
+  void ExecuteAIPageInputCommandById(
+      const std::string& id,
+      const std::string& value,
+      const std::string& input_type,
+      cef::mojom::RenderFrame::ExecuteAIPageInputCommandByIdCallback callback) override;
   void ExecuteSelectCommand(const std::string& xpath,
                             const std::vector<int32_t>& indexes,
                             const std::vector<std::string>& values,
                             cef::mojom::RenderFrame::ExecuteSelectCommandCallback callback) override;
+  void ExecuteSelectCommandById(
+      const std::string& id,
+      const std::vector<int32_t>& indexes,
+      const std::vector<std::string>& values,
+      cef::mojom::RenderFrame::ExecuteSelectCommandByIdCallback callback) override;
   void Clone(mojo::PendingReceiver<cef::mojom::RenderFrame> receiver) override {
     receivers_.Add(this, std::move(receiver));
   }

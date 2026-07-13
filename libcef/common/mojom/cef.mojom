@@ -212,9 +212,21 @@ interface RenderFrame {
       => (int32 result);
 
   [EnableIf=arkweb_input_events, Sync]
+  ExecuteAIPageInputCommandByXPath(string xpath, string value, string input_type)
+      => (int32 result);
+
+  [EnableIf=arkweb_input_events, Sync]
+  ExecuteAIPageInputCommandById(string id, string value, string input_type)
+      => (int32 result);
+
+  [EnableIf=arkweb_input_events, Sync]
   ExecuteSelectCommand(string xpath, array<int32> indexes,
                        array<string> values)
       => (int32 result);
+
+  [EnableIf=arkweb_input_events, Sync]
+  ExecuteSelectCommandById(string id, array<int32> indexes,
+                           array<string> values) => (int32 result);
 
   [EnableIf=arkweb_optimize_parser_budget]
   SetOptimizeParserBudgetEnabled(bool enable);
