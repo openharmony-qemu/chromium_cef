@@ -949,6 +949,9 @@ void StartDownloadWithParams(
 #if BUILDFLAG(ARKWEB_MEDIA_AVSESSION)
   void PutWebMediaAVSessionEnabled(bool enable) override;
 #endif // ARKWEB_MEDIA_AVSESSION
+#if BUILDFLAG(ARKWEB_MEDIA_HLS)
+  void PutWebMediaNetworkProxyEnabled(bool enable) override;
+#endif  // ARKWEB_MEDIA_HLS
 #if BUILDFLAG(ARKWEB_DEVTOOLS)
   bool is_web_debugging_access_ = false;
 #endif
