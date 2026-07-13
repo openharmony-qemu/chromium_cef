@@ -4,6 +4,7 @@
 
 #include "cef/libcef/browser/alloy/alloy_browser_host_impl.h"
 
+#include <cmath>
 #include <memory>
 #include <string>
 #include <utility>
@@ -256,6 +257,10 @@ int AlloyBrowserHostImplUtils::handleZoomEventWithInput(bool zoom_in) {
   }
 
   double curFactor = alloyBrowserHostImpl->GetZoomLevel();
+  if (std::fmod(curFactor, 2.0) != 0.0) {
+    curFactor = zoom_in ? std::floor(curFactor / 2.0) * 2.0
+                        : std::ceil(curFactor / 2.0) * 2.0;
+  }
   double tempZoomFactor = zoom_in ? curFactor + 2.0 : curFactor - 2.0;
   if (tempZoomFactor > 10.0 || tempZoomFactor < -10.0) {
     LOG(ERROR) << "The mouse wheel event can no longer be zoomed in or out.";
