@@ -31,6 +31,9 @@ class CefCookieManagerImpl : virtual public CefCookieManager {
                        bool includeHttpOnly,
                        CefRefPtr<CefCookieVisitor> visitor,
                        bool is_sync,
+#if BUILDFLAG(ARKWEB_COOKIE)
+                       bool include_partitioned_cookies,
+#endif
                        bool is_from_ndk) override;
   bool SetCookie(const CefString& url,
                  const CefCookie& cookie,
