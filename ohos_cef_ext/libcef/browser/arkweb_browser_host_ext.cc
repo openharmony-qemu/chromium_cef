@@ -855,6 +855,7 @@ void ArkWebBrowserHostExtImpl::UpdateBrowserSettings(
 #endif
 #if BUILDFLAG(ARKWEB_ERROR_PAGE)
   settings_.error_page_enabled = browser_settings.error_page_enabled;
+  settings_.subframe_error_page_enabled = browser_settings.subframe_error_page_enabled;
 #endif
 #if BUILDFLAG(ARKWEB_CLIPBOARD)
   settings_.clipboard_site_permission_enabled = browser_settings.clipboard_site_permission_enabled;
