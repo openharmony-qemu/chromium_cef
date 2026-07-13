@@ -642,7 +642,7 @@ gfx::Rect CefRenderWidgetHostViewOSR::GetPhysicalViewBounds() {
 gfx::Rect CefRenderWidgetHostViewOSR::GetViewBounds() {
 #if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
   gfx::Rect bounds = GetPhysicalViewBounds();
-  bounds.set_height(bounds.height() - GetShrinkViewportHeight());
+  bounds.set_height(bounds.height() - GetShrinkVisualViewportHeight());
   return bounds;
 #else
   if (IsPopupWidget()) {
