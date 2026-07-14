@@ -397,10 +397,12 @@ void BrowserWindowOsrOhos::OnPaint(CefRefPtr<CefBrowser> browser,
   // render to screen
   WindowWidgetType nextWindowid =
       WindowAdapter::GetInstance().GetWindowWidgetId() + 1;
-  WindowIdType windowId = WindowAdapter::GetInstance().GetWindowId(nextWindowid);
-  WindowType window = WindowAdapter::GetInstance().GetWindow(windowId);
-
-  bool result = RenderOnScreen((void*)window, buffer, width, height);
+  WindowIdType windowId =
+      WindowAdapter::GetInstance().GetWindowId(nextWindowid);
+  auto window = WindowAdapter::GetInstance().GetWindow(windowId);
+  bool result =
+      RenderOnScreen(window && window->IsValid() ? window->Get() : nullptr,
+                     buffer, width, height);
   if (!result) {
     LOG(ERROR) << "RenderOnScreen failed";
   }
