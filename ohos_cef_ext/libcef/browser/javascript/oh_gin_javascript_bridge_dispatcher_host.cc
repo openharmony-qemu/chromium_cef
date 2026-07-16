@@ -1153,7 +1153,7 @@ const char* OhGinJavascriptBridgeDispatcherHost::GetLastCallingFrameUrlTLS() {
 #endif
 
 void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethod(
-    int routing_id,
+    const content::GlobalRenderFrameHostId& global_id,
     int32_t object_id,
     const std::string& document_url,
     const std::string& method_name,
@@ -1179,12 +1179,12 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethod(
 #endif
 
   if (content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
-    SetLastCallingFrameInfosOnUIThread(routing_id, document_url);
+    SetLastCallingFrameInfosOnUIThread(global_id, document_url);
   } else {
     CEF_POST_TASK(CEF_UIT,
         base::BindOnce(&OhGinJavascriptBridgeDispatcherHost::
                        SetLastCallingFrameInfosOnUIThread,
-            base::WrapRefCounted(this), routing_id, document_url));
+            base::WrapRefCounted(this), global_id, document_url));
   }
   base::Value::List* argument = const_cast<base::Value::List*>(&arguments);
 
@@ -1214,8 +1214,9 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethod(
     return;
   }
   // 为了兼容老版本webcotroller方式, classname可能为空
+  // 后续方法调用和获取返回值无需使用child_id, 只需要frame_routing_id
   int error = client_->NotifyJavaScriptResult(ceflistvalue, method, classname,
-                                              result, routing_id, object_id);
+                                              result, global_id.frame_routing_id, object_id);
   *error_code = static_cast<content::mojom::OhGinJavascriptBridgeError>(error);
   if (error != 0) {
     return;
@@ -1226,7 +1227,7 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethod(
 }
 
 void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodAsync(
-    int routing_id,
+    const content::GlobalRenderFrameHostId& global_id,
     int32_t object_id,
     const std::string& document_url,
     const std::string& method_name,
@@ -1250,12 +1251,12 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodAsync(
 #endif
 
   if (content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
-    SetLastCallingFrameInfosOnUIThread(routing_id, document_url);
+    SetLastCallingFrameInfosOnUIThread(global_id, document_url);
   } else {
     CEF_POST_TASK(CEF_UIT,
         base::BindOnce(&OhGinJavascriptBridgeDispatcherHost::
                        SetLastCallingFrameInfosOnUIThread,
-            base::WrapRefCounted(this), routing_id, document_url));
+            base::WrapRefCounted(this), global_id, document_url));
   }
   base::Value::List* argument = const_cast<base::Value::List*>(&arguments);
 
@@ -1283,12 +1284,13 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodAsync(
     return;
   }
   // 为了兼容老版本webcotroller方式, classname可能为空
+  // 后续方法调用和获取返回值无需使用child_id, 只需要frame_routing_id
   client_->NotifyJavaScriptResult(ceflistvalue, method, classname, result,
-                                  routing_id, object_id);
+                                  global_id.frame_routing_id, object_id);
 }
 
 void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodFlowbuf(
-    int routing_id,
+    const content::GlobalRenderFrameHostId& global_id,
     int32_t object_id,
     const std::string& document_url,
     const std::string& method_name,
@@ -1315,12 +1317,12 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodFlowbuf(
 #endif
 
   if (content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
-    SetLastCallingFrameInfosOnUIThread(routing_id, document_url);
+    SetLastCallingFrameInfosOnUIThread(global_id, document_url);
   } else {
     CEF_POST_TASK(CEF_UIT,
         base::BindOnce(&OhGinJavascriptBridgeDispatcherHost::
                        SetLastCallingFrameInfosOnUIThread,
-            base::WrapRefCounted(this), routing_id, document_url));
+            base::WrapRefCounted(this), global_id, document_url));
   }
   base::Value::List* argument = const_cast<base::Value::List*>(&arguments);
 
@@ -1351,7 +1353,7 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodFlowbuf(
   }
   // 为了兼容老版本webcotroller方式, classname可能为空
   int error = client_->NotifyJavaScriptResultFlowbuf(
-      ceflistvalue, method, classname, fd, result, routing_id, object_id);
+      ceflistvalue, method, classname, fd, result, global_id.frame_routing_id, object_id);
   *error_code = static_cast<content::mojom::OhGinJavascriptBridgeError>(error);
   if (error != 0) {
     return;
@@ -1362,7 +1364,7 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodFlowbuf(
 }
 
 void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodFlowbufAsync(
-    int routing_id,
+    const content::GlobalRenderFrameHostId& global_id,
     int32_t object_id,
     const std::string& document_url,
     const std::string& method_name,
@@ -1378,12 +1380,12 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodFlowbufAsync(
     return;
   }
   if (content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
-    SetLastCallingFrameInfosOnUIThread(routing_id, document_url);
+    SetLastCallingFrameInfosOnUIThread(global_id, document_url);
   } else {
     CEF_POST_TASK(CEF_UIT,
         base::BindOnce(&OhGinJavascriptBridgeDispatcherHost::
                        SetLastCallingFrameInfosOnUIThread,
-            base::WrapRefCounted(this), routing_id, document_url));
+            base::WrapRefCounted(this), global_id, document_url));
   }
   base::Value::List* argument = const_cast<base::Value::List*>(&arguments);
 
@@ -1413,7 +1415,7 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodFlowbufAsync(
   }
   // 为了兼容老版本webcotroller方式, classname可能为空
   client_->NotifyJavaScriptResultFlowbuf(ceflistvalue, method, classname, fd,
-                                         result, routing_id, object_id);
+                                         result, global_id.frame_routing_id, object_id);
 }
 
 void OhGinJavascriptBridgeDispatcherHost::OnObjectWrapperDeleted(
@@ -1493,17 +1495,17 @@ void OhGinJavascriptBridgeDispatcherHost::InvokeMethod(const std::string& method
     async_task_runner_->PostTask(
         FROM_HERE, base::BindOnce(&OhGinJavascriptBridgeDispatcherHost::InvokeMethodInternal,
                                   base::WrapRefCounted(this),
-                                  object_receivers_.current_context().first.frame_routing_id,
+                                  object_receivers_.current_context().first,
                                   object_receivers_.current_context().second, method_name, document_url,
                                   std::move(arguments), std::move(callback)));
   } else {
-    InvokeMethodInternal(object_receivers_.current_context().first.frame_routing_id,
+    InvokeMethodInternal(object_receivers_.current_context().first,
                          object_receivers_.current_context().second, method_name, document_url,
                          std::move(arguments), std::move(callback));
   }
 }
 
-void OhGinJavascriptBridgeDispatcherHost::InvokeMethodInternal(int routing_id,
+void OhGinJavascriptBridgeDispatcherHost::InvokeMethodInternal(const content::GlobalRenderFrameHostId& global_id,
                                                                int32_t object_id,
                                                                const std::string& method_name,
                                                                const std::string& document_url,
@@ -1512,7 +1514,7 @@ void OhGinJavascriptBridgeDispatcherHost::InvokeMethodInternal(int routing_id,
   base::Value::List wrapped_result;
   content::mojom::OhGinJavascriptBridgeError error_code
       = content::mojom::OhGinJavascriptBridgeError::kOhGinJavascriptBridgeNoError;
-  OnInvokeMethod(routing_id, object_id, document_url, method_name,
+  OnInvokeMethod(global_id, object_id, document_url, method_name,
                  std::move(arguments), &wrapped_result, &error_code);
 
   OnInvokeMethodCallback(error_code, std::move(wrapped_result), std::move(callback));
@@ -1544,11 +1546,11 @@ void OhGinJavascriptBridgeDispatcherHost::InvokeMethodAsync(const std::string& m
     async_task_runner_->PostTask(
         FROM_HERE, base::BindOnce(&OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodAsync,
                                   base::WrapRefCounted(this),
-                                  object_receivers_.current_context().first.frame_routing_id,
+                                  object_receivers_.current_context().first,
                                   object_receivers_.current_context().second, document_url, method_name,
                                   std::move(arguments)));
   } else {
-    OnInvokeMethodAsync(object_receivers_.current_context().first.frame_routing_id,
+    OnInvokeMethodAsync(object_receivers_.current_context().first,
         object_receivers_.current_context().second, document_url, method_name,
         arguments);
   }
@@ -1582,7 +1584,7 @@ void OhGinJavascriptBridgeDispatcherHost::InvokeMethodFlowbuf(const std::string&
   content::mojom::OhGinJavascriptBridgeError error_code
       = content::mojom::OhGinJavascriptBridgeError::kOhGinJavascriptBridgeNoError;
  
-  OnInvokeMethodFlowbuf(object_receivers_.current_context().first.frame_routing_id,
+  OnInvokeMethodFlowbuf(object_receivers_.current_context().first,
                         object_receivers_.current_context().second,
                         document_url,
                         method_name,
@@ -1629,20 +1631,12 @@ void OhGinJavascriptBridgeDispatcherHost::ObjectWrapperDeleted(int32_t object_id
   (void)object_id;
 }
 
-FrameInfos OhGinJavascriptBridgeDispatcherHost::GetLastCallingFrameInfos(int32_t routing_id) {
+FrameInfos OhGinJavascriptBridgeDispatcherHost::GetLastCallingFrameInfos(
+  const content::GlobalRenderFrameHostId& global_id) {
   FrameInfos frame_info;
-  content::WebContentsImpl* web_contents_impl =
-      static_cast<content::WebContentsImpl*>(web_contents());
-  if (!web_contents_impl) {
-    LOG(ERROR) << "OhGinJavascriptBridgeDispatcherHost::GetLastCallingFrameInfos "
-                  "web_contents_impl null";
-    return frame_info;
-  }
- 
   content::RenderFrameHost* target_frame =
-      web_contents_impl->AsWebContentsImplExt()
-          ->GetTargetFramesIncludingPending(routing_id);
-  if (!target_frame) {
+      content::RenderFrameHost::FromID(global_id);
+  if (!target_frame || !target_frame->IsRenderFrameLive()) {
     LOG(ERROR) << "GetLastCallingFrameInfos failed, get RenderFrameHost failed";
     return frame_info;
   }
@@ -1652,7 +1646,6 @@ FrameInfos OhGinJavascriptBridgeDispatcherHost::GetLastCallingFrameInfos(int32_t
     LOG(ERROR) << "GetLastCallingFrameInfos failed, dynamic_cast to content::RenderFrameHostImpl failed";
     return frame_info;
   }
-  auto global_id = rfh->GetGlobalId();
   frame_info.id = std::to_string(global_id.child_id) + "_" + std::to_string(global_id.frame_routing_id);
   if (content::RenderFrameHostImpl* parent = rfh->GetParent()) {
     auto parent_global_id = parent->GetGlobalId();
@@ -1667,13 +1660,13 @@ FrameInfos OhGinJavascriptBridgeDispatcherHost::GetLastCallingFrameInfos(int32_t
 }
 
 void OhGinJavascriptBridgeDispatcherHost::SetLastCallingFrameInfosOnUIThread(
-  int32_t routing_id,
+  const content::GlobalRenderFrameHostId& global_id,
   const std::string& document_url) {
   if (!web_contents()) {
     return;
   }
  
-  FrameInfos frame_info = GetLastCallingFrameInfos(routing_id);
+  FrameInfos frame_info = GetLastCallingFrameInfos(global_id);
   OhJavascriptInjector* javascriptInjector =
       OhJavascriptInjector::FromWebContents(web_contents());
   if (javascriptInjector) {
