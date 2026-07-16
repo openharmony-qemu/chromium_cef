@@ -52,7 +52,8 @@ typedef struct LastCallingFrameUrlInfo {
 #endif
 
 class OhGinJavascriptBridgeDispatcherHost
-    : public base::RefCountedThreadSafe<OhGinJavascriptBridgeDispatcherHost>,
+    : public base::RefCountedDeleteOnSequence<
+          OhGinJavascriptBridgeDispatcherHost>,
       public content::WebContentsObserver,
       public content::mojom::OhGinJavascriptBridgeHost,
       public content::mojom::OhGinJavascriptBridgeRemoteObject {
@@ -188,7 +189,9 @@ class OhGinJavascriptBridgeDispatcherHost
                            InvokeMethodFlowbufCallback callback) override;
 
  private:
-  friend class base::RefCountedThreadSafe<OhGinJavascriptBridgeDispatcherHost>;
+  friend class base::RefCountedDeleteOnSequence<
+      OhGinJavascriptBridgeDispatcherHost>;
+  friend class base::DeleteHelper<OhGinJavascriptBridgeDispatcherHost>;
 
   // object id and ace js function name
   typedef std::map<ObjectID, std::string> ObjectMap;
@@ -291,7 +294,6 @@ class OhGinJavascriptBridgeDispatcherHost
   std::map<content::GlobalRenderFrameHostId,
            mojo::AssociatedRemote<content::mojom::OhGinJavascriptBridge>>
       remotes_;
-  base::WeakPtrFactory<OhGinJavascriptBridgeDispatcherHost> weak_ptr_factory_;
 };
 }  // namespace NWEB
 #endif
