@@ -2756,9 +2756,8 @@ bool ArkWebRenderWidgetHostViewOSRExt::PullToRefreshAction(
   }
 
   bool is_dark =
-      (browser_impl_->settings().force_dark_mode_enabled == STATE_ENABLED &&
        browser_impl_->settings().dark_prefer_color_scheme_enabled ==
-           STATE_ENABLED);
+           STATE_ENABLED;
   bool result =
       browser_impl_->GetClient()->AsArkWebClient()->OnPullToRefreshAction(
           static_cast<int>(action));
