@@ -305,7 +305,7 @@ static void RunSelectNow(
   // Convert the client certificates file to X509
   net::CertificateList certsList =
       net::X509Certificate::CreateCertificateListFromBytes(
-          base::as_bytes(base::make_span(cert_data)),
+          base::as_bytes(base::span(cert_data)),
           net::X509Certificate::FORMAT_AUTO);
   if (certsList.empty()) {
     LOG(ERROR) << "RunSelectNow: certs list is empty";

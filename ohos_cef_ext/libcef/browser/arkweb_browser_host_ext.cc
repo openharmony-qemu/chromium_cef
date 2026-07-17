@@ -679,6 +679,11 @@ void ArkWebBrowserHostExtImpl::ViewSource() {
 
   content::RenderFrameHost* main_frame =
       GetWebContents()->GetPrimaryMainFrame();
+  if (!main_frame) {
+    LOG(ERROR) << "NWebDelegate::ViewSource "
+                  "main_frame is nullptr";
+    return;
+  }
   main_frame->ViewSource();
 
 }
@@ -4906,8 +4911,13 @@ void ArkWebBrowserHostExtImpl::EnableHttpsUpgrades(bool enable) {
   }
   OhosHttpsUpgradesHelper::CreateForWebContents(web_contents);
   auto* https_helper = OhosHttpsUpgradesHelper::FromWebContents(web_contents);
-    https_helper->set_is_arkweb_https_upgrades_enable(enable);
+  if (!https_helper) {
+    LOG_FEEDBACK(WARNING, kHttpsUpgrades)
+        << "EnableHttpsUpgrades message:httpsHelperIsNull";
+    return;
   }
+  https_helper->set_is_arkweb_https_upgrades_enable(enable);
+}
 #endif
 
 #if BUILDFLAG(ARKWEB_EXT_RECEIVE_RESPONSE)
