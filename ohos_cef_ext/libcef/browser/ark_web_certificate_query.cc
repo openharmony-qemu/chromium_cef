@@ -33,31 +33,6 @@ namespace certificate_query {
 
 namespace {
 
-// Helper function to safely get usage scenario without blink header dependencies
-#if BUILDFLAG(ARKWEB_LOGGER_REPORT)
-int32_t GetUsageScenarioSafely(content::WebContents* web_contents) {
-  if (!web_contents) {
-    return 99; // Default value
-  }
-
-  // Get WebPreferences through content public interface
-  // This avoids direct blink header inclusion
-  const blink::web_pref::WebPreferences& prefs = web_contents->GetOrCreateWebPreferences();
-
-  // Access usage_scenario field (assuming it's still accessible)
-  // If this fails, we may need to use a different approach
-  #if defined(__has_include)
-    #if __has_include("third_party/blink/renderer/core/frame/web_preferences.h")
-      return prefs.usage_scenario;
-    #else
-      return 99; // Default fallback value
-    #endif
-  #else
-    return 99; // Default fallback value
-  #endif
-}
-#endif
-
 class CefAllowCertificateErrorCallbackImpl : public ArkWebCefSslCallback {
  public:
   using CallbackType = CertificateErrorCallback;
@@ -248,7 +223,6 @@ CertificateErrorCallback AllowAllCertificateError(
                                   std::string(request_url.host()),
                                   base::ohos::kNetworkSSLError, err_msg);
     if (!is_incognito) {
-      int32_t usage_scenario = GetUsageScenarioSafely(web_contents);
       LOG(URL) << "event_message: " << err_msg << ", url: " << origin_url.spec();
     }
   }
