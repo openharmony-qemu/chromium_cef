@@ -18,15 +18,11 @@
 #include "base/task/thread_pool.h"
 #include "chrome/browser/browsing_data/chrome_browsing_data_remover_constants.h"
 #include "chrome/browser/profiles/profile.h"
-#include "chrome/browser/signin/account_reconcilor_factory.h"
-#include "chrome/browser/signin/identity_manager_factory.h"
-#include "chrome/browser/sync/sync_ui_util.h"
 #include "chrome/browser/ui/browser.h"
 #include "components/browsing_data/content/browsing_data_helper.h"
 #include "components/browsing_data/core/pref_names.h"
 #include "components/history/core/common/pref_names.h"
 #include "components/prefs/pref_service.h"
-#include "components/signin/public/identity_manager/identity_manager.h"
 #include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/browsing_data_filter_builder.h"
@@ -37,22 +33,8 @@
 #include "chrome/browser/extensions/api/browsing_data/browsing_data_api.h"
 #include "ohos_nweb/src/capi/web_extension_browsing_data_items.h"
 #include "ohos_nweb/src/cef_delegate/nweb_extension_browsing_data_cef_delegate.h"
-#include "chrome/browser/sync/sync_service_factory.h"
-#include "components/sync/service/sync_service.h"
-// Forward declaration for AccountReconcilor Lock mechanism
-#if BUILDFLAG(ENABLE_DICE_SUPPORT)
-#include "components/signin/core/browser/account_reconcilor.h"
-#endif
 
 namespace {
-
-bool IsSyncRunning(Profile* profile) {
-  if (profile->IsOffTheRecord()) {
-    return false;
-  }
-  syncer::SyncService* sync_service = SyncServiceFactory::GetForProfile(profile);
-  return sync_service && sync_service->IsSyncFeatureActive();
-}
 
 std::optional<std::vector<std::string>> GetOptionStringVector(const base::Value::Dict& options,
     const char* key) {
@@ -161,19 +143,6 @@ void BrowsingDataRemoverFunction::StartRemoving() {
 
   // Add a ref (Balanced in OnTaskFinished)
   AddRef();
-
-  // Prevent Sync from being paused, if required.
-  // Note: In Chromium 141, GetScopedSyncDataDeletion() has been removed.
-  // We'll use AccountReconcilor's Lock mechanism if available, or skip this protection.
-  if (!IsPauseSyncAllowed() && IsSyncRunning(profile)) {
-    AccountReconcilor* reconcilor = AccountReconcilorFactory::GetForProfile(profile);
-    if (reconcilor) {
-      // Use the new AccountReconcilor::Lock mechanism to temporarily block sync
-      // This prevents sync conflicts during browsing data removal
-      LOG(INFO) << "AccountReconciler available for sync protection during data removal";
-      // The lock mechanism would be implemented here if needed in future versions
-    }
-  }
 
   // Create a BrowsingDataRemover, set the current object as an observer (so
   // that we're notified after removal) and call remove() with the arguments
