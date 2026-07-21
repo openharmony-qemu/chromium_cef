@@ -183,7 +183,7 @@ bool WillDispatchTabUpdatedEventWithTab(
     int tab_id,
     WebContents* contents,
     NWebExtensionTabChangeInfo changeInfo,
-    NWebExtensionTab tab,
+    NWebExtensionTabV2 tab,
     content::BrowserContext* browser_context,
     mojom::ContextType target_context,
     const Extension* extension,
@@ -191,14 +191,14 @@ bool WillDispatchTabUpdatedEventWithTab(
     std::optional<base::Value::List>& event_args_out,
     mojom::EventFilteringInfoPtr& event_filtering_info_out,
     bool* dispatch_separate_event_out) {
-  if (tab.nwebId <= 0) {
+  if (tab.tab_v1.nwebId <= 0) {
     LOG(INFO) << "WillDispatchTabUpdatedEventWithTab tab nweb id is invalid";
     return false;
   }
 
   ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior =
       ExtensionTabUtil::GetScrubTabBehavior(extension, target_context, contents);
- 
+
   base::Value::Dict tab_value = GetTabValue(tab, scrub_tab_behavior);
   base::Value::Dict changed_properties;
   FillChangeInfo(changeInfo, changed_properties);
@@ -211,7 +211,7 @@ bool WillDispatchTabUpdatedEventWithTab(
 }
 
 bool WillDispatchTabCreatedEvent(
-    NWebExtensionTab tab,
+    NWebExtensionTabV2 tab,
     content::BrowserContext* browser_context,
     mojom::ContextType target_context,
     const Extension* extension,
@@ -219,11 +219,13 @@ bool WillDispatchTabCreatedEvent(
     std::optional<base::Value::List>& event_args_out,
     mojom::EventFilteringInfoPtr& event_filtering_info_out,
     bool* dispatch_separate_event_out) {
-  GURL gurl(tab.url.value_or(""));
+  GURL gurl(tab.tab_v1.url.value_or(""));
   ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior =
-      ExtensionTabUtil::GetScrubTabBehaviorExt(extension, target_context, gurl, tab.id.value_or(-1));
- 
-  base::Value::Dict tab_value = extensions::GetTabValue(tab, scrub_tab_behavior);
+      ExtensionTabUtil::GetScrubTabBehaviorExt(extension, target_context, gurl,
+                                               tab.tab_v1.id.value_or(-1));
+
+  base::Value::Dict tab_value =
+      extensions::GetTabValue(tab, scrub_tab_behavior);
   event_args_out.emplace();
   event_args_out->Append(std::move(tab_value));
   return true;
@@ -235,7 +237,7 @@ void TabsEventRouter::DispatchTabUpdatedEvent(
     int tab_id,
     content::WebContents* contents,
     std::unique_ptr<NWebExtensionTabChangeInfo> changeInfo,
-    std::unique_ptr<NWebExtensionTab> tab) {
+    std::unique_ptr<NWebExtensionTabV2> tab) {
   DCHECK(contents);
 
   Profile* profile = Profile::FromBrowserContext(contents->GetBrowserContext());
@@ -246,7 +248,7 @@ void TabsEventRouter::DispatchTabUpdatedEvent(
   }
 
   NWebExtensionTabChangeInfo change_info(*changeInfo);
-  NWebExtensionTab extension_tab(*tab);
+  NWebExtensionTabV2 extension_tab(*tab);
 
   // compatible with old version, NWEB_NOTIFY is useless.
   if (change_info.status.has_value() &&
@@ -261,8 +263,8 @@ void TabsEventRouter::DispatchTabUpdatedEvent(
       base::Value::List(), profile);
   event->user_gesture = extensions::EventRouter::UserGestureState::kNotEnabled;
   event->will_dispatch_callback =
-      base::BindRepeating(&WillDispatchTabUpdatedEventWithTab, tab_id,
-                          contents, std::move(change_info), std::move(extension_tab));
+      base::BindRepeating(&WillDispatchTabUpdatedEventWithTab, tab_id, contents,
+                          std::move(change_info), std::move(extension_tab));
   EventRouter::Get(profile)->BroadcastEvent(std::move(event));
 }
 
@@ -316,19 +318,20 @@ void TabsEventRouter::DispatchTabAttachedEvent(
                 extensions::EventRouter::UserGestureState::kUnknown);
 }
 
-void TabsEventRouter::DispatchTabCreatedEvent(int tab_id,
-                                              content::BrowserContext* browserContext,
-                                              std::unique_ptr<NWebExtensionTab> tab) {
+void TabsEventRouter::DispatchTabCreatedEvent(
+    int tab_id,
+    content::BrowserContext* browserContext,
+    std::unique_ptr<NWebExtensionTabV2> tab) {
   DCHECK(browserContext);
-  NWebExtensionTab extension_tab(*tab);
+  NWebExtensionTabV2 extension_tab(*tab);
 
   Profile* profile = Profile::FromBrowserContext(browserContext);
   auto event = std::make_unique<Event>(events::TABS_ON_CREATED,
                                        api::tabs::OnCreated::kEventName,
                                        base::Value::List(), profile);
   event->user_gesture = extensions::EventRouter::UserGestureState::kNotEnabled;
-  event->will_dispatch_callback =
-      base::BindRepeating(&WillDispatchTabCreatedEvent, std::move(extension_tab));
+  event->will_dispatch_callback = base::BindRepeating(
+      &WillDispatchTabCreatedEvent, std::move(extension_tab));
   EventRouter::Get(profile)->BroadcastEvent(std::move(event));
 }
 

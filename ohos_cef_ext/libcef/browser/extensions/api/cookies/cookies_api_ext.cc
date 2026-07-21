@@ -58,18 +58,19 @@ ExtensionFunction::ResponseAction CookiesGetAllCookieStoresFunction::Run() {
   NWebExtensionTabQueryInfoV2 queryInfo;
   queryInfo.contextType = GetExtensionContextType(browser_context());
   queryInfo.includeIncognitoInfo = include_incognito_information();
-  std::vector<NWebExtensionTab> tabs = OHOS::NWeb::NWebExtensionTabCefDelegate::QueryTab(queryInfo);
-  for (const NWebExtensionTab& tab : tabs) {
-    if (!tab.id.has_value()) {
+  std::vector<NWebExtensionTabV2> tabs =
+      OHOS::NWeb::NWebExtensionTabCefDelegate::QueryTab(queryInfo);
+  for (const NWebExtensionTabV2& tab : tabs) {
+    if (!tab.tab_v1.id.has_value()) {
       continue;
     }
-    if (tab.incognito) {
+    if (tab.tab_v1.incognito) {
       if (include_incognito) {
-        incognito_tab_ids.Append(tab.id.value());
+        incognito_tab_ids.Append(tab.tab_v1.id.value());
       }
       continue;
     }
-    original_tab_ids.Append(tab.id.value());
+    original_tab_ids.Append(tab.tab_v1.id.value());
   }
   // Return a list of all cookie stores with at least one open tab.
   std::vector<api::cookies::CookieStore> cookie_stores;

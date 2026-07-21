@@ -25,13 +25,13 @@
 
 namespace extensions {
 
-base::Value::Dict GetWindowValue(
-    const WebExtensionWindow& window,
+base::Value::Dict GetWindowValueV2(
+    const WebExtensionWindowV2& window,
     const std::vector<ExtensionTabUtil::ScrubTabBehavior>& scrub_tab_behaviors,
     bool populate = true);
 
 base::Value::List GetWindowValueList(
-    const std::vector<WebExtensionWindow>& windows,
+    const std::vector<WebExtensionWindowV2>& windows,
     const std::vector<std::vector<ExtensionTabUtil::ScrubTabBehavior>>& scrub_tab_behaviors_combined,
     bool populate = true);
 

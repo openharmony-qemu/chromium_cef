@@ -36,7 +36,6 @@ const char kWidthKey[] = "width";
 const char kHeightKey[] = "height";
 const char kTabsKey[] = "tabs";
 const char kSessionIdKey[] = "sessionId";
-}
 
 base::Value::Dict GetWindowValue(
     const WebExtensionWindow& window,
@@ -62,20 +61,38 @@ base::Value::Dict GetWindowValue(
     dict.Set(kHeightKey, *window.height);
   if (window.sessionId)
     dict.Set(kSessionIdKey, *window.sessionId);
-  if (populate)
+  return dict;
+}
+
+}
+
+base::Value::Dict GetWindowValueV2(
+    const WebExtensionWindowV2& window,
+    const std::vector<ExtensionTabUtil::ScrubTabBehavior>& scrub_tab_behaviors,
+    bool populate) {
+  // Reuse V1 GetWindowValue for base window fields
+  base::Value::Dict dict =
+      GetWindowValue(window.window, scrub_tab_behaviors, false);
+  // Override tabs with V2 tabs
+  if (populate) {
     dict.Set(kTabsKey, GetTabValueList(window.tabs, scrub_tab_behaviors));
+  }
   return dict;
 }
 
 base::Value::List GetWindowValueList(
-    const std::vector<WebExtensionWindow>& windows,
-    const std::vector<std::vector<ExtensionTabUtil::ScrubTabBehavior>>& scrub_tab_behaviors_combined,
+    const std::vector<WebExtensionWindowV2>& windows,
+    const std::vector<std::vector<ExtensionTabUtil::ScrubTabBehavior>>&
+        scrub_tab_behaviors_combined,
     bool populate) {
   base::Value::List window_list;
   size_t i = 0;
-  for (const WebExtensionWindow& window : windows) {
-    if (i == scrub_tab_behaviors_combined.size()) break;
-    window_list.Append(GetWindowValue(window, scrub_tab_behaviors_combined[i++], populate));
+  for (const WebExtensionWindowV2& window : windows) {
+    if (i == scrub_tab_behaviors_combined.size()) {
+      break;
+    }
+    window_list.Append(
+        GetWindowValueV2(window, scrub_tab_behaviors_combined[i++], populate));
   }
   return window_list;
 }
@@ -87,12 +104,12 @@ int32_t GetCurrentWindowId(content::WebContents* webcontents, int32_t default_wi
 
   int32_t tab_id = ExtensionTabUtil::GetTabId(webcontents);
   if (tab_id > 0) {
-    std::unique_ptr<NWebExtensionTab> tab =
+    std::unique_ptr<NWebExtensionTabV2> tab =
         OHOS::NWeb::NWebExtensionTabCefDelegate::GetTab(tab_id);
-    if (!tab || tab->nwebId  < 0) {
+    if (!tab || tab->tab_v1.nwebId  < 0) {
       return default_window_id;
     }
-    return tab->windowId;
+    return tab->tab_v1.windowId;
   } else {
     auto host_base = CefBrowserHostBase::GetBrowserForContents(webcontents);
     if (!host_base || host_base->IsChromeStyle()) {
