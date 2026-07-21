@@ -235,14 +235,14 @@ void ExtensionContextMenusInvokeActiveTab(
 NO_SANITIZE("cfi-icall")
 content::BrowserContext* GetBrowserContextInUse(
     content::BrowserContext* browser_context,
-    const std::optional<NWebExtensionTab>& tab,
+    const std::optional<NWebExtensionTabV2>& tab,
     const std::string& extension_id) {
   if (!browser_context) {
     LOG(ERROR) << "browser_context is null";
     return nullptr;
   }
 
-  if (!tab || !tab->incognito) {
+  if (!tab || !tab->tab_v1.incognito) {
     return browser_context;
   }
 
@@ -276,7 +276,7 @@ content::BrowserContext* GetBrowserContextInUse(
 
 base::Value::List BuildContextMenuEventArgs(
     ContextMenusOnClickedDataV2& data,
-    std::optional<NWebExtensionTab>& tab,
+    std::optional<NWebExtensionTabV2>& tab,
     content::BrowserContext* browser_context,
     const std::string& extension_id) {
   base::Value::Dict properties;
@@ -290,9 +290,9 @@ base::Value::List BuildContextMenuEventArgs(
         extensions::ExtensionTabUtil::kDontScrubTab,
         extensions::ExtensionTabUtil::kDontScrubTab};
     args.Append(extensions::GetTabValue(*tab, scrub_tab_behavior));
-    if (tab->id.has_value()) {
-      ExtensionContextMenusInvokeActiveTab(browser_context, tab->id.value(),
-                                           extension_id);
+    if (tab->tab_v1.id.has_value()) {
+      ExtensionContextMenusInvokeActiveTab(
+          browser_context, tab->tab_v1.id.value(), extension_id);
     }
   }
   return args;
@@ -334,7 +334,7 @@ void CefWebExtensionMenuManager::OnClickedExtensionContextMenus(
   if (tab) {
     extensions::ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior = {
         extensions::ExtensionTabUtil::kDontScrubTab, extensions::ExtensionTabUtil::kDontScrubTab};
-    args.Append(extensions::GetTabValue(*tab, scrub_tab_behavior));
+    args.Append(extensions::GetTabValueV1(*tab, scrub_tab_behavior));
     if (tab->id.has_value()) {
       ExtensionContextMenusInvokeActiveTab(browser_context, tab->id.value(), extension_id);
     }
@@ -356,8 +356,8 @@ void CefWebExtensionMenuManager::OnClickedExtensionContextMenus(
 NO_SANITIZE("cfi-icall")
 void CefWebExtensionMenuManager::OnClickedExtensionContextMenus(
     const std::string& extension_id,
-                                                    ContextMenusOnClickedDataV2& data,
-                                                    std::optional<NWebExtensionTab>& tab) {
+    ContextMenusOnClickedDataV2& data,
+    std::optional<NWebExtensionTabV2>& tab) {
   content::BrowserContext* browser_context = GetBrowserContext();
   content::BrowserContext* browser_context_active =
       GetBrowserContextInUse(browser_context, tab, extension_id);

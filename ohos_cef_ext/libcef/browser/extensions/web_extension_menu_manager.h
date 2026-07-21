@@ -27,9 +27,10 @@ class CefWebExtensionMenuManager {
   static void OnClickedExtensionContextMenus(const std::string& extension_id,
                                              ContextMenusOnClickedData& data,
                                              std::optional<NWebExtensionTab>& tab);
-  static void OnClickedExtensionContextMenus(const std::string& extension_id,
-                                             ContextMenusOnClickedDataV2& data,
-                                             std::optional<NWebExtensionTab>& tab);
+  static void OnClickedExtensionContextMenus(
+      const std::string& extension_id,
+      ContextMenusOnClickedDataV2& data,
+      std::optional<NWebExtensionTabV2>& tab);
   static std::vector<NWebContextMenusItem> GetAllExtensionContextMenus(const std::vector<std::string>& extension_ids);
   static void OnContextMenusCreate(const std::string& extension_id, extensions::MenuItem* menu_item);
   static void OnContextMenusUpdate(const std::string& extension_id, extensions::MenuItem* menu_item);

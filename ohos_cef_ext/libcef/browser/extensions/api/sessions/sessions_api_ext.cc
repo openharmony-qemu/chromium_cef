@@ -34,12 +34,12 @@ const char kRestoreInIncognitoError[] =
     "Can not restore sessions in incognito mode.";
 
 ExtensionTabUtil::ScrubTabBehavior GetScrubTabBehavior(
-    NWebExtensionTab& tab,
+    NWebExtensionTabV2& tab,
     const ExtensionFunction* function) {
-  GURL gurl(tab.url.value_or(""));
+  GURL gurl(tab.tab_v1.url.value_or(""));
   return ExtensionTabUtil::GetScrubTabBehaviorExt(
       function->extension(), function->source_context_type(), gurl,
-      tab.id.value_or(-1));
+      tab.tab_v1.id.value_or(-1));
 }
 
 base::Value::Dict NWebSessionToValue(NWebExtensionSession& session,
@@ -54,11 +54,11 @@ base::Value::Dict NWebSessionToValue(NWebExtensionSession& session,
   }
   if (session.window) {
     std::vector<ExtensionTabUtil::ScrubTabBehavior> scrub_tab_behaviors;
-    for (NWebExtensionTab tab : session.window->tabs) {
+    for (NWebExtensionTabV2& tab : session.window->tabs) {
       scrub_tab_behaviors.emplace_back(GetScrubTabBehavior(tab, function));
     }
     to_value_result.Set(
-        "window", GetWindowValue(session.window.value(), scrub_tab_behaviors));
+        "window", GetWindowValueV2(session.window.value(), scrub_tab_behaviors));
   }
 
   return to_value_result;
@@ -80,28 +80,28 @@ base::Value::List NWebSessionsToValue(
 base::Value::Dict NWebSessionsDeviceToValue(NWebExtensionSessionsDevice& device,
                                             const ExtensionFunction* function) {
   base::Value::Dict to_value_result;
- 
+
   to_value_result.Set("deviceName", device.device_name);
- 
+
   base::Value::List sessions_list;
   for (auto& session : device.sessions) {
     sessions_list.Append(NWebSessionToValue(session, function));
   }
   to_value_result.Set("sessions", std::move(sessions_list));
- 
+
   return to_value_result;
 }
- 
+
 base::Value::List NWebSessionsDevicesToValue(
     std::vector<NWebExtensionSessionsDevice>& devices,
     const ExtensionFunction* function) {
   base::Value::List to_value_result;
- 
+
   to_value_result.reserve(devices.size());
   for (auto& device : devices) {
     to_value_result.Append(NWebSessionsDeviceToValue(device, function));
   }
- 
+
   return to_value_result;
 }
 
