@@ -35,6 +35,7 @@
 #include "cef/libcef/common/mojom/cef.mojom.h"
 #include "cef/libcef/renderer/blink_glue.h"
 #include "cef/ohos_cef_ext/include/arkweb_frame_ext.h"
+#include "content/public/browser/browser_thread.h"
 #include "content/public/browser/global_routing_id.h"
 #include "mojo/public/cpp/bindings/receiver_set.h"
 #include "mojo/public/cpp/bindings/remote.h"
@@ -217,7 +218,8 @@ void SetIsFling(bool is_fling);
       const std::string& xpath, const std::vector<int32_t> indexes, const std::vector<std::string> values,
       mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote); // only in io thread
   void OnIoRenderFrameDisconnect(); // only in io thread
-  mojo::Remote<cef::mojom::RenderFrame> io_thread_render_frame_; // only in io thread
+  std::unique_ptr<mojo::Remote<cef::mojom::RenderFrame>, content::BrowserThread::DeleteOnIOThread>
+      io_thread_render_frame_{new mojo::Remote<cef::mojom::RenderFrame>()}; // only in io thread
   std::atomic<bool> is_io_frame_connected_{false};
 #endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
 #if BUILDFLAG(IS_ARKWEB)
