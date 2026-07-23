@@ -1635,6 +1635,10 @@ class ArkWebBrowserHostExt : public virtual CefBrowserHost,
   virtual void SetIsOfflineWebComponent() {}
 #endif
 
+#if BUILDFLAG(ARKWEB_DELEGATE_COMPOSITING)
+  virtual void DiscardCompositingResources() {}
+#endif
+
   ///
   /// Get the window id of the UI framework
   ///

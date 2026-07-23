@@ -418,3 +418,23 @@ void AlloyBrowserHostImplUtils::SetIsOfflineWebComponent() {
   }
 }
 #endif
+
+#if BUILDFLAG(ARKWEB_DELEGATE_COMPOSITING)
+void AlloyBrowserHostImplUtils::DiscardCompositingResources() {
+  if (alloyBrowserHostImpl == nullptr) {
+    LOG(WARNING) << "alloyBrowserHostImpl is nullptr";
+    return;
+  }
+  if (!alloyBrowserHostImpl->IsWindowless()) {
+    return;
+  }
+  if (!CEF_CURRENTLY_ON_UIT()) {
+    CEF_POST_TASK(CEF_UIT, base::BindOnce(&AlloyBrowserHostImpl::DiscardCompositingResources,
+                                          alloyBrowserHostImpl->AsAlloyBrowserHostImpl()));
+    return;
+  }
+  if (alloyBrowserHostImpl->platform_delegate_) {
+    alloyBrowserHostImpl->platform_delegate_->DiscardCompositingResources();
+  }
+}
+#endif
