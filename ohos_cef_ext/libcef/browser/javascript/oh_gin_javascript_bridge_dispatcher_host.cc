@@ -1570,6 +1570,9 @@ void OhGinJavascriptBridgeDispatcherHost::InvokeMethodFlowbuf(const std::string&
 
   if (!flowbuf_region.IsValid()) {
     LOG(ERROR) << "OhGinJavascriptBridgeDispatcherHost::InvokeMethodFlowbuf flowbuf_region is invalid , run combined_args way";
+    base::Value::List wrapped_result;
+    std::move(callback).Run(content::mojom::OhGinJavascriptBridgeError::kOhGinJavascriptBridgeNonAssignableTypes,
+        std::move(wrapped_result));
     return;
   }
  
@@ -1577,6 +1580,9 @@ void OhGinJavascriptBridgeDispatcherHost::InvokeMethodFlowbuf(const std::string&
   int dup_fd = dup(fd);
   if (fd < 0 || dup_fd < 0) {
     LOG(ERROR) << "OhGinJavascriptBridgeDispatcherHost::InvokeMethodFlowbuf flowbuf_region is invalid, fd < 0 , run combined_args way";
+    base::Value::List wrapped_result;
+    std::move(callback).Run(content::mojom::OhGinJavascriptBridgeError::kOhGinJavascriptBridgeNonAssignableTypes,
+        std::move(wrapped_result));
     return;
   }
  
