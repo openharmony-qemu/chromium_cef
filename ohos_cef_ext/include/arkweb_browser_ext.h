@@ -1150,6 +1150,13 @@ class ArkWebBrowserHostExt : public virtual CefBrowserHost,
   virtual int32_t ExecuteSelectCommand(const std::string& xpath,
                                        const std::vector<int32_t>& indexes,
                                        const std::vector<std::string>& values) = 0;
+
+  /// Validate element id (frame_token, document_scope_token, dom_node_id)
+  ///
+  virtual void ValidateElementId(
+      const std::string& element_id,
+      CefRefPtr<CefAIPageCommandCallback> callback) = 0;
+
   ///
   /// Set whether the soft keyboard is displayed.
   ///
