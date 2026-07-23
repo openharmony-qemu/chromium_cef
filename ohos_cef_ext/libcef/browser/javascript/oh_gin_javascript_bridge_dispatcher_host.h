@@ -106,7 +106,7 @@ class OhGinJavascriptBridgeDispatcherHost
   void OnHasAsyncThreadMethod(int32_t object_id,
                    const std::string& method_name,
                    bool* result);
-  void OnInvokeMethod(int routing_id,
+  void OnInvokeMethod(const content::GlobalRenderFrameHostId& global_id,
                       int32_t object_id,
                       const std::string& document_url,
                       const std::string& method_name,
@@ -118,12 +118,12 @@ class OhGinJavascriptBridgeDispatcherHost
                               base::Value::List wrapped_result,
                               InvokeMethodCallback callback);
 
-  void OnInvokeMethodAsync(int routing_id,
+  void OnInvokeMethodAsync(const content::GlobalRenderFrameHostId& global_id,
                            int32_t object_id,
                            const std::string& document_url,
                            const std::string& method_name,
                            const base::Value::List& arguments);
-  void OnInvokeMethodFlowbuf(int routing_id,
+  void OnInvokeMethodFlowbuf(const content::GlobalRenderFrameHostId& global_id,
                              int32_t object_id,
                              const std::string& document_url,
                              const std::string& method_name,
@@ -136,7 +136,7 @@ class OhGinJavascriptBridgeDispatcherHost
                                      base::Value::List wrapped_result,
                                      InvokeMethodFlowbufCallback callback);
 
-  void OnInvokeMethodFlowbufAsync(int routing_id,
+  void OnInvokeMethodFlowbufAsync(const content::GlobalRenderFrameHostId& global_id,
                                   int32_t object_id,
                                   const std::string& document_url,
                                   const std::string& method_name,
@@ -172,7 +172,7 @@ class OhGinJavascriptBridgeDispatcherHost
                     const std::string& document_url,
                     base::Value::List arguments,
                     InvokeMethodCallback callback) override;
-  void InvokeMethodInternal(int routing_id,
+  void InvokeMethodInternal(const content::GlobalRenderFrameHostId& global_id,
                             int32_t object_id,
                             const std::string& method_name,
                             const std::string& document_url,
@@ -261,8 +261,9 @@ class OhGinJavascriptBridgeDispatcherHost
                              bool is_async);
 
   // Run on the UI thread.
-  FrameInfos GetLastCallingFrameInfos(int32_t routing_id);
-  void SetLastCallingFrameInfosOnUIThread(int32_t routing_id, const std::string& document_url);
+  FrameInfos GetLastCallingFrameInfos(const content::GlobalRenderFrameHostId& global_id);
+  void SetLastCallingFrameInfosOnUIThread(const content::GlobalRenderFrameHostId& global_id,
+                                          const std::string& document_url);
 
   // js property name and object id
   using MethodPair = std::pair<std::string, std::unordered_set<std::string>>;
