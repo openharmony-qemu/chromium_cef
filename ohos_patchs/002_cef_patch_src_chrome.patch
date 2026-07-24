@@ -232,7 +232,7 @@ index 72eb09607..d3866aae8 100644
  
      base::PathService::OverrideAndCreateIfNeeded(
 diff --git a/src/chrome/browser/BUILD.gn b/src/chrome/browser/BUILD.gn
-index 7f82cd5ab..c33088589 100644
+index 24aaab191..0f392da84 100644
 --- a/src/chrome/browser/BUILD.gn
 +++ b/src/chrome/browser/BUILD.gn
 @@ -11,6 +11,7 @@ import("//build/config/compiler/pgo/pgo.gni")

@@ -1969,7 +1969,7 @@ index 36248b2a3e..4dcfe54abc 100644
  }
  
 diff --git a/src/content/app/content_main_runner_impl.cc b/src/content/app/content_main_runner_impl.cc
-index a177fc024d..778aa6884e 100644
+index 330bb73b8d..45e4f856a9 100644
 --- a/src/content/app/content_main_runner_impl.cc
 +++ b/src/content/app/content_main_runner_impl.cc
 @@ -50,6 +50,7 @@
@@ -1980,7 +1980,7 @@ index a177fc024d..778aa6884e 100644
  #include "base/time/time.h"
  #include "base/trace_event/trace_event.h"
  #include "build/branding_buildflags.h"
-@@ -1378,6 +1379,11 @@ void ContentMainRunnerImpl::Shutdown() {
+@@ -1379,6 +1380,11 @@ void ContentMainRunnerImpl::Shutdown() {
    is_shutdown_ = true;
  }
  
@@ -2431,10 +2431,10 @@ index 21f7fb2b6c..6f369d7e32 100644
    // Will call the appropriate NavigationThrottle function based on |event| on
    // all NavigationThrottles owned by this NavigationThrottleRunner.
 diff --git a/src/content/browser/renderer_host/render_frame_host_impl.cc b/src/content/browser/renderer_host/render_frame_host_impl.cc
-index 584ed4c8b2..d0e43c1cce 100644
+index ffa2886925..d723f700b6 100644
 --- a/src/content/browser/renderer_host/render_frame_host_impl.cc
 +++ b/src/content/browser/renderer_host/render_frame_host_impl.cc
-@@ -9747,6 +9747,16 @@ void RenderFrameHostImpl::CreateNewWindow(
+@@ -9758,6 +9758,16 @@ void RenderFrameHostImpl::CreateNewWindow(
      return;
    }
  
@@ -2451,7 +2451,7 @@ index 584ed4c8b2..d0e43c1cce 100644
    // Otherwise, consume user activation before we proceed. In particular, it is
    // important to do this before we return from the |opener_suppressed| case
    // below.
-@@ -12189,6 +12199,7 @@ void RenderFrameHostImpl::CommitNavigation(
+@@ -12202,6 +12212,7 @@ void RenderFrameHostImpl::CommitNavigation(
        ProcessLock::FromSiteInfo(GetSiteInstance()->GetSiteInfo());
    auto browser_calc_origin_to_commit = navigation_request->GetOriginToCommit();
    if (!process_lock.is_error_page() && !is_mhtml_subframe &&
@@ -2943,10 +2943,10 @@ index 7f9b515297..5606867e43 100644
                                       ContentMainRunner* content_main_runner);
  
 diff --git a/src/content/public/browser/content_browser_client.cc b/src/content/public/browser/content_browser_client.cc
-index 6a2ad673c8..546fee829f 100644
+index 1db23bd990..4dbdf597d7 100644
 --- a/src/content/public/browser/content_browser_client.cc
 +++ b/src/content/public/browser/content_browser_client.cc
-@@ -1204,7 +1204,7 @@ ContentBrowserClient::CreateURLLoaderHandlerForServiceWorkerNavigationPreload(
+@@ -1199,7 +1199,7 @@ ContentBrowserClient::CreateURLLoaderHandlerForServiceWorkerNavigationPreload(
  void ContentBrowserClient::OnNetworkServiceCreated(
      network::mojom::NetworkService* network_service) {}
  
@@ -2955,7 +2955,7 @@ index 6a2ad673c8..546fee829f 100644
      BrowserContext* context,
      bool in_memory,
      const base::FilePath& relative_partition_path,
-@@ -1213,6 +1213,7 @@ void ContentBrowserClient::ConfigureNetworkContextParams(
+@@ -1208,6 +1208,7 @@ void ContentBrowserClient::ConfigureNetworkContextParams(
          cert_verifier_creation_params) {
    network_context_params->user_agent = GetUserAgentBasedOnPolicy(context);
    network_context_params->accept_language = "en-us,en";
@@ -2964,10 +2964,10 @@ index 6a2ad673c8..546fee829f 100644
  
  std::vector<base::FilePath>
 diff --git a/src/content/public/browser/content_browser_client.h b/src/content/public/browser/content_browser_client.h
-index 5de5c63cdc..47ce4421df 100644
+index 26261ac727..d007fe342f 100644
 --- a/src/content/public/browser/content_browser_client.h
 +++ b/src/content/public/browser/content_browser_client.h
-@@ -1413,6 +1413,12 @@ class CONTENT_EXPORT ContentBrowserClient {
+@@ -1399,6 +1399,12 @@ class CONTENT_EXPORT ContentBrowserClient {
        bool opener_suppressed,
        bool* no_javascript_access);
  
@@ -2980,7 +2980,7 @@ index 5de5c63cdc..47ce4421df 100644
    // Allows the embedder to return a delegate for the SpeechRecognitionManager.
    // The delegate will be owned by the manager. It's valid to return nullptr.
    virtual SpeechRecognitionManagerDelegate*
-@@ -2258,7 +2264,7 @@ class CONTENT_EXPORT ContentBrowserClient {
+@@ -2244,7 +2250,7 @@ class CONTENT_EXPORT ContentBrowserClient {
    //
    // If |relative_partition_path| is the empty string, it means this needs to
    // create the default NetworkContext for the BrowserContext.
@@ -2989,7 +2989,7 @@ index 5de5c63cdc..47ce4421df 100644
        BrowserContext* context,
        bool in_memory,
        const base::FilePath& relative_partition_path,
-@@ -2500,6 +2506,22 @@ class CONTENT_EXPORT ContentBrowserClient {
+@@ -2486,6 +2492,22 @@ class CONTENT_EXPORT ContentBrowserClient {
        const net::IsolationInfo& isolation_info,
        mojo::PendingRemote<network::mojom::URLLoaderFactory>* out_factory);
  
@@ -3012,7 +3012,7 @@ index 5de5c63cdc..47ce4421df 100644
    // Creates an OverlayWindow to be used for video or Picture-in-Picture.
    // This window will house the content shown when in Picture-in-Picture mode.
    // This will return a new OverlayWindow.
-@@ -2565,6 +2587,10 @@ class CONTENT_EXPORT ContentBrowserClient {
+@@ -2551,6 +2573,10 @@ class CONTENT_EXPORT ContentBrowserClient {
    // Used as part of the user agent string.
    virtual std::string GetProduct();
  
@@ -4141,6 +4141,31 @@ index 6754bacdf6..92388852b9 100644
  
    switch (policy) {
      case ReferrerPolicy::CLEAR_ON_TRANSITION_FROM_SECURE_TO_INSECURE:
+diff --git a/src/ohos/adapter/multiprocess/command_line/command_line.cc b/src/ohos/adapter/multiprocess/command_line/command_line.cc
+index aa02ca552b..56a61d2899 100644
+--- a/src/ohos/adapter/multiprocess/command_line/command_line.cc
++++ b/src/ohos/adapter/multiprocess/command_line/command_line.cc
+@@ -309,6 +309,10 @@ void CommandLine::FixCrashpadClientFd(
+         if (cmd == ohos_args_begin) {
+             break;
+         }
++        // AppSpawn 参数中可能包含空占位，不能把它传给 Chromium 入口。
++        if (cmd.empty()) {
++            continue;
++        }
+         buffer_size += cmd.size() + 1;
+     }
+ 
+@@ -323,6 +327,9 @@ void CommandLine::FixCrashpadClientFd(
+         if (cmd == ohos_args_begin) {
+             break;
+         }
++        if (cmd.empty()) {
++            continue;
++        }
+         std::memcpy(result.buffer.data() + offset, cmd.data(), cmd.size());
+         result.buffer[offset + cmd.size()] = '\0';
+         result.argv.push_back(result.buffer.data() + offset);
 diff --git a/src/ohos/adapter/screen/screen_adapter.cc b/src/ohos/adapter/screen/screen_adapter.cc
 index 4919e26dde..c2329e6bb4 100644
 --- a/src/ohos/adapter/screen/screen_adapter.cc
@@ -4192,10 +4217,10 @@ index 176523d86f..550a7adfbe 100644
      }
 diff --git a/src/ohos/adapter/web_entry/cef/cef_loader.cc b/src/ohos/adapter/web_entry/cef/cef_loader.cc
 new file mode 100644
-index 0000000000..30b4b813dd
+index 0000000000..01d39093e9
 --- /dev/null
 +++ b/src/ohos/adapter/web_entry/cef/cef_loader.cc
-@@ -0,0 +1,73 @@
+@@ -0,0 +1,71 @@
 +// Copyright (c) 2024 Huawei Device Co., Ltd. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -4248,12 +4273,10 @@ index 0000000000..30b4b813dd
 +std::string CefLoader::GetEntryPoint(int process_type) {
 +  std::string entry_point;
 +  switch (process_type) {
-+    case ProcessType::kMainProcess:
-+    case ProcessType::kRenderProcess:
-+    case ProcessType::kGpuProcess:
++    case ProcessType::kChromeMain:
 +      entry_point = "CefMain";
 +      break;
-+    case ProcessType::kCrashpadHandler:
++    case ProcessType::kCrashPadHandler:
 +      entry_point = "CrashpadHandlerMain";
 +      break;
 +    default:
@@ -4271,7 +4294,7 @@ index 0000000000..30b4b813dd
 +}  // namespace ohos::adapter::web_entry
 diff --git a/src/ohos/adapter/web_entry/cef/cef_loader.h b/src/ohos/adapter/web_entry/cef/cef_loader.h
 new file mode 100644
-index 0000000000..6a7cfa2044
+index 0000000000..965c1b16d5
 --- /dev/null
 +++ b/src/ohos/adapter/web_entry/cef/cef_loader.h
 @@ -0,0 +1,18 @@
@@ -4294,44 +4317,40 @@ index 0000000000..6a7cfa2044
 +
 +}  // namespace ohos::adapter::web_entry
 diff --git a/src/ohos/adapter/web_entry/web_entry.cc b/src/ohos/adapter/web_entry/web_entry.cc
-index cf6a2b7b16..7c28909f2c 100644
+index 44267a96ff..005411bf2a 100644
 --- a/src/ohos/adapter/web_entry/web_entry.cc
 +++ b/src/ohos/adapter/web_entry/web_entry.cc
-@@ -7,6 +7,7 @@
+@@ -31,6 +31,7 @@
  
  #include <atomic>
  #include <chrono>
 +#include <filesystem>
  #include <thread>
+ #include <vector>
  
- #include "ohos/adapter/aki_hook/aki_hook.h"
-@@ -63,7 +64,20 @@ int RunOtherProcessType(int process_type) {
-   std::vector<std::string> commands;
-   multiprocess::AppSpawnCommunication::RequestCommandline(commands);
-   std::vector<const char*> cstrs;
+@@ -108,7 +109,16 @@ int RunChildProcess() {
+   CommandLine::FixCrashpadClientFd(commands, fd_mappings);
+   CommandLine::InitForCurrentProcess(commands);
+ 
 -  auto loader = BasicLoader::Create(USE_LOADER_TARGET);
-+  std::string subprocess_path_name = "";
-+  if (int(USE_LOADER_TARGET) == int(WebLoaderType::kCef)) {
-+    const std::string sso_flag = ".so";
-+    if (!commands.empty() && !commands[0].empty()) {
-+      std::filesystem::path file_path(commands[0].data());
-+      if (file_path.extension().string() == sso_flag) {
-+        subprocess_path_name = commands[0].data();
-+        LOGI("cef --browser-subprocess-path= %{public}s",
-+             subprocess_path_name.c_str());
-+      }
-+    }
++  std::string subprocess_path;
++  if (static_cast<int>(USE_LOADER_TARGET) ==
++          static_cast<int>(WebLoaderType::kCef) &&
++      !commands.empty() &&
++      std::filesystem::path(commands.front()).extension() == ".so") {
++    subprocess_path = commands.front();
++    LOGI("cef --browser-subprocess-path= %{public}s",
++         subprocess_path.c_str());
 +  }
-+  auto loader =
-+      BasicLoader::Create(USE_LOADER_TARGET, subprocess_path_name.c_str());
-   for (size_t i = 0; i < commands.size(); ++i) {
-     if (commands[i].find("--type") != std::string::npos) {
-       auto pos = commands[i].find_last_of("=");
++  auto loader = BasicLoader::Create(USE_LOADER_TARGET, subprocess_path);
+   int entry_type = GetEntryType();
+   auto argc_argv = CommandLine::BuildArgcArgv(commands);
+ 
 diff --git a/src/ohos/adapter/web_entry/web_loader.cc b/src/ohos/adapter/web_entry/web_loader.cc
-index a8b7d1f872..469780d312 100644
+index cf4ec77e0d..f794aedee6 100644
 --- a/src/ohos/adapter/web_entry/web_loader.cc
 +++ b/src/ohos/adapter/web_entry/web_loader.cc
-@@ -10,6 +10,9 @@ namespace ohos::adapter::web_entry {
+@@ -11,6 +11,9 @@ namespace ohos::adapter::web_entry {
  BasicLoader::BasicLoader(const std::string& dir, const std::string& name)
      : shared_library_(dir, name) {}
  
@@ -4341,16 +4360,6 @@ index a8b7d1f872..469780d312 100644
  bool BasicLoader::Initialize() { return true; }
  
  __attribute__((no_sanitize("cfi", "cfi-icall")))
-@@ -28,6 +31,9 @@ int BasicLoader::StartMainProcess(const std::vector<std::string>& args) {
-   if (fn != nullptr) {
-     std::vector<const char*> argv_cstr;
-     for (const auto& arg : args) {
-+      if (arg.empty()) {
-+        continue;
-+      }
-       argv_cstr.push_back(const_cast<char*>(arg.c_str()));
-     }
-     return fn(argv_cstr.size(), argv_cstr.data());
 diff --git a/src/ohos/adapter/web_entry/web_loader.h b/src/ohos/adapter/web_entry/web_loader.h
 index d64d372a2f..1309fb4d6f 100644
 --- a/src/ohos/adapter/web_entry/web_loader.h
@@ -4602,7 +4611,7 @@ index e401617523..f97ea8029b 100644
  }
 \ No newline at end of file
 diff --git a/src/ohos/app/ohos_hap/chromium/src/main/resources/base/profile/shortcuts_config.json b/src/ohos/app/ohos_hap/chromium/src/main/resources/base/profile/shortcuts_config.json
-index 63b0293bd5..80c784a7ed 100644
+index 63b0293bd5..2bd9030239 100644
 --- a/src/ohos/app/ohos_hap/chromium/src/main/resources/base/profile/shortcuts_config.json
 +++ b/src/ohos/app/ohos_hap/chromium/src/main/resources/base/profile/shortcuts_config.json
 @@ -5,7 +5,7 @@
@@ -4614,6 +4623,13 @@ index 63b0293bd5..80c784a7ed 100644
            "moduleName": "chromium",
            "abilityName": "EntryAbility",
            "parameters": {
+@@ -15,4 +15,4 @@
+       ]
+     }
+   ]
+-}
+\ No newline at end of file
++}
 diff --git a/src/ohos/app/ohos_hap/chromium/src/main/resources/en_US/element/string.json b/src/ohos/app/ohos_hap/chromium/src/main/resources/en_US/element/string.json
 index c62f2dfdd4..6b37ab8d8a 100644
 --- a/src/ohos/app/ohos_hap/chromium/src/main/resources/en_US/element/string.json
@@ -5173,7 +5189,7 @@ index 171f4aaa55..f971acbed1 100644
      JsBindingUtils.bindFunction("AppWindow.SetBounds", setBounds);
      JsBindingUtils.bindFunction("AppWindow.SetEnabled", setEnabled);
 diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets
-index 0d32f97570..274fec5b08 100644
+index 0d32f97570..3f4f6277a8 100644
 --- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets
 +++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets
 @@ -28,6 +28,7 @@
@@ -5184,7 +5200,7 @@ index 0d32f97570..274fec5b08 100644
  import { NativeContext } from "../interface/CommonInterface";
  import JsBindingUtils from "./JsBindingUtils";
  import { ContextType } from "../common/Constants";
-@@ -65,10 +66,48 @@ export class CmdArgsHelper {
+@@ -65,10 +65,48 @@ export class CmdArgsHelper {
      return JsBindingUtils.getNativeContext(ContextType.kMainProcess);
    }
  
@@ -5225,7 +5241,6 @@ index 0d32f97570..274fec5b08 100644
 +      // 从系统环境获取语言设置
 +      const systemLanguage = CmdArgsHelper.getSystemLanguage();
 +      vec_args.push(`--lang=${systemLanguage}`);
-+      vec_args.push("--force-renderer-accessibility=complete");
 +      vec_args.push("--enable-media-stream=true");
 +      vec_args.push("--enable-speech-input=true");
 +    }
@@ -5330,49 +5345,6 @@ index 3a98838e27..f5cbe1c561 100644
   private:
    const OutOfProcessBehavior out_of_process_behavior_;
  };
-diff --git a/src/printing/printing_context_linux.cc b/src/printing/printing_context_linux.cc
-index f3ed1bc6d3..ff1bde33dc 100644
---- a/src/printing/printing_context_linux.cc
-+++ b/src/printing/printing_context_linux.cc
-@@ -81,11 +81,11 @@ mojom::ResultCode PrintingContextLinux::UseDefaultSettings() {
- #endif
- 
- #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_OHOS)
--  if (!ui::LinuxUi::instance())
-+  if (!ui::PrintingContextLinuxDelegate::instance())
-     return mojom::ResultCode::kSuccess;
- 
-   if (!print_dialog_)
--    print_dialog_ = ui::LinuxUi::instance()->CreatePrintDialog(this);
-+    print_dialog_ = ui::PrintingContextLinuxDelegate::instance()->CreatePrintDialog(this);
- 
-   if (print_dialog_) {
-     print_dialog_->UseDefaultSettings();
-@@ -97,8 +97,8 @@ mojom::ResultCode PrintingContextLinux::UseDefaultSettings() {
- 
- gfx::Size PrintingContextLinux::GetPdfPaperSizeDeviceUnits() {
- #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_OHOS)
--  if (ui::LinuxUi::instance())
--    return ui::LinuxUi::instance()->GetPdfPaperSize(this);
-+  if (ui::PrintingContextLinuxDelegate::instance())
-+    return ui::PrintingContextLinuxDelegate::instance()->GetPdfPaperSize(this);
- #endif
- 
-   return gfx::Size();
-@@ -110,11 +110,11 @@ mojom::ResultCode PrintingContextLinux::UpdatePrinterSettings(
-   DCHECK(!in_print_job_);
- 
- #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_OHOS)
--  if (!ui::LinuxUi::instance())
-+  if (!ui::PrintingContextLinuxDelegate::instance())
-     return mojom::ResultCode::kSuccess;
- 
-   if (!print_dialog_)
--    print_dialog_ = ui::LinuxUi::instance()->CreatePrintDialog(this);
-+    print_dialog_ = ui::PrintingContextLinuxDelegate::instance()->CreatePrintDialog(this);
- 
-   if (print_dialog_) {
-     // PrintDialogGtk::UpdateSettings() calls InitWithSettings() so settings_ will
 diff --git a/src/sandbox/linux/suid/client/setuid_sandbox_host.cc b/src/sandbox/linux/suid/client/setuid_sandbox_host.cc
 index f3a6d25be4..c826aa9e9a 100644
 --- a/src/sandbox/linux/suid/client/setuid_sandbox_host.cc
