@@ -53,13 +53,6 @@ class OhGinJavascriptBridgeDispatcher final : public content::mojom::OhGinJavasc
 #endif  // CONTENT_ENABLE_LEGACY_IPC
   void DidClearWindowObject() override;
 
-  std::unique_ptr<base::Value> InvokeJavascriptMethodFlowbuf(
-      ObjectID object_id,
-      const std::string& method_name,
-      const base::Value::List& arguments,
-      int fd,
-      content::mojom::OhGinJavascriptBridgeError* error);
-
   OhGinJavascriptBridgeObject* GetObject(const ObjectID object_id);
   void OnOhGinJavascriptBridgeObjectDeleted(
       const OhGinJavascriptBridgeObject* object);
