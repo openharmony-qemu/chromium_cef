@@ -1166,15 +1166,15 @@ void ArkwebFrameHostExtImpl::ExecuteInputCommandOnIO(
     mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote) {
   CEF_REQUIRE_IOT();
   if (pending_remote.is_valid()) {
-    io_thread_render_frame_.reset();
-    io_thread_render_frame_.Bind(std::move(pending_remote));
+    io_thread_render_frame_->reset();
+    io_thread_render_frame_->Bind(std::move(pending_remote));
     is_io_frame_connected_.store(true);
-    io_thread_render_frame_.set_disconnect_handler(
+    io_thread_render_frame_->set_disconnect_handler(
         base::BindOnce(&ArkwebFrameHostExtImpl::OnIoRenderFrameDisconnect,
                        weak_ptr_factory_.GetWeakPtr()));
   }
-  if (io_thread_render_frame_ && io_thread_render_frame_.is_bound()) {
-    io_thread_render_frame_->ExecuteInputCommand(xpath, value, event_type,
+  if (io_thread_render_frame_ && io_thread_render_frame_->is_bound()) {
+    (*io_thread_render_frame_)->ExecuteInputCommand(xpath, value, event_type,
         base::BindOnce(
             [](std::shared_ptr<std::promise<int32_t>> promise, int32_t result) {
               if (promise) {
@@ -1198,16 +1198,16 @@ void ArkwebFrameHostExtImpl::ExecuteAIPageInputCommandByXPathOnIO(
     mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote) {
   CEF_REQUIRE_IOT();
   if (pending_remote.is_valid()) {
-    io_thread_render_frame_.reset();
-    io_thread_render_frame_.Bind(std::move(pending_remote));
+    io_thread_render_frame_->reset();
+    io_thread_render_frame_->Bind(std::move(pending_remote));
     is_io_frame_connected_.store(true);
-    io_thread_render_frame_.set_disconnect_handler(
+    io_thread_render_frame_->set_disconnect_handler(
         base::BindOnce(&ArkwebFrameHostExtImpl::OnIoRenderFrameDisconnect,
                        weak_ptr_factory_.GetWeakPtr()));
   }
 
-  if (io_thread_render_frame_ && io_thread_render_frame_.is_bound()) {
-    io_thread_render_frame_->ExecuteAIPageInputCommandByXPath(
+  if (io_thread_render_frame_ && io_thread_render_frame_->is_bound()) {
+    (*io_thread_render_frame_)->ExecuteAIPageInputCommandByXPath(
         xpath, value, input_type,
         base::BindOnce(
             [](std::shared_ptr<std::promise<int32_t>> promise,
@@ -1236,16 +1236,16 @@ void ArkwebFrameHostExtImpl::ExecuteAIPageInputCommandByIdOnIO(
     mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote) {
   CEF_REQUIRE_IOT();
   if (pending_remote.is_valid()) {
-    io_thread_render_frame_.reset();
-    io_thread_render_frame_.Bind(std::move(pending_remote));
+    io_thread_render_frame_->reset();
+    io_thread_render_frame_->Bind(std::move(pending_remote));
     is_io_frame_connected_.store(true);
-    io_thread_render_frame_.set_disconnect_handler(
+    io_thread_render_frame_->set_disconnect_handler(
         base::BindOnce(&ArkwebFrameHostExtImpl::OnIoRenderFrameDisconnect,
                        weak_ptr_factory_.GetWeakPtr()));
   }
 
-  if (io_thread_render_frame_ && io_thread_render_frame_.is_bound()) {
-    io_thread_render_frame_->ExecuteAIPageInputCommandById(
+  if (io_thread_render_frame_ && io_thread_render_frame_->is_bound()) {
+    (*io_thread_render_frame_)->ExecuteAIPageInputCommandById(
         id, value, input_type,
         base::BindOnce(
             [](std::shared_ptr<std::promise<int32_t>> promise,
@@ -1274,15 +1274,15 @@ void ArkwebFrameHostExtImpl::ExecuteSelectCommandOnIO(
     mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote) {
   CEF_REQUIRE_IOT();
   if (pending_remote.is_valid()) {
-    io_thread_render_frame_.reset();
-    io_thread_render_frame_.Bind(std::move(pending_remote));
+    io_thread_render_frame_->reset();
+    io_thread_render_frame_->Bind(std::move(pending_remote));
     is_io_frame_connected_.store(true);
-    io_thread_render_frame_.set_disconnect_handler(
+    io_thread_render_frame_->set_disconnect_handler(
         base::BindOnce(&ArkwebFrameHostExtImpl::OnIoRenderFrameDisconnect,
                        weak_ptr_factory_.GetWeakPtr()));
   }
-  if (io_thread_render_frame_ && io_thread_render_frame_.is_bound()) {
-    io_thread_render_frame_->ExecuteSelectCommand(xpath, indexes, values,
+  if (io_thread_render_frame_ && io_thread_render_frame_->is_bound()) {
+    (*io_thread_render_frame_)->ExecuteSelectCommand(xpath, indexes, values,
         base::BindOnce(
             [](std::shared_ptr<std::promise<int32_t>> promise, int32_t result) {
               if (promise) {
@@ -1306,15 +1306,15 @@ void ArkwebFrameHostExtImpl::ExecuteSelectCommandByIdOnIO(
     mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote) {
   CEF_REQUIRE_IOT();
   if (pending_remote.is_valid()) {
-    io_thread_render_frame_.reset();
-    io_thread_render_frame_.Bind(std::move(pending_remote));
+    io_thread_render_frame_->reset();
+    io_thread_render_frame_->Bind(std::move(pending_remote));
     is_io_frame_connected_.store(true);
-    io_thread_render_frame_.set_disconnect_handler(
+    io_thread_render_frame_->set_disconnect_handler(
         base::BindOnce(&ArkwebFrameHostExtImpl::OnIoRenderFrameDisconnect,
                        weak_ptr_factory_.GetWeakPtr()));
   }
-  if (io_thread_render_frame_ && io_thread_render_frame_.is_bound()) {
-    io_thread_render_frame_->ExecuteSelectCommandById(
+  if (io_thread_render_frame_ && io_thread_render_frame_->is_bound()) {
+    (*io_thread_render_frame_)->ExecuteSelectCommandById(
         id, indexes, values,
         base::BindOnce(
             [](std::shared_ptr<std::promise<int32_t>> promise,
@@ -1341,14 +1341,14 @@ void ArkwebFrameHostExtImpl::RequirePositionEditAble(std::shared_ptr<std::promis
   CEF_REQUIRE_IOT();
   if (pending_remote.is_valid()) {
     LOG(INFO) << "SetFocusByPosition pending_remote is valid, need bind pending_remote";
-    io_thread_render_frame_.reset();
-    io_thread_render_frame_.Bind(std::move(pending_remote));
+    io_thread_render_frame_->reset();
+    io_thread_render_frame_->Bind(std::move(pending_remote));
     is_io_frame_connected_.store(true);
-    io_thread_render_frame_.set_disconnect_handler(
+    io_thread_render_frame_->set_disconnect_handler(
       base::BindOnce(&ArkwebFrameHostExtImpl::OnIoRenderFrameDisconnect, weak_ptr_factory_.GetWeakPtr()));
   }
-  if (io_thread_render_frame_ && io_thread_render_frame_.is_bound()) {
-    io_thread_render_frame_->SetFocusByPosition(x, y, base::BindOnce(
+  if (io_thread_render_frame_ && io_thread_render_frame_->is_bound()) {
+    (*io_thread_render_frame_)->SetFocusByPosition(x, y, base::BindOnce(
       [](std::shared_ptr<std::promise<bool>> promise, bool isEditable) {
         LOG(INFO) << "SetFocusByPosition SubThread: Callback received: " << isEditable;
         if (promise) {
@@ -1364,9 +1364,10 @@ void ArkwebFrameHostExtImpl::RequirePositionEditAble(std::shared_ptr<std::promis
 }
 
 void ArkwebFrameHostExtImpl::OnIoRenderFrameDisconnect() {
+  LOG(INFO) << "OnIoRenderFrameDisconnect called";
   CEF_REQUIRE_IOT();
   is_io_frame_connected_.store(false);
-  io_thread_render_frame_.reset();
+  io_thread_render_frame_->reset();
 }
 
 #endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
