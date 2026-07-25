@@ -245,3 +245,16 @@ void CefResponseImpl::SetReadOnly(bool read_only) {
   base::AutoLock lock_scope(lock_);
   read_only_ = read_only;
 }
+
+#if BUILDFLAG(ARKWEB_SCHEME_HANDLER)
+void CefResponseImpl::SetCustomErrorCode(int custom_error_code) {
+  base::AutoLock lock_scope(lock_);
+  CHECK_READONLY_RETURN_VOID();
+  custom_error_code_ = custom_error_code;
+}
+
+int CefResponseImpl::GetCustomErrorCode() {
+  base::AutoLock lock_scope(lock_);
+  return custom_error_code_;
+}
+#endif
