@@ -1048,7 +1048,6 @@ void AlloyBrowserHostImpl::SetContentsBounds(content::WebContents* source,
 
 void AlloyBrowserHostImpl::UpdateTargetURL(content::WebContents* source,
                                            const GURL& url) {
-  AsAlloyBrowserHostImplExt()->ReportWindowStatus(false);
   contents_delegate_.UpdateTargetURL(source, url);
 }
 
