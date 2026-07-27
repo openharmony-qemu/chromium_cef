@@ -232,6 +232,13 @@ CefDevToolsMessageHandler::CefDevToolsMessageHandler(
         }
         return Result{false, {}};
       }, weak_factory_.GetWeakPtr());
+  method_handlers_["showCertificateViewer"] = base::BindRepeating(
+      [](base::WeakPtr<CefDevToolsMessageHandler> self, const base::Value::List& params) {
+        if (self) {
+          return self->ShowCertificateViewer(params);
+        }
+        return Result{false, {}};
+      }, weak_factory_.GetWeakPtr());
 
   protocol_message_handlers_["Page.bringToFront"] = base::BindRepeating(
       [](base::WeakPtr<CefDevToolsMessageHandler> self, const base::Value::List& params) {
@@ -272,6 +279,8 @@ dock_mode_changed_(false) {
       // method_handlers_ is a private member of this,
       // never lives longer than this.
       &CefDevToolsMessageHandler::GetHostConfig, base::Unretained(this));
+  method_handlers_["showCertificateViewer"] = base::BindRepeating(
+      &CefDevToolsMessageHandler::ShowCertificateViewer, base::Unretained(this));
 
   protocol_message_handlers_["Page.bringToFront"] = base::BindRepeating(
       &CefDevToolsMessageHandler::PageBringToFront, base::Unretained(this));
@@ -580,4 +589,18 @@ Result CefDevToolsMessageHandler::PageBringToFront(const base::Value::List&) {
     return {false, {}};
   }
   return {delegate_->BringToFront(), {}};
+}
+
+Result CefDevToolsMessageHandler::ShowCertificateViewer(const base::Value::List& params) {
+  LOG(INFO) << "CefDevToolsMessageHandler::ShowCertificateViewer";
+  if (!delegate_) {
+    LOG(WARNING) << "ShowCertificateViewer, no delegate_";
+    return {false, {}};
+  }
+  if (params.empty() || !params[0].is_string()) {
+    LOG(WARNING) << "ShowCertificateViewer, no param or param is not a string";
+    return {false, {}};
+  }
+  std::string cert_chain = params[0].GetString();
+  return {delegate_->ShowCertificateViewer(cert_chain), {}};
 }
