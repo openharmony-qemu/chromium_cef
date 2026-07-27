@@ -97,6 +97,11 @@ class CefDevToolsMessageHandlerDelegate : public virtual CefBaseRefCounted {
   ///
   /*--cef()--*/
   virtual bool SetDockMode(int mode) { return false; }
+  ///
+  /// Called when devtools request to show certificate info.
+  ///
+  /*--cef()--*/
+  virtual bool ShowCertificateViewer(const CefString& cert_chain) { return false; }
 #endif
 };
 
