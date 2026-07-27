@@ -18,8 +18,8 @@
 
 #include <string>
 
+#include "arkweb/chromium_ext/components/safe_browsing/content/browser/ohos_sb_threat_type.h"
 #include "base/time/time.h"
-#include "libcef/browser/ohos_safe_browsing/ohos_sb_threat_type.h"
 
 namespace ohos_safe_browsing {
 
