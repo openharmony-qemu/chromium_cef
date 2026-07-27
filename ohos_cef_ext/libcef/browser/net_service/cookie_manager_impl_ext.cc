@@ -272,13 +272,7 @@ bool CefCookieManagerImplExt::SetCookie(
     const CefString& str_cookie,
     bool includeHttpOnly) {
   GURL gurl = GURL(url.ToString());
-  if (!OHOS::NWeb::NWebImpl::ShouldLazyInitWebEngine() && !ValidContext()) {
-    StoreOrTriggerInitCallback(base::BindOnce(
-        base::IgnoreResult(&CefCookieManagerImplExt::SetCookieInternal), this,
-        gurl, cookie, callback, is_sync, str_cookie, includeHttpOnly));
-    return true;
-  }
-
+  LOG(DEBUG) << "CefCookieManagerImpl::SetCookie is_sync: " << is_sync;
   return SetCookieInternal(gurl, cookie, callback, is_sync, str_cookie,
                            includeHttpOnly);
 }
