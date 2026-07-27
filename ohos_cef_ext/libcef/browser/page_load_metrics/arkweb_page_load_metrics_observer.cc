@@ -17,6 +17,9 @@
 #include "content/public/browser/web_contents.h"
 #include "content/public/renderer/render_frame.h"
 #include "libcef/browser/alloy/alloy_browser_host_impl.h"
+#if BUILDFLAG(ARKWEB_REPORT_SYS_EVENT)
+#include "libcef/browser/browser_host_base.h"
+#endif
 #include "libcef/browser/first_meaningful_paint_details_impl.h"
 #include "libcef/browser/largest_contentful_paint_details_impl.h"
 #include "libcef/common/app_manager.h"
@@ -274,9 +277,20 @@ void OhPageLoadMetricsObserver::OnFirstContentfulPaintInPage(
 void OhPageLoadMetricsObserver::ReportFirstContentfulPaint(
     int64_t navigation_start_tick,
     int64_t first_contentful_paint_ms) {
+#if BUILDFLAG(ARKWEB_REPORT_SYS_EVENT)
+  CefRefPtr<CefBrowserHostBase> browser_base =
+      CefBrowserHostBase::GetBrowserForContents(
+          GetDelegate().GetWebContents());
+  if (!browser_base || !browser_base->IsAlloyStyle()) {
+    return;
+  }
+  CefRefPtr<AlloyBrowserHostImpl> browser =
+      browser_base->AsAlloyBrowserHostImpl();
+#else
   CefRefPtr<AlloyBrowserHostImpl> browser =
       AlloyBrowserHostImpl::GetBrowserForContents(
           GetDelegate().GetWebContents());
+#endif
   if (!browser.get()) {
     return;
   }
@@ -320,8 +334,18 @@ void OhPageLoadMetricsObserver::ReportFirstMeaningfulPaint(
     int64_t navigation_start_time,
     int64_t first_meaningful_paint_time) {
   auto web_contents = GetDelegate().GetWebContents();
+#if BUILDFLAG(ARKWEB_REPORT_SYS_EVENT)
+  CefRefPtr<CefBrowserHostBase> browser_base =
+      CefBrowserHostBase::GetBrowserForContents(web_contents);
+  if (!browser_base || !browser_base->IsAlloyStyle()) {
+    return;
+  }
+  CefRefPtr<AlloyBrowserHostImpl> browser =
+      browser_base->AsAlloyBrowserHostImpl();
+#else
   CefRefPtr<AlloyBrowserHostImpl> browser =
       AlloyBrowserHostImpl::GetBrowserForContents(web_contents);
+#endif
   if (!browser.get()) {
     return;
   }
@@ -351,9 +375,20 @@ void OhPageLoadMetricsObserver::ReportFirstMeaningfulPaint(
 
 void OhPageLoadMetricsObserver::ReportLargestContentfulPaint(
     const page_load_metrics::mojom::PageLoadTiming& timing) {
+#if BUILDFLAG(ARKWEB_REPORT_SYS_EVENT)
+  CefRefPtr<CefBrowserHostBase> browser_base =
+      CefBrowserHostBase::GetBrowserForContents(
+          GetDelegate().GetWebContents());
+  if (!browser_base || !browser_base->IsAlloyStyle()) {
+    return;
+  }
+  CefRefPtr<AlloyBrowserHostImpl> browser =
+      browser_base->AsAlloyBrowserHostImpl();
+#else
   CefRefPtr<AlloyBrowserHostImpl> browser =
       AlloyBrowserHostImpl::GetBrowserForContents(
           GetDelegate().GetWebContents());
+#endif
   if (!browser.get()) {
     return;
   }
