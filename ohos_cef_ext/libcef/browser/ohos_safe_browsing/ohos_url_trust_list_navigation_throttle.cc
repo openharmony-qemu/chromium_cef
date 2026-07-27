@@ -19,7 +19,6 @@
 #include "content/public/browser/web_contents.h"
 #include "ohos_sb_block_page.h"
 #include "ohos_sb_controller_client.h"
-#include "ohos_sb_threat_type.h"
 #include "ohos_url_trust_list_interface.h"
 
 using NavigationThrottle = content::NavigationThrottle;
