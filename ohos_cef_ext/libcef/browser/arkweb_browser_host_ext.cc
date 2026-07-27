@@ -4380,6 +4380,19 @@ void ArkWebBrowserHostExtImpl::PutWebMediaAVSessionEnabled(bool enable) {
 }
 #endif  // ARKWEB_MEDIA_AVSESSION
 
+#if BUILDFLAG(ARKWEB_MEDIA_HLS)
+void ArkWebBrowserHostExtImpl::PutWebMediaNetworkProxyEnabled(bool enable) {
+  content::MediaSessionImpl* mediaSession =
+      content::MediaSessionImpl::Get(GetWebContents());
+  if (!mediaSession || !GetWebContents()) {
+    LOG(ERROR) << "ArkWebBrowserHostExtImpl::PutWebMediaNetworkProxyEnabled "
+                  "failed, mediaSession or web contents error.";
+    return;
+  }
+  mediaSession->SetMediaNetworkProxyEnabled(enable);
+}
+#endif // ARKWEB_MEDIA_HLS
+
 #if BUILDFLAG(ARKWEB_DEVTOOLS)
 void ArkWebBrowserHostExtImpl::SetWebDebuggingAccess(bool isEnableDebug) {
   base::AutoLock locker(lock_);
