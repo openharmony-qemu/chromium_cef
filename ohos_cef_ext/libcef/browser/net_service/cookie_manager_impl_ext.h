@@ -79,6 +79,9 @@ class CefCookieManagerImplExt : public CefCookieManagerImpl,
                        bool includeHttpOnly,
                        CefRefPtr<CefCookieVisitor> visitor,
                        bool is_sync,
+#if BUILDFLAG(ARKWEB_COOKIE)
+                       bool include_partitioned_cookies,
+#endif
                        bool is_from_ndk) override;
 
   bool SetCookie(const CefString& url,
@@ -171,11 +174,17 @@ void UpdateHostContentSettingsMap();
   void GetCookieListCookieTask(const GURL& url,
                                net::CookieOptions options,
                                CefRefPtr<CefCookieVisitor> visitor,
+#if BUILDFLAG(ARKWEB_COOKIE)
+                               bool include_partitioned_cookies,
+#endif
                                base::OnceClosure complete);
   bool VisitUrlCookiesInternal(const GURL& url,
                                bool includeHttpOnly,
                                CefRefPtr<CefCookieVisitor> visitor,
                                bool is_sync,
+#if BUILDFLAG(ARKWEB_COOKIE)
+                               bool include_partitioned_cookies,
+#endif
                                bool is_from_ndk);
   void SetCookieInternalCookieTask(std::unique_ptr<net::CanonicalCookie> cookie,
                                    const GURL& url,

@@ -244,6 +244,9 @@ bool CefCookieManagerImplExt::VisitUrlCookies(
     bool includeHttpOnly,
     CefRefPtr<CefCookieVisitor> visitor,
     bool is_sync,
+#if BUILDFLAG(ARKWEB_COOKIE)
+    bool include_partitioned_cookies,
+#endif
     bool is_from_ndk) {
   if (!visitor.get()) {
     return false;
@@ -255,6 +258,9 @@ bool CefCookieManagerImplExt::VisitUrlCookies(
   }
   LOG(DEBUG) << "CefCookieManagerImpl::VisitUrlCookies is_sync: " << is_sync;
   return VisitUrlCookiesInternal(gurl, includeHttpOnly, visitor, is_sync,
+#if BUILDFLAG(ARKWEB_COOKIE)
+                                 include_partitioned_cookies,
+#endif
                                  is_from_ndk);
 }
 
@@ -796,14 +802,29 @@ void CefCookieManagerImplExt::GetCookieListCookieTask(
     const GURL& url,
     net::CookieOptions options,
     CefRefPtr<CefCookieVisitor> visitor,
+#if BUILDFLAG(ARKWEB_COOKIE)
+    bool include_partitioned_cookies,
+#endif
     base::OnceClosure complete) {
   LOG(DEBUG) << "CefCookieManagerImplExt::GetCookieListCookieTask";
   DCHECK(cookie_store_task_runner_->RunsTasksInCurrentSequence());
 
   CookieManager* cookie_manager = GetNetworkCookieManager();
+#if BUILDFLAG(ARKWEB_COOKIE)
+  net::CookiePartitionKeyCollection cookie_partition_key_collection;
+  if (include_partitioned_cookies) {
+    cookie_partition_key_collection = net::CookiePartitionKeyCollection(
+      net::CookiePartitionKey::FromWire(net::SchemefulSite(url),
+        net::CookiePartitionKey::AncestorChainBit::kSameSite));
+  }
+#endif
   if (!cookie_manager) {
     GetCookieStore()->GetCookieListWithOptionsAsync(
+#if BUILDFLAG(ARKWEB_COOKIE)
+        url, options, cookie_partition_key_collection,
+#else
         url, options, net::CookiePartitionKeyCollection(),
+#endif
         base::BindOnce(&CefCookieManagerImplExt::GetCookiesCallbackImpl,
                        base::Unretained(this), visitor, std::move(complete),
                        nullptr));
@@ -811,7 +832,11 @@ void CefCookieManagerImplExt::GetCookieListCookieTask(
   }
 
   cookie_manager->GetCookieList(
+#if BUILDFLAG(ARKWEB_COOKIE)
+      url, options, cookie_partition_key_collection,
+#else
       url, options, net::CookiePartitionKeyCollection(),
+#endif
       base::BindOnce(&CefCookieManagerImplExt::GetCookiesCallbackImpl,
                      base::Unretained(this), visitor, std::move(complete),
                      cookie_manager));
@@ -822,6 +847,9 @@ bool CefCookieManagerImplExt::VisitUrlCookiesInternal(
     bool includeHttpOnly,
     CefRefPtr<CefCookieVisitor> visitor,
     bool is_sync,
+#if BUILDFLAG(ARKWEB_COOKIE)
+    bool include_partitioned_cookies,
+#endif
     bool is_from_ndk) {
   DCHECK(visitor);
   DCHECK(url.is_valid());
@@ -835,11 +863,18 @@ bool CefCookieManagerImplExt::VisitUrlCookiesInternal(
   if (is_sync) {
     RunCookieTaskSync(base::BindOnce(
         &CefCookieManagerImplExt::GetCookieListCookieTask,
+#if BUILDFLAG(ARKWEB_COOKIE)
+        base::Unretained(this), std::move(url), options, visitor, include_partitioned_cookies));
+#else
         base::Unretained(this), std::move(url), options, visitor));
+#endif
   } else {
     RunCookieTaskAsync(
         base::BindOnce(&CefCookieManagerImplExt::GetCookieListCookieTask,
                        base::Unretained(this), std::move(url), options, visitor,
+#if BUILDFLAG(ARKWEB_COOKIE)
+                       include_partitioned_cookies,
+#endif
                        base::NullCallback()));
   }
   return true;
