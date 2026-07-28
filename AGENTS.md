@@ -96,7 +96,19 @@ ArkWebCore.hap (Chromium + CEF 合编产物)
         ↓ 编译条件：is_arkweb_ext GN 变量控制
 ```
 
+### 子目录专属指引（进入这些目录先读对应文件）
+
+| 目录 | 指引文件 | 覆盖内容 |
+|------|----------|----------|
+| `tests/cefclient/` | `tests/cefclient/CLAUDE.md` | CEFClient 示例应用的 CMake 构建与集成模式 |
+| `tests/cefsimple_capi/` | `tests/cefsimple_capi/CLAUDE.md` | 纯 C（C11）C API 示例，手动引用计数约定 |
+| `tools/claude/` | `tools/claude/CLAUDE.md` | 上游 Chromium/GN·Ninja 构建背景 |
+
 ## 知识索引
+
+**编辑前先声明（强约束）**：在动手改代码前，先用一句话说明——(1) 任务类别（API/桥接/补丁/扩展/渲染/权限/安全浏览/DevTools 等）；(2) 已读的深度文档；(3) 命中的硬约束与依赖方向禁止项。三者缺一律不得开始编辑；该声明须原样出现在最终回复的开头（见“最终回复要求”），供审阅核对。
+
+### 按场景路由
 
 改动前按场景定位，以下场景需要特别注意隐含约束：
 
@@ -107,11 +119,32 @@ ArkWebCore.hap (Chromium + CEF 合编产物)
 | C↔C++ 桥接 | `libcef_dll/cpptoc|ctocpp/` 由 `tools/translator.py` 生成，禁止手改 |
 | 新增 OH 扩展接口 | 在 `ohos_cef_ext/include/` 中以 C++ 虚类定义即可，**无需**修改桥接层。详见 [bridge-layer-analysis.md](docs/knowledge/bridge-layer-analysis.md) |
 
+### 按路径路由
+
+| 改动路径 | 先读 / 先做 |
+|----------|-------------|
+| `include/` 公共 API | 属上游代码，改动须走 `patch/`；改签名后必须运行 `./cef_create_projects.sh` 重新生成 `libcef_dll/` 桥接 |
+| `libcef_dll/cpptoc|ctocpp/` | 生成产物，禁止手改；改上游头文件后由脚本重生成 |
+| `ohos_cef_ext/**` | 读 [bridge-layer-analysis.md](docs/knowledge/bridge-layer-analysis.md)；新增源文件同步登记 `cef_arkweb_extension.gni` |
+| `ohos_cef_ext/**/devtools/` | CDP 协议改动，遵守异步回调约定，勿用 `Runtime.evaluate` 操控页面 |
+| `ohos_cef_ext/**/renderer/` | 仅此处可用 V8/DOM；跨进程数据须走 `common/mojom/` 的 Mojo IPC |
+| `patch/patches/` | 读 `patch/patch.cfg` 的 name/path/condition 约定，改动最小化 |
+
+### 按术语路由（任务描述/日志/接口中出现下列词时）
+
+| 术语 | 先读 / 定位 |
+|------|-------------|
+| CDP / DevTools / SendDevToolsMessage | `ohos_cef_ext/libcef/browser/devtools/arkweb/`、`include/cef_browser.h`；结果经 `CefDevToolsMessageObserver` 异步回调 |
+| JS Bridge / gin | `ohos_cef_ext/{libcef/browser,common,renderer}/javascript/` |
+| Mojo / IPC | `ohos_cef_ext/libcef/common/mojom/` |
+| `_for_include` / `_ext` | 见下方术语表与反模式；勿忽略 include 注入文件 |
+| Alloy / OSR | 见下方术语表；OSR 相关在 `ohos_cef_ext/libcef/browser/osr/` |
+
 ### 深度知识文档
 
-| 文档 | 主题 |
-|------|------|
-| [bridge-layer-analysis.md](docs/knowledge/bridge-layer-analysis.md) | C↔C++ 桥接层设计目的、ArkWeb 绕过桥接层的原因、新增接口时是否需要桥接层的决策指引 |
+| 文档 | 何时读 |
+|------|--------|
+| [bridge-layer-analysis.md](docs/knowledge/bridge-layer-analysis.md) | 新增/修改 OH 扩展接口，或纠结“是否需要动桥接层”时；含 C↔C++ 桥接层设计目的与 ArkWeb 绕过桥接层的原因 |
 
 ## 专家经验与约束
 
@@ -123,6 +156,14 @@ ArkWebCore.hap (Chromium + CEF 合编产物)
 - 新增 OH 扩展源文件必须在 `cef_arkweb_extension.gni` 中注册
 - CDP 调用（SendDevToolsMessage）是异步的，结果通过 CefDevToolsMessageObserver 回调
 - V8/DOM 操作只能在渲染进程中使用
+
+### 询问后再动（需先确认/升级）
+
+- 修改 `ohos_cef_ext/include/` 中**已发布**扩展接口的签名、语义、生命周期或错误码 → 属破坏性变更，先评估对宿主（web_webview / ohos_nweb）的兼容性影响，并升级相应版本号；不确定时先询问，不要直接改
+- 触及权限、安全浏览、反追踪、鉴权信任边界（`permission/`、`ohos_safe_browsing/`、`anti_tracking/`）→ 先确认再改，勿放宽默认策略
+- 改动持久化数据格式、序列化、Mojo IPC 消息结构 → 需保证跨版本兼容，先确认
+- 新增/升级第三方依赖或涉及 License 的改动 → 先询问
+- DFX/日志：不要删改既有日志 tag、错误码文案与崩溃/故障归因信息（安全浏览、崩溃上报等依赖其做故障定位）；新增日志沿用所在模块既有 tag 规范，勿泄露 URL、cookie、token 等敏感数据
 
 ### 依赖方向禁止
 
@@ -162,3 +203,40 @@ ArkWebCore.hap (Chromium + CEF 合编产物)
 ```
 
 提交使用 `git commit -s`，保留 DCO Signed-off-by 签名。
+
+## 验证闭环
+
+改完必须自证。按改动类型选择对应检查，**不要**只凭“看起来对了”收尾。
+
+### 最小检查（任何改动都要过）
+
+| 检查 | 命令 / 动作 |
+|------|-------------|
+| 增量编译 | `./build.sh -A rk3568`（源码根目录）；改动大或涉及依赖用全量 `./build.sh -t w -A rk3568` |
+| 代码风格 | `tools/fix_style.sh`（clang-format 风格，勿手工对齐） |
+| 提交签名 | `git commit -s`，保留 DCO Signed-off-by |
+
+### 按任务追加检查
+
+| 任务类型 | 追加动作 |
+|----------|----------|
+| 改了 `include/` 公共 API 签名 | 运行 `./cef_create_projects.sh` 重新生成 `libcef_dll/cpptoc|ctocpp/`，确认生成结果一并提交且未手改 |
+| 新增 `ohos_cef_ext/` 源文件 | 确认已登记 `cef_arkweb_extension.gni`，且该文件确实参与编译（编译日志可见） |
+| 改了 Chromium 补丁 | 确认 `patch/patch.cfg` 条目正确，`cef_create_projects.sh` 应用无冲突 |
+| 改了功能逻辑 | 运行相关 `tests/ceftests` 用例：`ninja -C out/<build_dir> ceftests` 后执行对应单测（见 `tests/ceftests/*_unittest.cc`）。`<build_dir>` 取 GN 输出目录，本地 CEF 构建形如 `Release_GN_x64` / `Debug_GN_x64`；OH 合编时取 `chromium_src` 全量编译的产物目录 |
+| 改了破坏性/兼容性敏感项 | 对照“询问后再动”清单复核，说明兼容性影响 |
+
+### 完成定义（Done）
+
+- 目标改动生效，且增量编译通过、`fix_style.sh` 无残留改动；
+- 相关 `ceftests` 用例通过（若适用）；
+- 未违反任一硬约束与依赖方向禁止项；生成产物已重生成而非手改；
+- 若触及 API/权限/兼容性，已在回复中说明影响。
+
+### 最终回复要求
+
+结尾用简短列表报告：开头原样附上“编辑前先声明”的三项（任务类别 / 已读文档 / 命中约束）；随后列出改了哪些文件、跑了哪些检查及结果、是否有未验证项及原因。测试失败要如实贴出，不要粉饰。
+
+### 无法在本仓库验证时的兜底
+
+本仓库不独立编译/跑测。若无法在当前环境完成上述检查，**不得**声称已验证——改为：列出改动文件与预期影响、说明为何无法验证、请求在 `chromium_src` 全量环境中编译并运行对应 `ceftests`。
