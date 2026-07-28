@@ -179,3 +179,10 @@ TEST_F(CefBrowserPlatformDelegateOsrTest, SetVirtualKeyBoardArg) {
   g_platform_delegate->SetVirtualKeyBoardArg(width, height, keyboard);
 }
 #endif
+
+#if BUILDFLAG(ARKWEB_DELEGATE_COMPOSITING)
+TEST_F(CefBrowserPlatformDelegateOsrTest, DiscardCompositingResources) {
+  ASSERT_NE(g_platform_delegate, nullptr);
+  g_platform_delegate->DiscardCompositingResources();
+}
+#endif

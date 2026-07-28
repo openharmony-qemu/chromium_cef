@@ -18,6 +18,7 @@
 #pragma once
  
 #include "base/memory/raw_ptr.h"
+#include "cef/libcef/browser/image_impl.h"
 #include "cef/libcef/browser/osr/browser_platform_delegate_osr.h"
 #include "cef/ohos_cef_ext/libcef/browser/osr/browser_platform_delegate_osr_ext.h"
 
