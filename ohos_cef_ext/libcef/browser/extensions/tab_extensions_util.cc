@@ -123,6 +123,9 @@ base::Value::Dict GetTabValue(
   if (tab.split_view_id.has_value()) {
     dict.Set("splitViewId", tab.split_view_id.value());
   }
+  if (tab.agentProcessing) {
+    dict.Set("agentProcessing", tab.agentProcessing.value());
+  }
   return dict;
 }
 
