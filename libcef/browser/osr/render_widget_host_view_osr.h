@@ -358,8 +358,11 @@ class CefRenderWidgetHostViewOSR
 
 #if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS) || BUILDFLAG(ARKWEB_EX_TOPCONTROLS)
   gfx::Rect GetPhysicalViewBounds();
-  virtual int GetShrinkViewportHeight() { return 0; }
-  int GetTopControlsOffset() const override { return 0; }
+  virtual float GetShrinkViewportHeight() { return 0; }
+  virtual float GetShrinkVisualViewportHeight() { return 0; }
+  float GetTopControlsOffset() const override { return 0; }
+  float GetTopContentOffset() const override { return 0; }
+  float GetBottomContentOffset() const override { return 0; }
 #endif
 
 #if BUILDFLAG(ARKWEB_EVICT_UNLOCK_FRAMES)
@@ -546,6 +549,8 @@ class CefRenderWidgetHostViewOSR
 #if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
   float top_controls_offset_ = 0.f;
   float top_content_offset_ = 0.f;
+  float bottom_controls_offset_ = 0.f;
+  float bottom_content_offset_ = 0.f;
 #endif
 
 #if BUILDFLAG(ARKWEB_EVICT_UNLOCK_FRAMES)

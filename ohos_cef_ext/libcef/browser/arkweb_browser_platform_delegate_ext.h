@@ -150,8 +150,8 @@ class ArkWebCefBrowserPlatformDelegateExt : public CefBrowserPlatformDelegate {
 #endif
 
 #if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
-  virtual int GetTopControlsOffset();
-  virtual int GetShrinkViewportHeight();
+  virtual float GetTopControlsOffset();
+  virtual float GetShrinkViewportHeight();
 #endif
 
 #if BUILDFLAG(ARKWEB_HTML_SELECT)

@@ -548,16 +548,14 @@ void CefBrowserPlatformDelegateOsrExt::OnSafeInsetsChange(int left,
 }
 #endif
 #if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
-int CefBrowserPlatformDelegateOsrExt::GetTopControlsOffset()
-{
+float CefBrowserPlatformDelegateOsrExt::GetTopControlsOffset() {
   if (CefRenderWidgetHostViewOSR* view = GetOSRHostView()) {
     return view->GetTopControlsOffset();
   }
   return 0;
 }
 
-int CefBrowserPlatformDelegateOsrExt::GetShrinkViewportHeight()
-{
+float CefBrowserPlatformDelegateOsrExt::GetShrinkViewportHeight() {
   if (CefRenderWidgetHostViewOSR* view = GetOSRHostView()) {
     return view->GetShrinkViewportHeight();
   }

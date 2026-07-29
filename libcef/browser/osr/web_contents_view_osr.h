@@ -109,7 +109,10 @@ class CefWebContentsViewOSR : public content::WebContentsView,
   const bool use_external_begin_frame_;
 
 #if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
-  int top_controls_height_ = 0;
+  float top_controls_height_ = 0.0f;
+  float top_controls_min_height_ = 0.0f;
+  float bottom_controls_height_ = 0.0f;
+  float bottom_controls_min_height_ = 0.0f;
 #endif
 
   raw_ptr<content::WebContents> web_contents_ = nullptr;

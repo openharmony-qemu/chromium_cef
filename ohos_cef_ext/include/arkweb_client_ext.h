@@ -135,6 +135,9 @@ class ArkWebClientExt : public CefClient, public virtual CefBaseRefCounted {
   virtual void OnTopControlsChanged(float top_controls_offset,
                                     float top_content_offset) {}
 
+  virtual void OnBottomControlsChanged(float bottom_controls_offset,
+                                       float bottom_content_offset) {}
+
   ///
   /// Return the height of top controls.
   ///
