@@ -4,6 +4,8 @@
 #ifndef CEF_OHOS_CEF_EXT_LIBCEF_BROWSER_OSR_BROWSER_PLATFORM_DELEGATE_OSR_EXT_H_
 #define CEF_OHOS_CEF_EXT_LIBCEF_BROWSER_OSR_BROWSER_PLATFORM_DELEGATE_OSR_EXT_H_
 #pragma once
+
+#include <set>
  
 #include "cef/libcef/browser/osr/browser_platform_delegate_osr.h"
 #if BUILDFLAG(ARKWEB_DRAG_DROP)
@@ -219,6 +221,7 @@ protected:
       bool use_external_begin_frame);
 #if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
   float shrink_viewport_height_ = 0;
+  std::set<int> shrink_viewport_height_;
 #endif
 #if BUILDFLAG(ARKWEB_FOCUS)
   // We keep track of the view's focus-capturing logic, and if the view hasn't

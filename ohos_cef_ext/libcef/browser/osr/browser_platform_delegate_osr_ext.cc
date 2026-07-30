@@ -257,17 +257,20 @@ void CefBrowserPlatformDelegateOsrExt::SendTouchEventList(
 #if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
   for (auto& event_adjust : event_adjust_list) {
     if (event_adjust.type == CEF_TET_PRESSED) {
+      active_touch_ids_.insert(event_adjust.id);
       shrink_viewport_height_ = view->GetShrinkViewportHeight();
-    } else if (event_adjust.type == CEF_TET_CANCELLED) {
-      shrink_viewport_height_ = 0;
     }
     if (event_adjust.from_overlay) {
       event_adjust.y -= view->GetShrinkViewportHeight();
     } else {
-    event_adjust.y -= shrink_viewport_height_;
+      event_adjust.y -= shrink_viewport_height_;
     }
-    if (event_adjust.type == CEF_TET_RELEASED) {
-      shrink_viewport_height_ = 0;
+    if (event_adjust.type == CEF_TET_RELEASED ||
+        event_adjust.type == CEF_TET_CANCELLED) {
+      active_touch_ids_.ERASE(event_adjust.id);
+      if (active_touch_ids_.empty()) {
+        shrink_viewport_height_ = 0;
+      }
     }
   }
 #endif
