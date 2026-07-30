@@ -277,6 +277,12 @@ void AlloyPermissionManager::RequestPermissionByType(
               &AlloyPermissionManager::OnRequestResponseCallBack,
               weak_ptr_factory_.GetWeakPtr(), request_id, permission_type));
       break;
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+    case PermissionType::IDLE_DETECTION:
+      pending_request_raw->SetPermissionStatus(permission_type,
+                                               PermissionStatus::GRANTED);
+      break;
+#endif  // BUILDFLAG(ARKWEB_DEVTOOLS)
     case PermissionType::SENSORS:
 #if BUILDFLAG(ARKWEB_SENSOR)
       if (browser) {
@@ -333,7 +339,9 @@ void AlloyPermissionManager::RequestPermissionByType(
     case PermissionType::DURABLE_STORAGE:
     case PermissionType::PAYMENT_HANDLER:
     case PermissionType::BACKGROUND_FETCH:
+#if !BUILDFLAG(ARKWEB_DEVTOOLS)
     case PermissionType::IDLE_DETECTION:
+#endif  // !BUILDFLAG(ARKWEB_DEVTOOLS)
     case PermissionType::PERIODIC_BACKGROUND_SYNC:
     case PermissionType::NFC:
     case PermissionType::VR:
@@ -439,6 +447,10 @@ PermissionStatus AlloyPermissionManager::GetPermissionStatus(
   } else if (permission_type == PermissionType::SENSORS) {
     return PermissionStatus::ASK;
 #endif  //BUILDFLAG(ARKWEB_SENSOR)
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+  } else if (permission_type == PermissionType::IDLE_DETECTION) {
+    return PermissionStatus::GRANTED;
+#endif  // BUILDFLAG(ARKWEB_DEVTOOLS)
 #if BUILDFLAG(ARKWEB_ARKWEB_EXTENSIONS)
   } else if (permission_type == PermissionType::NOTIFICATIONS) {
     if ((*base::CommandLine::ForCurrentProcess()).HasSwitch(
@@ -664,6 +676,10 @@ void AlloyPermissionManager::AbortPermissionRequestByType(
         browser->AbortAskVideoCapturePermission(requesting_origin.spec());
       }
       break;
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+    case PermissionType::IDLE_DETECTION:
+      break;
+#endif  // BUILDFLAG(ARKWEB_DEVTOOLS)
     case PermissionType::SENSORS:
 #if BUILDFLAG(ARKWEB_SENSOR)
       if (browser) {
@@ -688,7 +704,9 @@ void AlloyPermissionManager::AbortPermissionRequestByType(
     case PermissionType::BACKGROUND_SYNC:
     case PermissionType::PAYMENT_HANDLER:
     case PermissionType::BACKGROUND_FETCH:
+#if !BUILDFLAG(ARKWEB_DEVTOOLS)
     case PermissionType::IDLE_DETECTION:
+#endif  // !BUILDFLAG(ARKWEB_DEVTOOLS)
     case PermissionType::PERIODIC_BACKGROUND_SYNC:
     case PermissionType::NFC:
     case PermissionType::VR:
