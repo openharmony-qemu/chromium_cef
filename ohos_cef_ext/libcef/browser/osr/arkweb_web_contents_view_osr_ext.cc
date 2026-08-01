@@ -170,11 +170,16 @@ float ArkWebCefWebContentsViewOSRExt::GetTopControlsHeight() {
   float top_controls_height = top_controls_height_;
 
   CefRefPtr<AlloyBrowserHostImpl> browser = GetBrowser();
-  if (browser.get() && browser->GetClient() &&
-      has_called_by_update_browser_controls_height_) {
-    top_controls_height =
-        browser->GetClient()->AsArkWebClient()->OnGetTopControlsHeight();
+  if (browser.get() && browser->GetClient()) {
+    top_controls_height = browser->GetClient()->AsArkWebClient()->OnGetTopControlsHeight();
+    if (top_controls_height != 0 && !has_called_by_update_browser_controls_height_) {
+      has_called_by_update_browser_controls_height_ = true;
+    }
+    if (!has_called_by_update_browser_controls_height_) {
+      top_controls_height = top_controls_height_;
+    }
   }
+
   if (top_controls_height != top_controls_height_) {
     LOG_FEEDBACK(INFO) << "TopControlsHeightChanged height:"
                        << top_controls_height_ << "->" << top_controls_height;
