@@ -603,9 +603,6 @@ void CefRenderWidgetHostViewOSR::Hide() {
 #endif
 
   if (delegated_frame_host_) {
-#if BUILDFLAG(ARKWEB_EVICT_UNLOCK_FRAMES)
-    SetUseSpecifiedDeadlinePolicy(true);
-#endif
     delegated_frame_host_->WasHidden(
         content::DelegatedFrameHost::HiddenCause::kOther);
     delegated_frame_host_->DetachFromCompositor();
