@@ -37,3 +37,13 @@ void ChromeContentClientCef::AddAdditionalSchemes(Schemes* schemes) {
   ChromeContentClient::AddAdditionalSchemes(schemes);
   CefAppManager::Get()->AddAdditionalSchemes(schemes);
 }
+
+#if BUILDFLAG(IS_ARKWEB)
+bool ChromeContentClientCef::ShouldAllowDefaultSiteInstanceGroup() {
+  // ArkWeb needs to keep the M132 subframe sharing behavior.
+  // Disabling kDefaultSiteInstanceGroups allows cross-origin subframes to share
+  // the parent SiteInstance. This matches other ad WebView's approach.
+  // See crbug.com/419595581
+  return false;
+}
+#endif
