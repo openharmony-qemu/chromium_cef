@@ -7,13 +7,14 @@
 
 #include <memory>
 
+#include "arkweb/chromium_ext/components/safe_browsing/content/browser/ohos_navigation_entry_safe_browsing_data.h"
+#include "arkweb/chromium_ext/components/safe_browsing/content/browser/ohos_sb_threat_type.h"
 #include "components/prefs/pref_service.h"
 #include "content/browser/renderer_host/navigation_entry_impl.h"
 #include "content/public/browser/navigation_handle.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/browser/web_contents_user_data.h"
 #include "libcef/browser/ohos_safe_browsing/ohos_sb_block_page.h"
-#include "libcef/browser/ohos_safe_browsing/ohos_sb_threat_type.h"
 #include "base/memory/raw_ptr.h"
 
 namespace ohos_safe_browsing {
@@ -28,24 +29,6 @@ class SbClient : public content::WebContentsObserver {
   // DISALLOW_COPY_AND_ASSIGN
   SbClient(const SbClient&) = delete;
   SbClient& operator=(const SbClient&) = delete;
-
-  struct SbBlockingPageInfo {
-    SbBlockingPageInfo();
-
-    SbBlockingPageInfo(const GURL& url,
-                       ohos_safe_browsing::OHSBThreatType block_type,
-                       int hw_code,
-                       int policy,
-                       const GURL& redirect_url);
-
-    ~SbBlockingPageInfo();
-
-    GURL info_url = GURL("");
-    int info_hw_code{0};
-    OHSBThreatType info_block_type = OHSBThreatType::THREAT_DEFAULT;
-    int info_policy{0};
-    GURL info_redirect_url = GURL("");
-  };
 
   class BlockingPageInfo
       : public content::WebContentsUserData<BlockingPageInfo> {
@@ -83,7 +66,18 @@ class SbClient : public content::WebContentsObserver {
 
   void ShowBlockingPage();
 
+  void EvaluateAndDisplayBlockPage();
+ 
+  void HandleBlockingPage(
+      OhosSbBlockingPageInfo& info, NavigationEntrySafeBrowsingData* safe_browsing_data, bool is_unprocessed);
+
   bool IsBlockPageShowing();
+
+  void SaveResultToEntry(const OhosSbBlockingPageInfo& info, content::NavigationEntry* entry);
+
+  void SaveResultToAllEntries(const OhosSbBlockingPageInfo& info);
+
+  void BuildAndCacheRedirectChain(const content::LoadCommittedDetails& load_details);
 
   void SetEvilUrlPolicyAndHwCode(const GURL& url,
                                  int policy,
