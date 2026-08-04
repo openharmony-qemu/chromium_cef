@@ -91,6 +91,13 @@ void CefBrowserPlatformDelegateOsr::RenderViewCreated(
     cef_browser_platform_delegate_osr_utils_->UpdateBypassVsyncCondition(view);
   }
 #endif
+
+#if BUILDFLAG(ARKWEB_DFX_DUMP)
+  CefRenderWidgetHostViewOSR* view1 = GetOSRHostView();
+  if (view1 && stackId_) {
+    cef_browser_platform_delegate_osr_utils_->UpdateAsyncStackId(view1);
+  }
+#endif
 }
 
 void CefBrowserPlatformDelegateOsr::BrowserCreated(

@@ -5087,3 +5087,13 @@ void ArkWebBrowserHostExtImpl::StartDownloadWithParams(
   manager->DownloadUrl(std::move(params));
 }
 #endif
+
+#if BUILDFLAG(ARKWEB_DFX_DUMP)
+void ArkWebBrowserHostExtImpl::SetAsyncStackId(uint64_t stackId) {
+  if (platform_delegate_) {
+      LOG(INFO) << "ArkWebBrowserHostExtImpl::SetAsyncStackId StackId:"
+                << stackId;
+    platform_delegate_->AsArkWebCefBrowserPlatformDelegateExt()->SetAsyncStackId(stackId);
+  }
+}
+#endif

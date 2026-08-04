@@ -1720,6 +1720,13 @@ class ArkWebBrowserHostExt : public virtual CefBrowserHost,
   virtual void PutWebMediaNetworkProxyEnabled(bool enable) {}
 #endif // ARKWEB_MEDIA_HLS
 
+#if BUILDFLAG(ARKWEB_DFX_DUMP)
+  ///
+  /// Set the Async StackId.
+  ///
+  virtual void SetAsyncStackId(uint64_t stackId) = 0;
+#endif
+
 };
 
 #endif  // ARKWEB_INCLUDE_CEF_BROWSER_H_

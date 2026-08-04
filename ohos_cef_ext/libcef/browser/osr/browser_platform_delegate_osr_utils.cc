@@ -196,6 +196,15 @@ void CefBrowserPlatformDelegateOsrUtils::UpdateBypassVsyncCondition(CefRenderWid
 }
 #endif
 
+#if BUILDFLAG(ARKWEB_DFX_DUMP)
+void CefBrowserPlatformDelegateOsrUtils::UpdateAsyncStackId(CefRenderWidgetHostViewOSR* view) {
+    if (view->AsArkWebRenderWidgetHostViewOSRExt()) {
+        view->AsArkWebRenderWidgetHostViewOSRExt()->SetAsyncStackId(
+            cefBrowserPlatformDelegateOsr->AsCefBrowserPlatformDelegateOsrExt()->stackId_);
+    }
+}
+#endif
+
 void CefBrowserPlatformDelegateOsrUtils::SetFocusAndUpdateStatus(
     bool setFocus, CefRenderWidgetHostViewOSR* view){
   cefBrowserPlatformDelegateOsr->AsCefBrowserPlatformDelegateOsrExt()->focus_status_ = setFocus;

@@ -3123,3 +3123,14 @@ bool ArkWebRenderWidgetHostViewOSRExt::OnNestedFling(float& velocity_x,
   return ret;
 }
 #endif
+
+#if BUILDFLAG(ARKWEB_DFX_DUMP)
+void ArkWebRenderWidgetHostViewOSRExt::SetAsyncStackId(uint64_t stackId) {
+  LOG(INFO) << "ArkWebRenderWidgetHostViewOSRExt::SetAsyncStackId stackId:"
+            << stackId;
+  if (auto compositor = ArkWebRenderWidgetHostViewOSRUtils::GetCompositor(
+            browser_impl_->GetAcceleratedWidget(is_popup_))) {
+    compositor->Utils()->SetAsyncStackId(stackId);
+  }
+}
+#endif
