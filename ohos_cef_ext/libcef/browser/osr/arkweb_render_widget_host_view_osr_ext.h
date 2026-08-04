@@ -395,6 +395,10 @@ void UpdateFocusAndScreenStatus(bool is_focused, bool is_single_screen) override
   bool OnNestedScroll(float& delta_x, float& delta_y) override;
   bool OnNestedFling(float& velocity_x, float& velocity_y) override;
 #endif
+
+#if BUILDFLAG(ARKWEB_DFX_DUMP)
+  void SetAsyncStackId(uint64_t stackId);
+#endif
  private:
   bool is_popup = false;
 

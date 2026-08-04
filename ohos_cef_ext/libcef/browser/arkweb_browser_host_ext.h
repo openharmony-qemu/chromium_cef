@@ -869,6 +869,10 @@ void StartDownloadWithParams(
     const DownloadUrlParameters& input_params) override;
 #endif
 
+#if BUILDFLAG(ARKWEB_DFX_DUMP)
+void SetAsyncStackId(uint64_t stackId) override;
+#endif
+
  private:
 #if BUILDFLAG(ARKWEB_MSGPORT)
   using MessagePipe = std::pair<blink::WebMessagePort, blink::WebMessagePort>;

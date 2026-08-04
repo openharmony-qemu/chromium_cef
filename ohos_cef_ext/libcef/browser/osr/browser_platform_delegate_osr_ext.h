@@ -215,6 +215,10 @@ public:
   void OnSafeBrowsingCheckDetail(int code, int policy, int threat) override;
 #endif
 
+#if BUILDFLAG(ARKWEB_DFX_DUMP)
+  void SetAsyncStackId(uint64_t stackId) override;
+#endif
+
 protected:
   // Platform-specific behaviors will be delegated to |native_delegate|.
   CefBrowserPlatformDelegateOsrExt(

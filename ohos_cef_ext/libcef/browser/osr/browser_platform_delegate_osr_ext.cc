@@ -1064,3 +1064,11 @@ void CefBrowserPlatformDelegateOsrExt::OnSafeBrowsingCheckDetail(
   }
 }
 #endif
+
+#if BUILDFLAG(ARKWEB_DFX_DUMP)
+void CefBrowserPlatformDelegateOsrExt::SetAsyncStackId(uint64_t stackId) {
+  LOG(INFO) << "CefBrowserPlatformDelegateOsrExt::SetAsyncStackId StackId:"
+            << stackId;
+  stackId_ = stackId;
+}
+#endif

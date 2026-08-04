@@ -215,5 +215,9 @@ class ArkWebCefBrowserPlatformDelegateExt : public CefBrowserPlatformDelegate {
 #if BUILDFLAG(ARKWEB_JS_ON_DOCUMENT_END)
   virtual void OnDocumentEndReady(const FrameInfos& frameInfo) {}
 #endif
+
+#if BUILDFLAG(ARKWEB_DFX_DUMP)
+  virtual void SetAsyncStackId(uint64_t stackId) {}
+#endif
 };
 #endif  // CEF_LIBCEF_BROWSER_BROWSER_PLATFORM_DELEGATE_EXT_H_
