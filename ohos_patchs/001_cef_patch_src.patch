@@ -2304,10 +2304,10 @@ index a7212c57cc..85d0bf052b 100644
      // Guard against wrong tokens being passed accidentally.
      return nullptr;
 diff --git a/src/content/browser/renderer_host/navigation_request.cc b/src/content/browser/renderer_host/navigation_request.cc
-index 1e80edea4d..ef90f513b2 100644
+index 7fe4e5e592..3e39d708bc 100644
 --- a/src/content/browser/renderer_host/navigation_request.cc
 +++ b/src/content/browser/renderer_host/navigation_request.cc
-@@ -8657,7 +8657,8 @@ std::optional<url::Origin> NavigationRequest::GetOriginToCommit() {
+@@ -8664,7 +8664,8 @@ std::optional<url::Origin> NavigationRequest::GetOriginToCommit() {
  }
  
  url::Origin NavigationRequest::GetOriginForURLLoaderFactoryBeforeResponse(
@@ -2317,7 +2317,7 @@ index 1e80edea4d..ef90f513b2 100644
    // Calculate an approximation of the origin. The sandbox/csp are ignored.
    url::Origin origin = GetOriginForURLLoaderFactoryUnchecked();
  
-@@ -8674,6 +8675,17 @@ url::Origin NavigationRequest::GetOriginForURLLoaderFactoryBeforeResponse(
+@@ -8681,6 +8682,17 @@ url::Origin NavigationRequest::GetOriginForURLLoaderFactoryBeforeResponse(
    bool use_opaque_origin =
        (sandbox_flags & network::mojom::WebSandboxFlags::kOrigin) ==
        network::mojom::WebSandboxFlags::kOrigin;
@@ -2335,7 +2335,7 @@ index 1e80edea4d..ef90f513b2 100644
    if (use_opaque_origin) {
      origin = origin.DeriveNewOpaqueOrigin();
    }
-@@ -8733,8 +8745,9 @@ NavigationRequest::GetOriginForURLLoaderFactoryAfterResponse() {
+@@ -8740,8 +8752,9 @@ NavigationRequest::GetOriginForURLLoaderFactoryAfterResponse() {
      return GetRenderFrameHost()->GetLastCommittedOrigin();
    }
  
@@ -2347,7 +2347,7 @@ index 1e80edea4d..ef90f513b2 100644
  
    SCOPED_CRASH_KEY_BOOL("Bug1454273", "is_in_main_frame", IsInMainFrame());
    SCOPED_CRASH_KEY_STRING256(
-@@ -8769,10 +8782,17 @@ NavigationRequest::GetOriginForURLLoaderFactoryAfterResponse() {
+@@ -8776,10 +8789,17 @@ NavigationRequest::GetOriginForURLLoaderFactoryAfterResponse() {
        DetermineInitiatorRelationship(initiator_rfh,
                                       frame_tree_node_->current_frame_host()));
  
@@ -2367,7 +2367,7 @@ index 1e80edea4d..ef90f513b2 100644
    // If the target of this navigation will be rendered in a RenderFrameHost,
    // then verify that the chosen origin is allowed to be accessed from that
 diff --git a/src/content/browser/renderer_host/navigation_request.h b/src/content/browser/renderer_host/navigation_request.h
-index 9556a08ec5..e780b35b5f 100644
+index af22a0da0f..377d2e7bb4 100644
 --- a/src/content/browser/renderer_host/navigation_request.h
 +++ b/src/content/browser/renderer_host/navigation_request.h
 @@ -2317,7 +2317,8 @@ class CONTENT_EXPORT NavigationRequest
@@ -2431,10 +2431,10 @@ index 21f7fb2b6c..6f369d7e32 100644
    // Will call the appropriate NavigationThrottle function based on |event| on
    // all NavigationThrottles owned by this NavigationThrottleRunner.
 diff --git a/src/content/browser/renderer_host/render_frame_host_impl.cc b/src/content/browser/renderer_host/render_frame_host_impl.cc
-index ffa2886925..d723f700b6 100644
+index 712f6a58bd..0a5421727b 100644
 --- a/src/content/browser/renderer_host/render_frame_host_impl.cc
 +++ b/src/content/browser/renderer_host/render_frame_host_impl.cc
-@@ -9758,6 +9758,16 @@ void RenderFrameHostImpl::CreateNewWindow(
+@@ -9764,6 +9764,16 @@ void RenderFrameHostImpl::CreateNewWindow(
      return;
    }
  
@@ -2451,7 +2451,7 @@ index ffa2886925..d723f700b6 100644
    // Otherwise, consume user activation before we proceed. In particular, it is
    // important to do this before we return from the |opener_suppressed| case
    // below.
-@@ -12202,6 +12212,7 @@ void RenderFrameHostImpl::CommitNavigation(
+@@ -12217,6 +12227,7 @@ void RenderFrameHostImpl::CommitNavigation(
        ProcessLock::FromSiteInfo(GetSiteInstance()->GetSiteInfo());
    auto browser_calc_origin_to_commit = navigation_request->GetOriginToCommit();
    if (!process_lock.is_error_page() && !is_mhtml_subframe &&
@@ -2501,7 +2501,7 @@ index a8c29f91c8..75e66ea9a1 100644
    RenderWidgetHostViewBase* GetRenderWidgetHostViewBase();
  
 diff --git a/src/content/browser/renderer_host/render_widget_host_view_aura.cc b/src/content/browser/renderer_host/render_widget_host_view_aura.cc
-index 83ffd3809a..7e6f259941 100644
+index 35a90f17b0..d37c174063 100644
 --- a/src/content/browser/renderer_host/render_widget_host_view_aura.cc
 +++ b/src/content/browser/renderer_host/render_widget_host_view_aura.cc
 @@ -8,6 +8,7 @@
@@ -2512,7 +2512,7 @@ index 83ffd3809a..7e6f259941 100644
  #include <utility>
  
  #include "base/auto_reset.h"
-@@ -52,6 +53,7 @@
+@@ -53,6 +54,7 @@
  #include "content/public/browser/content_browser_client.h"
  #include "content/public/browser/device_service.h"
  #include "content/public/browser/render_view_host.h"
@@ -2520,7 +2520,7 @@ index 83ffd3809a..7e6f259941 100644
  #include "content/public/common/page_visibility_state.h"
  #include "services/service_manager/public/cpp/interface_provider.h"
  #include "third_party/blink/public/common/input/web_input_event.h"
-@@ -758,6 +760,9 @@ gfx::Rect RenderWidgetHostViewAura::GetViewBounds() {
+@@ -768,6 +770,9 @@ gfx::Rect RenderWidgetHostViewAura::GetViewBounds() {
  void RenderWidgetHostViewAura::UpdateBackgroundColor() {
    CHECK(GetBackgroundColor());
  
@@ -2530,7 +2530,7 @@ index 83ffd3809a..7e6f259941 100644
    SkColor color = *GetBackgroundColor();
    window_->layer()->SetColor(color);
  }
-@@ -1107,6 +1112,12 @@ void RenderWidgetHostViewAura::TransformPointToRootSurface(gfx::PointF* point) {
+@@ -1117,6 +1122,12 @@ void RenderWidgetHostViewAura::TransformPointToRootSurface(gfx::PointF* point) {
  }
  
  gfx::Rect RenderWidgetHostViewAura::GetBoundsInRootWindow() {
@@ -2543,7 +2543,7 @@ index 83ffd3809a..7e6f259941 100644
    aura::Window* top_level = window_->GetToplevelWindow();
    gfx::Rect bounds(top_level->GetBoundsInScreen());
  
-@@ -2698,6 +2709,16 @@ void RenderWidgetHostViewAura::CreateAuraWindow(aura::client::WindowType type) {
+@@ -2728,6 +2739,16 @@ void RenderWidgetHostViewAura::CreateAuraWindow(aura::client::WindowType type) {
    window_->layer()->SetColor(GetBackgroundColor() ? *GetBackgroundColor()
                                                    : SK_ColorWHITE);
    UpdateFrameSinkIdRegistration();
@@ -4217,7 +4217,7 @@ index 176523d86f..550a7adfbe 100644
      }
 diff --git a/src/ohos/adapter/web_entry/cef/cef_loader.cc b/src/ohos/adapter/web_entry/cef/cef_loader.cc
 new file mode 100644
-index 0000000000..01d39093e9
+index 0000000000..af7fa309d6
 --- /dev/null
 +++ b/src/ohos/adapter/web_entry/cef/cef_loader.cc
 @@ -0,0 +1,71 @@
@@ -4441,7 +4441,7 @@ index 8208769f58..1f4dd98f01 100644
    return current_default_loader.get();
  }
 diff --git a/src/ohos/adapter/window/app_window_adapter.cc b/src/ohos/adapter/window/app_window_adapter.cc
-index ce875c8c42..e8437fab71 100644
+index a5967d7216..bddcb666f5 100644
 --- a/src/ohos/adapter/window/app_window_adapter.cc
 +++ b/src/ohos/adapter/window/app_window_adapter.cc
 @@ -32,6 +32,13 @@ void AppWindowAdapter::Close(int32_t id) {
@@ -4518,100 +4518,20 @@ index ed6d17651a..1d48845df4 100644
    ]
  }
 diff --git a/src/ohos/app/ohos_hap/chromium/src/main/resources/base/element/string.json b/src/ohos/app/ohos_hap/chromium/src/main/resources/base/element/string.json
-index e401617523..f97ea8029b 100644
+index e401617523..3c94d3e6eb 100644
 --- a/src/ohos/app/ohos_hap/chromium/src/main/resources/base/element/string.json
 +++ b/src/ohos/app/ohos_hap/chromium/src/main/resources/base/element/string.json
-@@ -1,44 +1,44 @@
--{
--  "string": [
--    {
--      "name": "module_desc",
--      "value": "module description"
--    },
--    {
--      "name": "EntryAbility_desc",
--      "value": "description"
--    },
--    {
--      "name": "EntryAbility_label",
+@@ -10,7 +10,7 @@
+     },
+     {
+       "name": "EntryAbility_label",
 -      "value": "Chromium"
--    },
--    {
--      "name": "BrowserAbility_desc",
--      "value": "description"
--    },
--    {
--      "name": "BrowserAbility_label",
--      "value": "BrowserAbility"
--    },
--    {
--      "name": "StatelessAbility_desc",
--      "value": "description"
--    },
--    {
--      "name": "StatelessAbility_label",
--      "value": "StatelessAbility"
--    },
--    {
--      "name": "TaskManagerAbility_desc",
--      "value": "TaskManagerAbility"
--    },
--    {
--      "name": "TaskManagerAbility_label",
--      "value": "TaskManagerAbility"
--    },
--    {
--      "name": "OpenNewWindow_label",
--      "value": "OpenNewWindow"
--    }
--  ]
-+{
-+  "string": [
-+    {
-+      "name": "module_desc",
-+      "value": "module description"
-+    },
-+    {
-+      "name": "EntryAbility_desc",
-+      "value": "description"
-+    },
-+    {
-+      "name": "EntryAbility_label",
 +      "value": "CEF"
-+    },
-+    {
-+      "name": "BrowserAbility_desc",
-+      "value": "description"
-+    },
-+    {
-+      "name": "BrowserAbility_label",
-+      "value": "BrowserAbility"
-+    },
-+    {
-+      "name": "StatelessAbility_desc",
-+      "value": "description"
-+    },
-+    {
-+      "name": "StatelessAbility_label",
-+      "value": "StatelessAbility"
-+    },
-+    {
-+      "name": "TaskManagerAbility_desc",
-+      "value": "TaskManagerAbility"
-+    },
-+    {
-+      "name": "TaskManagerAbility_label",
-+      "value": "TaskManagerAbility"
-+    },
-+    {
-+      "name": "OpenNewWindow_label",
-+      "value": "OpenNewWindow"
-+    }
-+  ]
- }
-\ No newline at end of file
+     },
+     {
+       "name": "BrowserAbility_desc",
 diff --git a/src/ohos/app/ohos_hap/chromium/src/main/resources/base/profile/shortcuts_config.json b/src/ohos/app/ohos_hap/chromium/src/main/resources/base/profile/shortcuts_config.json
-index 63b0293bd5..2bd9030239 100644
+index 63b0293bd5..80c784a7ed 100644
 --- a/src/ohos/app/ohos_hap/chromium/src/main/resources/base/profile/shortcuts_config.json
 +++ b/src/ohos/app/ohos_hap/chromium/src/main/resources/base/profile/shortcuts_config.json
 @@ -5,7 +5,7 @@
@@ -4623,103 +4543,32 @@ index 63b0293bd5..2bd9030239 100644
            "moduleName": "chromium",
            "abilityName": "EntryAbility",
            "parameters": {
-@@ -15,4 +15,4 @@
-       ]
-     }
-   ]
--}
-\ No newline at end of file
-+}
 diff --git a/src/ohos/app/ohos_hap/chromium/src/main/resources/en_US/element/string.json b/src/ohos/app/ohos_hap/chromium/src/main/resources/en_US/element/string.json
-index c62f2dfdd4..6b37ab8d8a 100644
+index c62f2dfdd4..19453ed121 100644
 --- a/src/ohos/app/ohos_hap/chromium/src/main/resources/en_US/element/string.json
 +++ b/src/ohos/app/ohos_hap/chromium/src/main/resources/en_US/element/string.json
-@@ -1,20 +1,20 @@
--{
--  "string": [
--    {
--      "name": "module_desc",
--      "value": "module description"
--    },
--    {
--      "name": "EntryAbility_desc",
--      "value": "description"
--    },
--    {
--      "name": "EntryAbility_label",
+@@ -10,7 +10,7 @@
+     },
+     {
+       "name": "EntryAbility_label",
 -      "value": "Chromium"
--    },
--    {
--      "name": "OpenNewWindow_label",
--      "value": "OpenNewWindow"
--    }
--  ]
-+{
-+  "string": [
-+    {
-+      "name": "module_desc",
-+      "value": "module description"
-+    },
-+    {
-+      "name": "EntryAbility_desc",
-+      "value": "description"
-+    },
-+    {
-+      "name": "EntryAbility_label",
 +      "value": "CEF"
-+    },
-+    {
-+      "name": "OpenNewWindow_label",
-+      "value": "OpenNewWindow"
-+    }
-+  ]
- }
-\ No newline at end of file
+     },
+     {
+       "name": "OpenNewWindow_label",
 diff --git a/src/ohos/app/ohos_hap/chromium/src/main/resources/zh_CN/element/string.json b/src/ohos/app/ohos_hap/chromium/src/main/resources/zh_CN/element/string.json
-index bc3615452d..c14a66f21e 100644
+index bc3615452d..8d4da7c323 100644
 --- a/src/ohos/app/ohos_hap/chromium/src/main/resources/zh_CN/element/string.json
 +++ b/src/ohos/app/ohos_hap/chromium/src/main/resources/zh_CN/element/string.json
-@@ -1,20 +1,20 @@
--{
--  "string": [
--    {
--      "name": "module_desc",
--      "value": "模块描述"
--    },
--    {
--      "name": "EntryAbility_desc",
--      "value": "description"
--    },
--    {
--      "name": "EntryAbility_label",
+@@ -10,7 +10,7 @@
+     },
+     {
+       "name": "EntryAbility_label",
 -      "value": "Chromium"
--    },
--    {
--      "name": "OpenNewWindow_label",
--      "value": "打开新的窗口"
--    }
--  ]
-+{
-+  "string": [
-+    {
-+      "name": "module_desc",
-+      "value": "模块描述"
-+    },
-+    {
-+      "name": "EntryAbility_desc",
-+      "value": "description"
-+    },
-+    {
-+      "name": "EntryAbility_label",
 +      "value": "CEF"
-+    },
-+    {
-+      "name": "OpenNewWindow_label",
-+      "value": "打开新的窗口"
-+    }
-+  ]
- }
-\ No newline at end of file
+     },
+     {
+       "name": "OpenNewWindow_label",
 diff --git a/src/ohos/app/ohos_hap/oh-package.json5 b/src/ohos/app/ohos_hap/oh-package.json5
 index f131d9efab..f75e44ac53 100644
 --- a/src/ohos/app/ohos_hap/oh-package.json5
@@ -4747,381 +4596,19 @@ index e2713a2779..8008dc9058 100644
 +/src/main/resources/resfile
 \ No newline at end of file
 diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/ability/WebBaseAbility.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/ability/WebBaseAbility.ets
-index 091a906e2f..71101454d7 100644
+index 091a906e2f..613376a35c 100644
 --- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/ability/WebBaseAbility.ets
 +++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/ability/WebBaseAbility.ets
-@@ -1,185 +1,186 @@
--// Copyright (c) 2024 Huawei Device Co., Ltd. All rights reserved.
--// Use of this source code is governed by a BSD-style license that can be
--// found in the LICENSE file.
--
--import UIAbility from '@ohos.app.ability.UIAbility';
--import LogUtil from '../utils/LogUtil';
--import window from '@ohos.window';
--import Want from '@ohos.app.ability.Want';
--import AbilityConstant from '@ohos.app.ability.AbilityConstant';
--import JsBindingUtils from '../utils/JsBindingUtils';
--import { ChangeEventType, NativeContext, WindowStatus } from '../interface/CommonInterface';
--import { CommandType, ConfigData, ContextType } from '../common/Constants';
--import CheckEmptyUtils from '../utils/CheckEmptyUtils';
--import { WebProxy } from '../interface/WebProxy';
--import { common } from '@kit.AbilityKit';
--import { BusinessError } from '@kit.BasicServicesKit';
--import { WebAbilityStage } from '../application/WebAbilityStage';
--import { CmdArgsHelper } from '../utils/CmdArgsHelper';
--
--const TAG: string = 'WebBaseAbility';
--
--export class WebBaseAbility extends UIAbility implements WebProxy {
--  protected xcomponentId: string = '';
--  protected startUri: string = '';
--  protected windowStage: window.WindowStage | undefined = undefined;
--  protected nativeContext: NativeContext =
--    JsBindingUtils.getNativeContext(ContextType.kMainProcess);
+@@ -25,7 +25,8 @@ export class WebBaseAbility extends UIAbility implements WebProxy {
+   protected windowStage: window.WindowStage | undefined = undefined;
+   protected nativeContext: NativeContext =
+     JsBindingUtils.getNativeContext(ContextType.kMainProcess);
 -  protected hideTitleBar: boolean = true;
--  protected originWindowId: number = -1;
--  protected useDarkMode: boolean = false;
--  protected isStateless: boolean = false;
--  protected titleButtonVisible: boolean = true;
--  protected appId: string = '';
--  protected deviceModeChangeEvent: ChangeEventType | undefined = undefined;
--  protected initStatus: WindowStatus = WindowStatus.FLOATING;
--  protected cmdArgs: Array<string> = [];
--
--  private initParameters(want: Want) {
--    if (want && want.parameters) {
--      if (want.parameters['xcomponentId'] !== undefined) {
--        this.xcomponentId = want.parameters['xcomponentId'] as string;
--      }
--      if (want.parameters["hideTitleBar"] !== undefined) {
--        this.hideTitleBar = want.parameters['hideTitleBar'] as boolean;
--      }
--      if (want.parameters["useDarkMode"] !== undefined) {
--        this.useDarkMode = want.parameters['useDarkMode'] as boolean;
--      }
--      if (want.parameters["titleButtonVisible"] !== undefined) {
--        this.titleButtonVisible = want.parameters['titleButtonVisible'] as boolean;
--      }
--      if (want.parameters["appId"] !== undefined) {
--        this.appId = want.parameters['appId'] as string;
--      }
--      if (want.parameters["webappWindow"] !== undefined && want.parameters["webappWindow"] !== '') {
--        this.appId = "--app-id=" + want.parameters['webappWindow'] as string;
--      }
--      if (want.parameters["initStatus"] !== undefined) {
--        this.initStatus = want.parameters['initStatus'] as WindowStatus;
--      }
--
--      let args = want.parameters['cmdArgs'];
--      this.cmdArgs = CmdArgsHelper.getCmdArgs(args);
--    }
--
--    if (want["uri"]) {
--      let storePath = want['uri'] as string;
--      // convert storage path to uri
--      this.startUri = storePath.replace("file://docs/", "file:///");
--    }
--  }
--
--  protected getContentPath(): string {
--    if (this.nativeContext.IsSupportNodeHandleFeature()) {
--      return 'pages/NodeHandleWindow';
--    } else {
--      return 'pages/Index';
--    }
--  }
--
--  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam) {
--    this.initParameters(want);
--
--    if (CheckEmptyUtils.isEmpty(this.xcomponentId)) {
--      LogUtil.info(TAG, 'onCreate, Allocate xcomponent id');
--      if (want.parameters?.openInNewWindow) {
--        this.xcomponentId = WebAbilityStage.X_COMPONENT_ID;
--        return;
--      }
--      let widgetId = this.nativeContext.ExecuteCommand(CommandType.kGetWidget, {}).widget_Id;
--      this.xcomponentId = ConfigData.WINDOW_PREFIX + widgetId;
--    }
--  }
--
--  onWindowStageCreate(windowStage: window.WindowStage) {
--    this.windowStage = windowStage;
--    this.originWindowId = windowStage?.getMainWindowSync().getWindowProperties().id;
--  }
--
--  // implements WebProxy interface
--  getWindowStage(): window.WindowStage | undefined {
--    return this.windowStage;
--  }
--
--  getWindow(): window.Window | undefined {
--    return this.windowStage?.getMainWindowSync();
--  }
--
--  getWindowContext(): common.Context {
--    return this.context;
--  }
--
--  getWindowId(): string {
--    return this.xcomponentId;
--  }
--
--  closeWindow() {
--    this.context.terminateSelf()
--      .then(() => {
--        LogUtil.info(TAG, 'terminate Self id: ' + this.getWindowId());
--      })
--      .catch((err: BusinessError) => {
--        LogUtil.error(TAG, 'Failed to terminate Self: ' + JSON.stringify(err));
--      });
--  }
--
--  setWindowTitle(title:string) {
--    this.context.setMissionLabel(title)
--      .catch((err: BusinessError) => {
--        LogUtil.error(TAG, 'Failed to set title: ' + JSON.stringify(err));
--      });
--  }
--
--  createSubWindow(name: string): Promise<window.Window> {
--    return new Promise<window.Window>((resolve, reject) => {
--      if (!this.windowStage) {
--        reject('Failed to get windowStage');
--        return;
--      }
--      this.windowStage.createSubWindow(name)
--        .then((data: window.Window) => {
--          resolve(data);
--        }).catch((error: BusinessError) => {
--        reject(error);
--      })
--    });
--  }
--
--  getOriginWindowId(): number {
--    return this.originWindowId;
--  }
--
--  isUIAbility(): boolean {
--    return true;
--  }
--
--  public updateAvoidAreaStatus(isFullScreen: boolean) {
--    let windowClass = this.getWindow();
-- 
--    // Set window to full screen.
--    windowClass?.setWindowLayoutFullScreen(true).then(() => {
--      LogUtil.info(TAG, 'Succeeded in setting the window layout to full-screen mode.');
--    }).catch((err: BusinessError) => {
--      LogUtil.error(TAG, 'Failed to set the window layout to full-screen mode. Cause:' + JSON.stringify(err));
--    });
-- 
--    // Hide the navigation bar here.
--    windowClass?.setSpecificSystemBarEnabled('navigationIndicator', false).then(() => {
--      LogUtil.info(TAG, 'Succeeded in setting the navigation indicator to be invisible.');
--    }).catch((err: BusinessError) => {
--      LogUtil.error(TAG, `Failed to set the navigation indicator to be invisible. Code is ${err.code}, message is ${err.message}`);
--    });
-- 
--    // The top status bar is set up to be hidden when in full-screen mode and displayed when maximized.
--    windowClass?.setSpecificSystemBarEnabled('status', !isFullScreen).then(() => {
--      LogUtil.info(TAG, 'Succeeded in setting the status bar to be invisible.');
--    }).catch((err: BusinessError) => {
--      LogUtil.error(TAG, `Failed to set the status bar to be invisible. Code is ${err.code}, message is ${err.message}`);
--    });
--  }
--
--  public setDeviceModeChangeEvent(deviceModeChangeEvent: ChangeEventType | undefined) {
--    this.deviceModeChangeEvent = deviceModeChangeEvent;
--  }
--};
-+// Copyright (c) 2024 Huawei Device Co., Ltd. All rights reserved.
-+// Use of this source code is governed by a BSD-style license that can be
-+// found in the LICENSE file.
-+
-+import UIAbility from '@ohos.app.ability.UIAbility';
-+import LogUtil from '../utils/LogUtil';
-+import window from '@ohos.window';
-+import Want from '@ohos.app.ability.Want';
-+import AbilityConstant from '@ohos.app.ability.AbilityConstant';
-+import JsBindingUtils from '../utils/JsBindingUtils';
-+import { ChangeEventType, NativeContext, WindowStatus } from '../interface/CommonInterface';
-+import { CommandType, ConfigData, ContextType } from '../common/Constants';
-+import CheckEmptyUtils from '../utils/CheckEmptyUtils';
-+import { WebProxy } from '../interface/WebProxy';
-+import { common } from '@kit.AbilityKit';
-+import { BusinessError } from '@kit.BasicServicesKit';
-+import { WebAbilityStage } from '../application/WebAbilityStage';
-+import { CmdArgsHelper } from '../utils/CmdArgsHelper';
-+
-+const TAG: string = 'WebBaseAbility';
-+
-+export class WebBaseAbility extends UIAbility implements WebProxy {
-+  protected xcomponentId: string = '';
-+  protected startUri: string = '';
-+  protected windowStage: window.WindowStage | undefined = undefined;
-+  protected nativeContext: NativeContext =
-+    JsBindingUtils.getNativeContext(ContextType.kMainProcess);
 +  // cef: Need to display title bar
 +  protected hideTitleBar: boolean = false;
-+  protected originWindowId: number = -1;
-+  protected useDarkMode: boolean = false;
-+  protected isStateless: boolean = false;
-+  protected titleButtonVisible: boolean = true;
-+  protected appId: string = '';
-+  protected deviceModeChangeEvent: ChangeEventType | undefined = undefined;
-+  protected initStatus: WindowStatus = WindowStatus.FLOATING;
-+  protected cmdArgs: Array<string> = [];
-+
-+  private initParameters(want: Want) {
-+    if (want && want.parameters) {
-+      if (want.parameters['xcomponentId'] !== undefined) {
-+        this.xcomponentId = want.parameters['xcomponentId'] as string;
-+      }
-+      if (want.parameters["hideTitleBar"] !== undefined) {
-+        this.hideTitleBar = want.parameters['hideTitleBar'] as boolean;
-+      }
-+      if (want.parameters["useDarkMode"] !== undefined) {
-+        this.useDarkMode = want.parameters['useDarkMode'] as boolean;
-+      }
-+      if (want.parameters["titleButtonVisible"] !== undefined) {
-+        this.titleButtonVisible = want.parameters['titleButtonVisible'] as boolean;
-+      }
-+      if (want.parameters["appId"] !== undefined) {
-+        this.appId = want.parameters['appId'] as string;
-+      }
-+      if (want.parameters["webappWindow"] !== undefined && want.parameters["webappWindow"] !== '') {
-+        this.appId = "--app-id=" + want.parameters['webappWindow'] as string;
-+      }
-+      if (want.parameters["initStatus"] !== undefined) {
-+        this.initStatus = want.parameters['initStatus'] as WindowStatus;
-+      }
-+
-+      let args = want.parameters['cmdArgs'];
-+      this.cmdArgs = CmdArgsHelper.getCmdArgs(args);
-+    }
-+
-+    if (want["uri"]) {
-+      let storePath = want['uri'] as string;
-+      // convert storage path to uri
-+      this.startUri = storePath.replace("file://docs/", "file:///");
-+    }
-+  }
-+
-+  protected getContentPath(): string {
-+    if (this.nativeContext.IsSupportNodeHandleFeature()) {
-+      return 'pages/NodeHandleWindow';
-+    } else {
-+      return 'pages/Index';
-+    }
-+  }
-+
-+  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam) {
-+    this.initParameters(want);
-+
-+    if (CheckEmptyUtils.isEmpty(this.xcomponentId)) {
-+      LogUtil.info(TAG, 'onCreate, Allocate xcomponent id');
-+      if (want.parameters?.openInNewWindow) {
-+        this.xcomponentId = WebAbilityStage.X_COMPONENT_ID;
-+        return;
-+      }
-+      let widgetId = this.nativeContext.ExecuteCommand(CommandType.kGetWidget, {}).widget_Id;
-+      this.xcomponentId = ConfigData.WINDOW_PREFIX + widgetId;
-+    }
-+  }
-+
-+  onWindowStageCreate(windowStage: window.WindowStage) {
-+    this.windowStage = windowStage;
-+    this.originWindowId = windowStage?.getMainWindowSync().getWindowProperties().id;
-+  }
-+
-+  // implements WebProxy interface
-+  getWindowStage(): window.WindowStage | undefined {
-+    return this.windowStage;
-+  }
-+
-+  getWindow(): window.Window | undefined {
-+    return this.windowStage?.getMainWindowSync();
-+  }
-+
-+  getWindowContext(): common.Context {
-+    return this.context;
-+  }
-+
-+  getWindowId(): string {
-+    return this.xcomponentId;
-+  }
-+
-+  closeWindow() {
-+    this.context.terminateSelf()
-+      .then(() => {
-+        LogUtil.info(TAG, 'terminate Self id: ' + this.getWindowId());
-+      })
-+      .catch((err: BusinessError) => {
-+        LogUtil.error(TAG, 'Failed to terminate Self: ' + JSON.stringify(err));
-+      });
-+  }
-+
-+  setWindowTitle(title:string) {
-+    this.context.setMissionLabel(title)
-+      .catch((err: BusinessError) => {
-+        LogUtil.error(TAG, 'Failed to set title: ' + JSON.stringify(err));
-+      });
-+  }
-+
-+  createSubWindow(name: string): Promise<window.Window> {
-+    return new Promise<window.Window>((resolve, reject) => {
-+      if (!this.windowStage) {
-+        reject('Failed to get windowStage');
-+        return;
-+      }
-+      this.windowStage.createSubWindow(name)
-+        .then((data: window.Window) => {
-+          resolve(data);
-+        }).catch((error: BusinessError) => {
-+        reject(error);
-+      })
-+    });
-+  }
-+
-+  getOriginWindowId(): number {
-+    return this.originWindowId;
-+  }
-+
-+  isUIAbility(): boolean {
-+    return true;
-+  }
-+
-+  public updateAvoidAreaStatus(isFullScreen: boolean) {
-+    let windowClass = this.getWindow();
-+ 
-+    // Set window to full screen.
-+    windowClass?.setWindowLayoutFullScreen(true).then(() => {
-+      LogUtil.info(TAG, 'Succeeded in setting the window layout to full-screen mode.');
-+    }).catch((err: BusinessError) => {
-+      LogUtil.error(TAG, 'Failed to set the window layout to full-screen mode. Cause:' + JSON.stringify(err));
-+    });
-+ 
-+    // Hide the navigation bar here.
-+    windowClass?.setSpecificSystemBarEnabled('navigationIndicator', false).then(() => {
-+      LogUtil.info(TAG, 'Succeeded in setting the navigation indicator to be invisible.');
-+    }).catch((err: BusinessError) => {
-+      LogUtil.error(TAG, `Failed to set the navigation indicator to be invisible. Code is ${err.code}, message is ${err.message}`);
-+    });
-+ 
-+    // The top status bar is set up to be hidden when in full-screen mode and displayed when maximized.
-+    windowClass?.setSpecificSystemBarEnabled('status', !isFullScreen).then(() => {
-+      LogUtil.info(TAG, 'Succeeded in setting the status bar to be invisible.');
-+    }).catch((err: BusinessError) => {
-+      LogUtil.error(TAG, `Failed to set the status bar to be invisible. Code is ${err.code}, message is ${err.message}`);
-+    });
-+  }
-+
-+  public setDeviceModeChangeEvent(deviceModeChangeEvent: ChangeEventType | undefined) {
-+    this.deviceModeChangeEvent = deviceModeChangeEvent;
-+  }
-+};
+   protected originWindowId: number = -1;
+   protected useDarkMode: boolean = false;
+   protected isStateless: boolean = false;
 diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/AppWindowAdapter.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/AppWindowAdapter.ets
 index 68d09d4867..daee82a47b 100644
 --- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/AppWindowAdapter.ets
@@ -5189,7 +4676,7 @@ index 171f4aaa55..f971acbed1 100644
      JsBindingUtils.bindFunction("AppWindow.SetBounds", setBounds);
      JsBindingUtils.bindFunction("AppWindow.SetEnabled", setEnabled);
 diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets
-index 0d32f97570..3f4f6277a8 100644
+index 0d32f97570..0c0a858790 100644
 --- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets
 +++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets
 @@ -28,6 +28,7 @@
@@ -5200,7 +4687,7 @@ index 0d32f97570..3f4f6277a8 100644
  import { NativeContext } from "../interface/CommonInterface";
  import JsBindingUtils from "./JsBindingUtils";
  import { ContextType } from "../common/Constants";
-@@ -65,10 +65,48 @@ export class CmdArgsHelper {
+@@ -65,10 +66,47 @@ export class CmdArgsHelper {
      return JsBindingUtils.getNativeContext(ContextType.kMainProcess);
    }
  
@@ -5248,7 +4735,7 @@ index 0d32f97570..3f4f6277a8 100644
      // pad添加 --in-process-gpu
      if (deviceInfo.deviceType === 'tablet') {
        vec_args.push("--in-process-gpu");
-@@ -80,7 +119,7 @@ export class CmdArgsHelper {
+@@ -80,7 +118,7 @@ export class CmdArgsHelper {
  
      let resDir = '--bundle-installation-dir=' + getContext().resourceDir;
      vec_args.push(resDir);
@@ -5483,7 +4970,7 @@ index 0becf4f375..b0c0167849 100644
  
  bool ResourceRequest::SavesCookies() const {
 diff --git a/src/services/network/public/mojom/network_context.mojom b/src/services/network/public/mojom/network_context.mojom
-index 9d348a6851..371831f14f 100644
+index ace382d2ba..ffa721d29b 100644
 --- a/src/services/network/public/mojom/network_context.mojom
 +++ b/src/services/network/public/mojom/network_context.mojom
 @@ -362,6 +362,9 @@ struct NetworkContextParams {
@@ -7973,7 +7460,7 @@ index 968be0b8e3..5464902296 100644
    // Deactivates the widget, making the next window in the Z order the active
    // window.
 diff --git a/src/ui/views/widget/widget_delegate.h b/src/ui/views/widget/widget_delegate.h
-index d2011a5c04..947c0bd535 100644
+index 8d01f5f7e6..ebb6b9508e 100644
 --- a/src/ui/views/widget/widget_delegate.h
 +++ b/src/ui/views/widget/widget_delegate.h
 @@ -24,6 +24,9 @@
@@ -7986,7 +7473,7 @@ index d2011a5c04..947c0bd535 100644
  class DesktopMediaPickerDialogView;
  class DigitalIdentityMultiStepDialogDelegate;
  class DownloadBubbleContentsViewTest;
-@@ -378,6 +381,8 @@ class VIEWS_EXPORT WidgetDelegate {
+@@ -379,6 +382,8 @@ class VIEWS_EXPORT WidgetDelegate {
      // These existing cases are "grandfathered in", but there shouldn't be more.
      // See comments atop `SetOwnedByWidget()`.
      friend class ::AutoPipSettingView;
@@ -7995,7 +7482,7 @@ index d2011a5c04..947c0bd535 100644
      friend class ::DigitalIdentityMultiStepDialogDelegate;
      friend class ::DownloadBubbleContentsViewTest;
      friend class ::DownloadBubbleSecurityViewTest;
-@@ -473,6 +478,9 @@ class VIEWS_EXPORT WidgetDelegate {
+@@ -474,6 +479,9 @@ class VIEWS_EXPORT WidgetDelegate {
      // DO NOT ADD TO THIS LIST!
      // These existing cases are "grandfathered in", but there shouldn't be more.
      // See comments atop `RegisterDeleteDelegateCallback()`.
@@ -8005,7 +7492,7 @@ index d2011a5c04..947c0bd535 100644
      friend class ::DesktopMediaPickerDialogView;
      friend class ::MediaGalleriesDialogViews;
      friend class ::PresentationReceiverWindowView;
-@@ -797,6 +805,10 @@ class VIEWS_EXPORT WidgetDelegate {
+@@ -798,6 +806,10 @@ class VIEWS_EXPORT WidgetDelegate {
    // Returns true if the title text should be centered.
    bool ShouldCenterWindowTitleText() const;
  
@@ -8016,7 +7503,7 @@ index d2011a5c04..947c0bd535 100644
    bool focus_traverses_out() const { return params_.focus_traverses_out; }
    bool enable_arrow_key_traversal() const {
      return params_.enable_arrow_key_traversal;
-@@ -926,7 +938,6 @@ class VIEWS_EXPORT WidgetDelegateView : public WidgetDelegate, public View {
+@@ -927,7 +939,6 @@ class VIEWS_EXPORT WidgetDelegateView : public WidgetDelegate, public View {
    const Widget* GetWidget() const override;
    View* GetContentsView() override;
  
@@ -8024,7 +7511,7 @@ index d2011a5c04..947c0bd535 100644
    // DO NOT ADD TO THIS LIST!
    // These existing cases are "grandfathered in", but there shouldn't be more.
    // See comments atop class.
-@@ -993,6 +1004,7 @@ class VIEWS_EXPORT WidgetDelegateView : public WidgetDelegate, public View {
+@@ -994,6 +1005,7 @@ class VIEWS_EXPORT WidgetDelegateView : public WidgetDelegate, public View {
  
    WidgetDelegateView();
  
