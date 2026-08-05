@@ -14,6 +14,7 @@ class SimpleHandler : public CefClient,
                       public CefLifeSpanHandler,
                       public CefLoadHandler,
                       public CefDownloadHandler,
+                      public CefKeyboardHandler,
                       public CefPermissionHandler,
                       public CefRenderHandler {
  public:
@@ -36,9 +37,15 @@ class SimpleHandler : public CefClient,
     return this;
   }
 
+  virtual CefRefPtr<CefKeyboardHandler> GetKeyboardHandler() override {
+    return this;
+  }
+
   // CefDisplayHandler methods:
   void OnTitleChange(CefRefPtr<CefBrowser> browser,
                      const CefString& title) override;
+  void OnFullscreenModeChange(CefRefPtr<CefBrowser> browser,
+                              bool fullscreen) override;
 
   // CefLifeSpanHandler methods:
   void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
@@ -98,6 +105,17 @@ class SimpleHandler : public CefClient,
                        const void* buffer,
                        int width,
                        int height) override;
+
+  // CefKeyboardHandler methods
+  virtual bool OnPreKeyEvent(CefRefPtr<CefBrowser> browser,
+                             const CefKeyEvent& event,
+                             CefEventHandle os_event,
+                             bool* is_keyboard_shortcut) override;
+  virtual bool OnKeyEvent(CefRefPtr<CefBrowser> browser,
+                          const CefKeyEvent& event,
+                          CefEventHandle os_event) override {
+    return false;
+  }
 
   void ShowMainWindow();
 
