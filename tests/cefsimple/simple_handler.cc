@@ -4,6 +4,7 @@
 
 #include "tests/cefsimple/simple_handler.h"
 
+#include <limits>
 #include <sstream>
 #include <string>
 
@@ -72,6 +73,34 @@ void SimpleHandler::OnTitleChange(CefRefPtr<CefBrowser> browser,
     // Set the title of the window using platform APIs.
     PlatformTitleChange(browser, title);
   }
+}
+
+void SimpleHandler::OnFullscreenModeChange(CefRefPtr<CefBrowser> browser,
+                                           bool fullscreen) {
+  CEF_REQUIRE_UI_THREAD();
+
+#if defined(OS_OHOS)
+  const CefWindowHandle window_handle =
+      browser->GetHost()->GetWindowHandle();
+  if (window_handle == kNullWindowHandle ||
+      window_handle > static_cast<CefWindowHandle>(
+                          std::numeric_limits<WindowWidgetType>::max())) {
+    LOG(ERROR) << "SimpleHandler::OnFullscreenModeChange invalid handle="
+               << window_handle << " browser=" << browser->GetIdentifier();
+    return;
+  }
+
+  const WindowWidgetType widget =
+      static_cast<WindowWidgetType>(window_handle);
+  LOG(INFO) << "SimpleHandler::OnFullscreenModeChange browser="
+            << browser->GetIdentifier() << " widget=" << widget
+            << " fullscreen=" << fullscreen;
+  if (fullscreen) {
+    AppWindowAdapter::GetInstance().SetFullscreen(widget);
+  } else {
+    AppWindowAdapter::GetInstance().UnMaximize(widget);
+  }
+#endif
 }
 
 void SimpleHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser) {
@@ -325,4 +354,81 @@ void SimpleHandler::OnPaint(CefRefPtr<CefBrowser> browser,
   if (!result) {
     LOG(ERROR) << "RenderOnScreen failed";
   }
+}
+
+bool SimpleHandler::OnPreKeyEvent(CefRefPtr<CefBrowser> browser,
+                                  const CefKeyEvent& event,
+                                  CefEventHandle os_event,
+                                  bool* is_keyboard_shortcut) {
+  LOG(INFO) << "Enter CefKeyboardHandler call API OnPreKeyEvent";
+  CEF_REQUIRE_UI_THREAD();
+  LOG(INFO) << "call API: " << __FUNCTION__ << ": " << __LINE__
+            << "  event.type:" << event.type
+            << "  event.is_system_key:" << event.is_system_key
+            << "  event.modifiers:" << event.modifiers
+            << "  event.windows_key_code:" << event.windows_key_code
+            << "  event.native_key_code:" << event.native_key_code;
+  // Ctrl+1 to Ctrl+5 only for test
+  if (browser && event.type == KEYEVENT_RAWKEYDOWN) {
+    switch (event.windows_key_code) {
+      case 0x7B:
+        if (browser->GetHost()) {
+          CefWindowInfo windowInfo;
+          CefBrowserSettings settings;
+          browser->GetHost()->ShowDevTools(windowInfo, this, settings,
+                                           CefPoint());
+        }
+        break;
+      default:
+        break;
+    }
+  }
+  if (browser && event.modifiers & EVENTFLAG_CONTROL_DOWN) {
+    if (event.type == KEYEVENT_KEYUP) {
+      switch (event.windows_key_code) {
+        case '1': {
+          bool cangoback = browser->CanGoBack();
+          if (cangoback) {
+            LOG(INFO) << "Enter CefBrowser call API CanGoBack";
+            LOG(INFO) << "Enter CefBrowser call API GoBack";
+            browser->GoBack();
+            LOG(INFO) << "Leave CefBrowser call API GoBack";
+            LOG(INFO) << "Leave CefBrowser call API CanGoBack return value: "
+                      << cangoback;
+          }
+        } break;
+        case '2': {
+          bool cangoforward = browser->CanGoForward();
+          if (cangoforward) {
+            LOG(INFO) << "Enter CefBrowser call API CanGoForward";
+            LOG(INFO) << "Enter CefBrowser call API GoForward";
+            browser->GoForward();
+            LOG(INFO) << "Leave CefBrowser call API GoForward";
+            LOG(INFO) << "Leave CefBrowser call API CanGoForward return value: "
+                      << cangoforward;
+          }
+        } break;
+        case '3':
+          LOG(INFO) << "Enter CefBrowser call API Reload";
+          browser->Reload();
+          LOG(INFO) << "Leave CefBrowser call API Reload";
+          break;
+        case '4':
+          LOG(INFO) << "Enter CefBrowser call API ReloadIgnoreCache";
+          browser->ReloadIgnoreCache();
+          LOG(INFO) << "Leave CefBrowser call API ReloadIgnoreCache";
+          break;
+        case '5':
+          LOG(INFO) << "Enter CefBrowser call API StopLoad";
+          browser->StopLoad();
+          LOG(INFO) << "Leave CefBrowser call API StopLoad";
+          break;
+        default:
+          break;
+      }
+    }
+  }
+  LOG(INFO) << "Leave CefKeyboardHandler call API OnPreKeyEvent"
+            << " return value: " << false;
+  return false;
 }
