@@ -221,7 +221,7 @@ protected:
       bool use_external_begin_frame);
 #if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
   float shrink_viewport_height_ = 0;
-  std::set<int> shrink_viewport_height_;
+  std::set<int> active_touch_ids_;
 #endif
 #if BUILDFLAG(ARKWEB_FOCUS)
   // We keep track of the view's focus-capturing logic, and if the view hasn't

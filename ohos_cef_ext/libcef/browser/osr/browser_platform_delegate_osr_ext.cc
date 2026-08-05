@@ -267,7 +267,7 @@ void CefBrowserPlatformDelegateOsrExt::SendTouchEventList(
     }
     if (event_adjust.type == CEF_TET_RELEASED ||
         event_adjust.type == CEF_TET_CANCELLED) {
-      active_touch_ids_.ERASE(event_adjust.id);
+      active_touch_ids_.erase(event_adjust.id);
       if (active_touch_ids_.empty()) {
         shrink_viewport_height_ = 0;
       }
