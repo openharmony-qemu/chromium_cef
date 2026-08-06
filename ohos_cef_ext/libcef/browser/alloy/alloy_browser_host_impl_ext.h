@@ -34,6 +34,24 @@ public:
 
   CefRefPtr<AlloyBrowserHostImplExt> AsAlloyBrowserHostImplExt() override { return this; }
 
+  // Public wrapper for AlloyBrowserHostImpl::CreateInternal (which is private).
+  // AlloyBrowserHostImplExt is a friend of AlloyBrowserHostImpl, so it can call
+  // CreateInternal. This allows external code (e.g., NWebHandlerDelegate) to
+  // create popup browsers with is_popup=true via CreatePopupBrowserInfo.
+  static CefRefPtr<AlloyBrowserHostImpl> CreatePopupInternal(
+      const CefBrowserSettings& settings,
+      CefRefPtr<CefClient> client,
+      content::WebContents* web_contents,
+      bool own_web_contents,
+      scoped_refptr<CefBrowserInfo> browser_info,
+      CefRefPtr<AlloyBrowserHostImpl> opener,
+      CefRefPtr<CefRequestContextImpl> request_context,
+      std::unique_ptr<CefBrowserPlatformDelegate> platform_delegate) {
+    return AlloyBrowserHostImpl::CreateInternal(
+        settings, client, web_contents, own_web_contents, browser_info,
+        opener, request_context, std::move(platform_delegate));
+  }
+
 #if BUILDFLAG(ARKWEB_OCCLUDED_OPT)
   void WasOccluded(bool occluded) override;
   void SetEnableLowerFrameRate(bool enabled) override;
