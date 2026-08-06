@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include "arkweb/ohos_nweb/src/capi/web_extension_window_items.h"
 #include "chrome/browser/extensions/api/tabs/tabs_api.h"
 
 #include <string>
@@ -30,7 +31,7 @@ using content::WebContents;
 
 namespace extensions {
 
-typedef OHOS::NWeb::NweExtensionWindowCefDelegate NweExtensionWindowCefDelegate;
+using OHOS::NWeb::NWebExtensionWindowCefDelegate;
 
 namespace windows = api::windows;
 
@@ -266,19 +267,23 @@ WebExtensionWindowRemoveInfoV2 GetWindowRemoveInfoV2(
 
 }  // namespace
 
-std::optional<WebExtensionWindow> getWindow(int id, std::optional<api::windows::QueryOptions>& query_options,
-                                            content::WebContents* webcontents,
-                                            content::BrowserContext* browser_context,
-                                            bool includeIncognitoInfo) {
+std::optional<WebExtensionWindowV2> GetWindow(
+    int id,
+    std::optional<api::windows::QueryOptions>& query_options,
+    content::WebContents* webcontents,
+    content::BrowserContext* browser_context,
+    bool includeIncognitoInfo) {
   int window_id = id;
   if (window_id == extension_misc::kCurrentWindowId) {
-    window_id = GetCurrentWindowId(webcontents, extension_misc::kCurrentWindowId);
+    window_id =
+        GetCurrentWindowId(webcontents, extension_misc::kCurrentWindowId);
   }
-  WebExtensionWindowQueryOptions windowQueryOptions = GetWindowQueryOptions(query_options);
 
   WebExtensionWindowQueryOptionsV2 windowQueryOptionsV2 =
-    GetWindowQueryOptionsV2(query_options, browser_context, includeIncognitoInfo);
-  return NweExtensionWindowCefDelegate::GetInstance()->OnGetWindowV2(window_id, windowQueryOptionsV2);
+      GetWindowQueryOptionsV2(query_options, browser_context,
+                              includeIncognitoInfo);
+  return NWebExtensionWindowCefDelegate::GetInstance()->OnGetWindowV2(
+      window_id, windowQueryOptionsV2);
 }
 
 ExtensionFunction::ResponseAction WindowsGetFunction::Run() {
@@ -287,13 +292,13 @@ ExtensionFunction::ResponseAction WindowsGetFunction::Run() {
   EXTENSION_FUNCTION_VALIDATE(params);
 
   int window_id = params->window_id;
-  std::optional<WebExtensionWindow> window = getWindow(window_id, params->query_options,
-                                                       GetSenderWebContents(),
-                                                       browser_context(),
-                                                       include_incognito_information());                                     
+  std::optional<WebExtensionWindowV2> window =
+      GetWindow(window_id, params->query_options, GetSenderWebContents(),
+                browser_context(), include_incognito_information());
   if (!window) {
-    return RespondNow(Error(ErrorUtils::FormatErrorMessage(extensions::ExtensionTabUtil::kWindowNotFoundError,
-                                                           base::NumberToString(window_id))));
+    return RespondNow(Error(ErrorUtils::FormatErrorMessage(
+        extensions::ExtensionTabUtil::kWindowNotFoundError,
+        base::NumberToString(window_id))));
   }
 
   bool populate = false;
@@ -301,25 +306,28 @@ ExtensionFunction::ResponseAction WindowsGetFunction::Run() {
     populate = *(params->query_options->populate);
   }
   std::vector<ExtensionTabUtil::ScrubTabBehavior> scrub_tab_behaviors;
-  for (NWebExtensionTab tab : window->tabs) {
-    GURL gurl(tab.url.value_or(""));
+  for (NWebExtensionTabV2 tab : window->tabs) {
+    GURL gurl(tab.tab_v1.url.value_or(""));
     ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior =
-        ExtensionTabUtil::GetScrubTabBehaviorExt(extension(), source_context_type(), gurl, tab.id.value_or(-1));
+        ExtensionTabUtil::GetScrubTabBehaviorExt(extension(),
+                                                 source_context_type(), gurl,
+                                                 tab.tab_v1.id.value_or(-1));
     scrub_tab_behaviors.emplace_back(scrub_tab_behavior);
   }
 
-  return RespondNow(WithArguments(GetWindowValue(*window, scrub_tab_behaviors, populate)));
+  return RespondNow(
+      WithArguments(GetWindowValueV2(*window, scrub_tab_behaviors, populate)));
 }
 
 ExtensionFunction::ResponseAction WindowsGetCurrentFunction::Run() {
   std::optional<windows::GetCurrent::Params> params =
       windows::GetCurrent::Params::Create(args());
-  EXTENSION_FUNCTION_VALIDATE(params);  
+  EXTENSION_FUNCTION_VALIDATE(params);
 
-  std::optional<WebExtensionWindow> window = getWindow(extension_misc::kCurrentWindowId, params->query_options,
-                                                       GetSenderWebContents(),
-                                                       browser_context(),
-                                                       include_incognito_information());
+  std::optional<WebExtensionWindowV2> window =
+      GetWindow(extension_misc::kCurrentWindowId, params->query_options,
+                GetSenderWebContents(), browser_context(),
+                include_incognito_information());
   if (!window) {
     return RespondNow(Error(extensions::ExtensionTabUtil::kNoCurrentWindowError));
   }
@@ -329,26 +337,25 @@ ExtensionFunction::ResponseAction WindowsGetCurrentFunction::Run() {
     populate = *(params->query_options->populate);
   }
   std::vector<ExtensionTabUtil::ScrubTabBehavior> scrub_tab_behaviors;
-  for (NWebExtensionTab tab : window->tabs) {
-    GURL gurl(tab.url.value_or(""));
+  for (NWebExtensionTabV2 tab : window->tabs) {
+    GURL gurl(tab.tab_v1.url.value_or(""));
     ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior =
-        ExtensionTabUtil::GetScrubTabBehaviorExt(extension(), source_context_type(), gurl, tab.id.value_or(-1));
+        ExtensionTabUtil::GetScrubTabBehaviorExt(extension(), source_context_type(), gurl, tab.tab_v1.id.value_or(-1));
     scrub_tab_behaviors.emplace_back(scrub_tab_behavior);
   }
- 
-  return RespondNow(WithArguments(GetWindowValue(*window, scrub_tab_behaviors, populate)));
+
+  return RespondNow(WithArguments(GetWindowValueV2(*window, scrub_tab_behaviors, populate)));
 }
 
 ExtensionFunction::ResponseAction WindowsGetLastFocusedFunction::Run() {
   std::optional<windows::GetLastFocused::Params> params =
       windows::GetLastFocused::Params::Create(args());
-  EXTENSION_FUNCTION_VALIDATE(params);  
+  EXTENSION_FUNCTION_VALIDATE(params);
 
-  WebExtensionWindowQueryOptions windowQueryOptions = GetWindowQueryOptions(params->query_options);
-  std::optional<WebExtensionWindow> window;
   WebExtensionWindowQueryOptionsV2 windowQueryOptionsV2 =
     GetWindowQueryOptionsV2(params->query_options, browser_context(), include_incognito_information());
-  window = NweExtensionWindowCefDelegate::GetInstance()->OnGetLastFocusedWindowV2(windowQueryOptionsV2);
+  std::optional<WebExtensionWindowV2> window =
+    NWebExtensionWindowCefDelegate::GetInstance()->OnGetLastFocusedWindowV2(windowQueryOptionsV2);
   if (!window) {
     return RespondNow(Error(extensions::tabs_constants::kNoLastFocusedWindowError));
   }
@@ -358,14 +365,14 @@ ExtensionFunction::ResponseAction WindowsGetLastFocusedFunction::Run() {
     populate = *(params->query_options->populate);
   }
   std::vector<ExtensionTabUtil::ScrubTabBehavior> scrub_tab_behaviors;
-  for (NWebExtensionTab tab : window->tabs) {
-    GURL gurl(tab.url.value_or(""));
+  for (NWebExtensionTabV2 tab : window->tabs) {
+    GURL gurl(tab.tab_v1.url.value_or(""));
     ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior =
-        ExtensionTabUtil::GetScrubTabBehaviorExt(extension(), source_context_type(), gurl, tab.id.value_or(-1));
+        ExtensionTabUtil::GetScrubTabBehaviorExt(extension(), source_context_type(), gurl, tab.tab_v1.id.value_or(-1));
     scrub_tab_behaviors.emplace_back(scrub_tab_behavior);
   }
- 
-  return RespondNow(WithArguments(GetWindowValue(*window, scrub_tab_behaviors, populate)));
+
+  return RespondNow(WithArguments(GetWindowValueV2(*window, scrub_tab_behaviors, populate)));
 }
 
 ExtensionFunction::ResponseAction WindowsGetAllFunction::Run() {
@@ -373,11 +380,10 @@ ExtensionFunction::ResponseAction WindowsGetAllFunction::Run() {
       windows::GetAll::Params::Create(args());
   EXTENSION_FUNCTION_VALIDATE(params);
 
-  WebExtensionWindowQueryOptions windowQueryOptions = GetWindowQueryOptions(params->query_options);
-  std::vector<WebExtensionWindow> windows;
   WebExtensionWindowQueryOptionsV2 windowQueryOptionsV2 =
     GetWindowQueryOptionsV2(params->query_options, browser_context(), include_incognito_information());
-  windows = NweExtensionWindowCefDelegate::GetInstance()->OnGetAllWindowsV2(windowQueryOptionsV2);
+  std::vector<WebExtensionWindowV2> windows =
+    NWebExtensionWindowCefDelegate::GetInstance()->OnGetAllWindowsV2(windowQueryOptionsV2);
 
   bool populate = false;
   if (params->query_options && params->query_options->populate) {
@@ -386,10 +392,10 @@ ExtensionFunction::ResponseAction WindowsGetAllFunction::Run() {
   std::vector<std::vector<ExtensionTabUtil::ScrubTabBehavior>> scrub_tab_behaviors_combined;
   for (size_t j = 0; j < windows.size(); j++) {
     std::vector<ExtensionTabUtil::ScrubTabBehavior> scrub_tab_behaviors;
-    for (NWebExtensionTab tab : windows[j].tabs) {
-      GURL gurl(tab.url.value_or(""));
+    for (NWebExtensionTabV2 tab : windows[j].tabs) {
+      GURL gurl(tab.tab_v1.url.value_or(""));
       ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior =
-          ExtensionTabUtil::GetScrubTabBehaviorExt(extension(), source_context_type(), gurl, tab.id.value_or(-1));
+          ExtensionTabUtil::GetScrubTabBehaviorExt(extension(), source_context_type(), gurl, tab.tab_v1.id.value_or(-1));
       scrub_tab_behaviors.emplace_back(scrub_tab_behavior);
     }
     scrub_tab_behaviors_combined.emplace_back(scrub_tab_behaviors);
@@ -399,8 +405,9 @@ ExtensionFunction::ResponseAction WindowsGetAllFunction::Run() {
 }
 
 // static
-void WindowsCreateFunction::OnCreateWindow(const base::WeakPtr<WindowsCreateFunction>& function,
-    const std::optional<WebExtensionWindow>& window,
+void WindowsCreateFunction::OnCreateWindow(
+    const base::WeakPtr<WindowsCreateFunction>& function,
+    const std::optional<WebExtensionWindowV2>& window,
     const std::optional<std::string>& error) {
   DCHECK(function);
   if (!function) {
@@ -408,21 +415,23 @@ void WindowsCreateFunction::OnCreateWindow(const base::WeakPtr<WindowsCreateFunc
     return;
   }
   if (!window || error) {
-    std::string errorMessage = error? *error : "create widow fail";
+    std::string errorMessage = error ? *error : "create widow fail";
     function->Respond(function->Error(errorMessage));
   } else {
     std::vector<ExtensionTabUtil::ScrubTabBehavior> scrub_tab_behaviors;
-    for (NWebExtensionTab tab : window->tabs) {
-      GURL gurl(tab.url.value_or(""));
+    for (NWebExtensionTabV2 tab : window->tabs) {
+      GURL gurl(tab.tab_v1.url.value_or(""));
       ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior =
           ExtensionTabUtil::GetScrubTabBehaviorExt(
-              function->extension(), function->source_context_type(), gurl, tab.id.value_or(-1));
+              function->extension(), function->source_context_type(), gurl,
+              tab.tab_v1.id.value_or(-1));
       scrub_tab_behaviors.emplace_back(scrub_tab_behavior);
     }
- 
+
     function->Respond(function->has_callback()
-            ? function->WithArguments(GetWindowValue(*window, scrub_tab_behaviors))
-            : function->NoArguments());
+                          ? function->WithArguments(
+                                GetWindowValueV2(*window, scrub_tab_behaviors))
+                          : function->NoArguments());
   }
 
   if (!function->call_create_window_) {
@@ -462,7 +471,7 @@ ExtensionFunction::ResponseAction WindowsCreateFunction::Run() {
   bool success;
   WebExtensionWindowCreateDataV2 data_V2 =
       GetWindowCreateDataV2(data, browser_context(), include_incognito_information(), extension()->id());
-  success = NweExtensionWindowCefDelegate::GetInstance()->OnCreateWindowV2(
+  success = NWebExtensionWindowCefDelegate::GetInstance()->OnCreateWindowV2(
       data, data_V2, base::BindRepeating(&WindowsCreateFunction::OnCreateWindow, weak_ptr_factory_.GetWeakPtr()));
   call_create_window_ = false;
 
@@ -482,7 +491,7 @@ ExtensionFunction::ResponseAction WindowsCreateFunction::Run() {
 
 // static
 void WindowsUpdateFunction::OnUpdateWindow(const base::WeakPtr<WindowsUpdateFunction>& function,
-    const std::optional<WebExtensionWindow>& window,
+    const std::optional<WebExtensionWindowV2>& window,
     const std::optional<std::string>& error) {
   DCHECK(function);
   if (!function) {
@@ -494,15 +503,18 @@ void WindowsUpdateFunction::OnUpdateWindow(const base::WeakPtr<WindowsUpdateFunc
     function->Respond(function->Error(errorMessage));
   } else {
     std::vector<ExtensionTabUtil::ScrubTabBehavior> scrub_tab_behaviors;
-    for (NWebExtensionTab tab : window->tabs) {
-      GURL gurl(tab.url.value_or(""));
-      ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior = ExtensionTabUtil::GetScrubTabBehaviorExt(
-          function->extension(), function->source_context_type(), gurl, tab.id.value_or(-1));
+    for (NWebExtensionTabV2 tab : window->tabs) {
+      GURL gurl(tab.tab_v1.url.value_or(""));
+      ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior =
+          ExtensionTabUtil::GetScrubTabBehaviorExt(
+              function->extension(), function->source_context_type(), gurl,
+              tab.tab_v1.id.value_or(-1));
       scrub_tab_behaviors.emplace_back(scrub_tab_behavior);
     }
     function->Respond(function->has_callback()
-            ? function->WithArguments(GetWindowValue(*window, scrub_tab_behaviors))
-            : function->NoArguments());
+                          ? function->WithArguments(GetWindowValueV2(
+                                *window, scrub_tab_behaviors))
+                          : function->NoArguments());
   }
 
   if (!function->call_update_window_) {
@@ -526,7 +538,7 @@ ExtensionFunction::ResponseAction WindowsUpdateFunction::Run() {
   bool success;
   WebExtensionWindowUpdateInfoV2 infoV2 =
       GetWindowUpdateInfoV2(info, browser_context(), include_incognito_information(), extension()->id());
-  success = NweExtensionWindowCefDelegate::GetInstance()->OnUpdateWindowV2(
+  success = NWebExtensionWindowCefDelegate::GetInstance()->OnUpdateWindowV2(
       window_id, infoV2, base::BindRepeating(&WindowsUpdateFunction::OnUpdateWindow, weak_ptr_factory_.GetWeakPtr()));
   call_update_window_ = false;
 
@@ -578,7 +590,7 @@ ExtensionFunction::ResponseAction WindowsRemoveFunction::Run() {
   bool success;
   WebExtensionWindowRemoveInfoV2 infoV2 =
       GetWindowRemoveInfoV2(browser_context(), include_incognito_information(), extension()->id());
-  success = NweExtensionWindowCefDelegate::GetInstance()->OnRemoveWindowV2(
+  success = NWebExtensionWindowCefDelegate::GetInstance()->OnRemoveWindowV2(
       window_id, infoV2, base::BindRepeating(&WindowsRemoveFunction::OnRemoveWindow, weak_ptr_factory_.GetWeakPtr()));
   call_remove_window_ = false;
 

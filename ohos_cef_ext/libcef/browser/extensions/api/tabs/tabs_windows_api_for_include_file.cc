@@ -15,8 +15,8 @@
 
 void TabUpdated(int tab_id,
                 content::WebContents* contents,
-    std::unique_ptr<NWebExtensionTabChangeInfo> change_info,
-                std::unique_ptr<NWebExtensionTab> tab);
+                std::unique_ptr<NWebExtensionTabChangeInfo> change_info,
+                std::unique_ptr<NWebExtensionTabV2> tab);
 
 void TabActivated(int tab_id, int window_id, content::BrowserContext* browser_context);
 
@@ -29,7 +29,7 @@ void TabAttached(int tab_id, content::WebContents* web_contents,
     int32_t new_position, int32_t new_window_id);
 
 void TabCreated(int tab_id, content::BrowserContext* browserContext,
-                std::unique_ptr<NWebExtensionTab> tab);
+                std::unique_ptr<NWebExtensionTabV2> tab);
 
 void TabDetached(content::WebContents* web_contents, int tab_id,
     int old_position, int old_window_id);

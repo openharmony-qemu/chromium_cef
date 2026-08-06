@@ -13,13 +13,20 @@
  * limitations under the License.
  */
 
+}
+
+struct NWebExtensionTabV2;
+struct WebExtensionWindowV2;
+
+namespace extensions {
+
 class WindowsCreateFunction : public ExtensionFunction {
   ~WindowsCreateFunction() override {}
   ResponseAction Run() override;
   DECLARE_EXTENSION_FUNCTION("windows.create", WINDOWS_CREATE)
  private:
   static void OnCreateWindow(const base::WeakPtr<WindowsCreateFunction>& function,
-                             const std::optional<WebExtensionWindow>& window,
+                             const std::optional<WebExtensionWindowV2>& window,
                              const std::optional<std::string>& error);
 
   bool call_create_window_ = false;
@@ -32,7 +39,7 @@ class WindowsUpdateFunction : public ExtensionFunction {
   DECLARE_EXTENSION_FUNCTION("windows.update", WINDOWS_UPDATE)
  private:
   static void OnUpdateWindow(const base::WeakPtr<WindowsUpdateFunction>& function,
-                             const std::optional<WebExtensionWindow>& window,
+                             const std::optional<WebExtensionWindowV2>& window,
                              const std::optional<std::string>& error);
 
   bool call_update_window_ = false;
@@ -56,7 +63,7 @@ class TabsCreateFunction : public ExtensionFunction {
   ResponseAction Run() override;
   DECLARE_EXTENSION_FUNCTION("tabs.create", TABS_CREATE)
   static void OnTabCreated(const base::WeakPtr<TabsCreateFunction>& function,
-                           const NWebExtensionTab& tab,
+                           const NWebExtensionTabV2& tab,
                            const std::optional<std::string>& error);
   static void CreateTabForExtension(std::string& url, content::BrowserContext* context);
   bool call_create_tab_ = false;
@@ -68,7 +75,7 @@ class TabsDuplicateFunction : public ExtensionFunction {
   ResponseAction Run() override;
   DECLARE_EXTENSION_FUNCTION("tabs.duplicate", TABS_DUPLICATE)
   static void OnTabDuplicated(const base::WeakPtr<TabsDuplicateFunction>& function,
-                             NWebExtensionTab& tab,
+                             NWebExtensionTabV2& tab,
                              const std::optional<std::string>& error);
   bool call_duplicate_tab_ = false;
   base::WeakPtrFactory<TabsDuplicateFunction> weak_ptr_factory_{this};
@@ -84,7 +91,7 @@ class TabsHighlightFunction : public ExtensionFunction {
                     std::string* error);
   DECLARE_EXTENSION_FUNCTION("tabs.highlight", TABS_HIGHLIGHT)
   static void OnTabHighlighted(const base::WeakPtr<TabsHighlightFunction>& function,
-                               WebExtensionWindow& window,
+                               WebExtensionWindowV2& window,
                                const std::optional<std::string>& error);
   bool call_highlight_tab_ = false;
   base::WeakPtrFactory<TabsHighlightFunction> weak_ptr_factory_{this};
@@ -109,7 +116,7 @@ class TabsUpdateFunction : public ExtensionFunction {
 
   DECLARE_EXTENSION_FUNCTION("tabs.update", TABS_UPDATE)
   static void OnTabUpdated(const base::WeakPtr<TabsUpdateFunction>& function,
-                           NWebExtensionTab& tab,
+                           NWebExtensionTabV2& tab,
                            const std::optional<std::string>& error);
   bool GetUpdateParams(int tab_id,
                        std::optional<api::tabs::Update::Params>&,
@@ -129,7 +136,7 @@ class TabsMoveFunction : public ExtensionFunction {
                std::string* error);
   DECLARE_EXTENSION_FUNCTION("tabs.move", TABS_MOVE)
   static void OnTabMoved(const base::WeakPtr<TabsMoveFunction>& function,
-                         const std::vector<NWebExtensionTab>& tab,
+                         const std::vector<NWebExtensionTabV2>& tab,
                          const std::optional<std::string>& error);
   bool call_move_tab_ = false;
   base::WeakPtrFactory<TabsMoveFunction> weak_ptr_factory_{this};
@@ -193,7 +200,7 @@ class TabsDiscardFunction : public ExtensionFunction {
 
   ExtensionFunction::ResponseAction Run() override;
   static void OnTabDiscarded(const base::WeakPtr<TabsDiscardFunction>& function,
-                             NWebExtensionTab& tab,
+                             NWebExtensionTabV2& tab,
                              const std::optional<std::string>& error);
   bool call_discard_tab_ = false;
   base::WeakPtrFactory<TabsDiscardFunction> weak_ptr_factory_{this};

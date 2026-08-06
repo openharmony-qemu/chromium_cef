@@ -114,7 +114,7 @@ CefWindowsEventRouter* CefWindowsEventRouter::GetInstance() {
 }
 
 void CefWindowsEventRouter::DispatchWindowCreatedEvent(content::BrowserContext* browser_context,
-                                                      const WebExtensionWindow& window) {
+                                                         const WebExtensionWindowV2& window) {
   LOG(DEBUG) << "CefWindowsEventRouter::DispatchWindowCreatedEvent";
   if (!browser_context) {
     LOG(ERROR) << "browser_context is null";
@@ -123,40 +123,43 @@ void CefWindowsEventRouter::DispatchWindowCreatedEvent(content::BrowserContext* 
   base::Value::List args;
   std::vector<ExtensionTabUtil::ScrubTabBehavior> scrub_tab_behaviors;
   constexpr mojom::ContextType context_type = mojom::ContextType::kUnspecified;
-  for (NWebExtensionTab tab : window.tabs) {
-    GURL gurl(tab.url.value_or(""));
+  for (NWebExtensionTabV2 tab : window.tabs) {
+    GURL gurl(tab.tab_v1.url.value_or(""));
     ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior =
-        ExtensionTabUtil::GetScrubTabBehaviorExt(nullptr, context_type, gurl, tab.id.value_or(-1));
+        ExtensionTabUtil::GetScrubTabBehaviorExt(nullptr, context_type, gurl,
+                                                 tab.tab_v1.id.value_or(-1));
     scrub_tab_behaviors.emplace_back(scrub_tab_behavior);
   }
-  args.Append(GetWindowValue(window, scrub_tab_behaviors));
+  args.Append(GetWindowValueV2(window, scrub_tab_behaviors));
   auto event = std::make_unique<Event>(events::WINDOWS_ON_CREATED,
                                        api::windows::OnCreated::kEventName,
-                                       std::move(args),
-                                       browser_context);
-  event->will_dispatch_callback = base::BindRepeating(&WillDispatchWindowEvent, *window.type);
+                                       std::move(args), browser_context);
+  event->will_dispatch_callback =
+      base::BindRepeating(&WillDispatchWindowEvent, *window.window.type);
   EventRouter::Get(browser_context)->BroadcastEvent(std::move(event));
 }
 
-void CefWindowsEventRouter::DispatchWindowRemovedEvent(content::BrowserContext* browser_context,
-                                                      const WebExtensionWindow& window) {
+void CefWindowsEventRouter::DispatchWindowRemovedEvent(
+    content::BrowserContext* browser_context,
+    const WebExtensionWindowV2& window) {
   LOG(DEBUG) << "CefWindowsEventRouter::DispatchWindowRemovedEvent";
   if (!browser_context) {
     LOG(ERROR) << "browser_context is null";
     return;
   }
   base::Value::List args;
-  args.Append(*window.id);
+  args.Append(*window.window.id);
   auto event = std::make_unique<Event>(events::WINDOWS_ON_REMOVED,
                                        api::windows::OnRemoved::kEventName,
-                                       std::move(args),
-                                       browser_context);
-  event->will_dispatch_callback = base::BindRepeating(&WillDispatchWindowEvent, *window.type);
+                                       std::move(args), browser_context);
+  event->will_dispatch_callback =
+      base::BindRepeating(&WillDispatchWindowEvent, *window.window.type);
   EventRouter::Get(browser_context)->BroadcastEvent(std::move(event));
 }
 
-void CefWindowsEventRouter::DispatchWindowBoundsChangedEvent(content::BrowserContext* browser_context,
-                                                             const WebExtensionWindow& window) {
+void CefWindowsEventRouter::DispatchWindowBoundsChangedEvent(
+    content::BrowserContext* browser_context,
+    const WebExtensionWindowV2& window) {
   LOG(DEBUG) << "CefWindowsEventRouter::DispatchWindowBoundsChangedEvent";
   if (!browser_context) {
     LOG(ERROR) << "browser_context is null";
@@ -165,34 +168,36 @@ void CefWindowsEventRouter::DispatchWindowBoundsChangedEvent(content::BrowserCon
   base::Value::List args;
   std::vector<ExtensionTabUtil::ScrubTabBehavior> scrub_tab_behaviors;
   constexpr mojom::ContextType context_type = mojom::ContextType::kUnspecified;
-  for (NWebExtensionTab tab : window.tabs) {
-    GURL gurl(tab.url.value_or(""));
+  for (NWebExtensionTabV2 tab : window.tabs) {
+    GURL gurl(tab.tab_v1.url.value_or(""));
     ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior =
-        ExtensionTabUtil::GetScrubTabBehaviorExt(nullptr, context_type, gurl, tab.id.value_or(-1));
+        ExtensionTabUtil::GetScrubTabBehaviorExt(nullptr, context_type, gurl,
+                                                 tab.tab_v1.id.value_or(-1));
     scrub_tab_behaviors.emplace_back(scrub_tab_behavior);
   }
-  args.Append(GetWindowValue(window, scrub_tab_behaviors));
-  auto event = std::make_unique<Event>(events::WINDOWS_ON_BOUNDS_CHANGED,
-                                       api::windows::OnBoundsChanged::kEventName,
-                                       std::move(args),
-                                       browser_context);
+  args.Append(GetWindowValueV2(window, scrub_tab_behaviors));
+  auto event =
+      std::make_unique<Event>(events::WINDOWS_ON_BOUNDS_CHANGED,
+                              api::windows::OnBoundsChanged::kEventName,
+                              std::move(args), browser_context);
   EventRouter::Get(browser_context)->BroadcastEvent(std::move(event));
 }
 
-void CefWindowsEventRouter::DispatchWindowFocusChangedEvent(content::BrowserContext* browser_context,
-                                                            const WebExtensionWindow& window) {
+void CefWindowsEventRouter::DispatchWindowFocusChangedEvent(
+    content::BrowserContext* browser_context,
+    const WebExtensionWindowV2& window) {
   LOG(DEBUG) << "CefWindowsEventRouter::DispatchWindowFocusChangedEvent";
   if (!browser_context) {
     LOG(ERROR) << "browser_context is null";
     return;
   }
   base::Value::List args;
-  args.Append(*window.id);
+  args.Append(*window.window.id);
   auto event = std::make_unique<Event>(events::WINDOWS_ON_FOCUS_CHANGED,
                                        api::windows::OnFocusChanged::kEventName,
                                        std::move(args));
-  event->will_dispatch_callback =
-      base::BindRepeating(&WillDispatchWindowFocusedEvent, browser_context, *window.type);
+  event->will_dispatch_callback = base::BindRepeating(
+      &WillDispatchWindowFocusedEvent, browser_context, *window.window.type);
   EventRouter::Get(browser_context)->BroadcastEvent(std::move(event));
 }
 

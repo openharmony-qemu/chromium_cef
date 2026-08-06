@@ -59,7 +59,7 @@ void ScrubTabValue(NWebExtensionTab& tab, const ExtensionTabUtil::ScrubTabBehavi
   }
 }
  
-base::Value::Dict GetTabValue(NWebExtensionTab& tab, const ExtensionTabUtil::ScrubTabBehavior& scrub_tab_behavior) {
+base::Value::Dict GetTabValueV1(NWebExtensionTab& tab, const ExtensionTabUtil::ScrubTabBehavior& scrub_tab_behavior) {
   ScrubTabValue(tab, scrub_tab_behavior);
   base::Value::Dict dict;
   if (tab.id) {
@@ -71,7 +71,6 @@ base::Value::Dict GetTabValue(NWebExtensionTab& tab, const ExtensionTabUtil::Scr
   if (tab.openerTabId) {
     dict.Set("openerTabId", *tab.openerTabId);
   }
-  // "lastAccessed" not supported yet in M114.
   dict.Set("highlighted", tab.highlighted);
   dict.Set("active", tab.active);
   dict.Set("pinned", tab.pinned);
@@ -107,6 +106,22 @@ base::Value::Dict GetTabValue(NWebExtensionTab& tab, const ExtensionTabUtil::Scr
   }
   if (tab.sessionId) {
     dict.Set("sessionId", *tab.sessionId);
+  }
+  return dict;
+}
+
+base::Value::Dict GetTabValue(
+    NWebExtensionTabV2& tab,
+    const ExtensionTabUtil::ScrubTabBehavior& scrub_tab_behavior) {
+  base::Value::Dict dict = GetTabValueV1(tab.tab_v1, scrub_tab_behavior);
+  if (tab.last_accessed.has_value()) {
+    dict.Set("lastAccessed", static_cast<double>(tab.last_accessed.value()));
+  }
+  if (tab.frozen.has_value()) {
+    dict.Set("frozen", tab.frozen.value());
+  }
+  if (tab.split_view_id.has_value()) {
+    dict.Set("splitViewId", tab.split_view_id.value());
   }
   return dict;
 }
@@ -156,13 +171,17 @@ base::Value::Dict GetTabZoomChangeValue(const NWebExtensionTabZoomChangeInfo& ta
   return dict;
 }
 
-base::Value::List GetTabValueList(const std::vector<NWebExtensionTab>& tabs,
-                                  const std::vector<ExtensionTabUtil::ScrubTabBehavior>& scrub_tab_behaviors) {
+base::Value::List GetTabValueList(
+    const std::vector<NWebExtensionTabV2>& tabs,
+    const std::vector<ExtensionTabUtil::ScrubTabBehavior>&
+        scrub_tab_behaviors) {
   base::Value::List tab_list;
   size_t i = 0;
-  for (NWebExtensionTab tab : tabs) {
-    if (i == scrub_tab_behaviors.size()) break;
-    LOG(DEBUG) << "GetTabValueList tab id: " << tab.id.value_or(-1);
+  for (NWebExtensionTabV2 tab : tabs) {
+    if (i == scrub_tab_behaviors.size()) {
+      break;
+    }
+    LOG(DEBUG) << "GetTabValueList tab id: " << tab.tab_v1.id.value_or(-1);
     tab_list.Append(GetTabValue(tab, scrub_tab_behaviors[i++]));
   }
   return tab_list;

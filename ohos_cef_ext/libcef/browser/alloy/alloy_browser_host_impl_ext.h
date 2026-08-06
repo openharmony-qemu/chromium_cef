@@ -181,7 +181,7 @@ public:
   void WebExtensionTabUpdated(
       int tab_id,
       std::unique_ptr<NWebExtensionTabChangeInfo> changeInfo,
-      std::unique_ptr<NWebExtensionTab> tab) override;
+      std::unique_ptr<NWebExtensionTabV2> tab) override;
 
   void WebExtensionTabRemoved(int tab_id,
     bool isWindowClosing, int windowId) override;
@@ -201,7 +201,7 @@ public:
 
   static void WebExtensionActionClicked(
       std::string extensionId,
-      const NWebExtensionTab* tab);
+      const NWebExtensionTabV2* tab);
 
   static void UpdatePinnedExtensionIds(
     content::BrowserContext* browser_context,
