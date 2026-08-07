@@ -20,7 +20,6 @@
 #include "chrome/browser/extensions/extension_tab_util.h"
 #include "chrome/browser/extensions/menu_manager.h"
 #include "extensions/browser/permissions/active_tab_permission_granter.h"
-#include "chrome/browser/extensions/tab_helper.h"
 #include "chrome/common/extensions/api/context_menus.h"
 #include "extensions/browser/event_router.h"
 #include "extensions/browser/extension_registry.h"
@@ -48,10 +47,10 @@ std::string GetTypeStr(extensions::MenuItem::Type type) {
     case extensions::MenuItem::Type::SEPARATOR:
       return "separator";
     default:
-      return nullptr;
+      return "";
   };
 }
- 
+
 std::string GetContextStr(extensions::MenuItem::Context context) {
   switch (context) {
     case extensions::MenuItem::Context::ALL:
@@ -81,10 +80,10 @@ std::string GetContextStr(extensions::MenuItem::Context context) {
     case extensions::MenuItem::Context::ACTION:
       return "action";
     default:
-      return nullptr;
+      return "";
   };
 }
- 
+
 std::vector<std::string> ContextListToStrVector(
     const extensions::MenuItem::ContextList& contextList) {
   std::vector<std::string> result;
