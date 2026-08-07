@@ -484,8 +484,11 @@ private:
     }
 
     std::optional<base::Value::Dict> result_dict = ParseJsonDict(result);
-    if (result_dict && !result_dict->FindBool("ok").value_or(false)) {
-      const std::string *error = result_dict->FindString("error");
+    if (result_dict && result_dict->FindBool("ok").value_or(false)) {
+      overlay_removed_ = true;
+    } else {
+      const std::string *error =
+          result_dict ? result_dict->FindString("error") : nullptr;
       error_ = error && !error->empty() ? *error : "remove overlay failed";
     }
 
@@ -521,8 +524,11 @@ private:
     } else if (!error_.empty()) {
       result.Set("ok", false);
       result.Set("error", error_);
-    } else {
+    } else if (overlay_removed_) {
       result.Set("ok", true);
+    } else {
+      result.Set("ok", false);
+      result.Set("error", "remove overlay failed");
     }
     if (callback_) {
       callback_->OnResult(ToJson(std::move(result)));
@@ -537,6 +543,7 @@ private:
   base::OneShotTimer command_timeout_timer_;
   size_t pending_count_ = 0;
   bool timed_out_ = false;
+  bool overlay_removed_ = false;
   bool completed_ = false;
 };
 
