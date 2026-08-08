@@ -868,7 +868,7 @@ bool OhosPrintManager::GetPrintBackground() {
   return !!should_print_background_;
 }
 
-void OhosPrintManager::CheckForCancel(int32_t preview_ui_id,
+void OhosPrintManager::CheckForCancel(const base::UnguessableToken& preview_ui_id,
                                       int32_t request_id,
                                       CheckForCancelCallback callback) {}
 
