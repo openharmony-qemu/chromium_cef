@@ -116,6 +116,7 @@ bool ProcessFeaturesSwitches(const base::Value& value, PrefService* localState) 
         switch_info.Set("commandline", *cmd_line);
         prefs_list.Append(std::move(switch_info));
       }
+      break;
     }
   }
  
