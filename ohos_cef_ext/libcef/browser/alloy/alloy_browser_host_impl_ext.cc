@@ -161,6 +161,9 @@ using content::KeyboardEventProcessingResult;
 #include "ohos_nweb_ex/overrides/cef/libcef/browser/video_assistant/video_assistant.h"
 #include "ohos_nweb_ex/overrides/cef/libcef/browser/alloy/alloy_video_hls_download_config.h"
 #endif  // ARKWEB_NWEB_EX
+#if BUILDFLAG(ARKWEB_FULLSCREEN_VIDEO_OVERLAY)
+#include "content/public/browser/fullscreen_overlay_media_player_controller.h"
+#endif
 #endif  // ARKWEB_VIDEO_ASSISTANT
 
 #if BUILDFLAG(ARKWEB_NWEB_EX)
@@ -332,6 +335,28 @@ std::string BuildMediaInfo(
   return json ? json.value() : std::string();
 }
 #endif // ARKWEB_NWEB_EX
+#if BUILDFLAG(ARKWEB_FULLSCREEN_VIDEO_OVERLAY)
+std::string BuildMediaInfoForOverlay(
+    const media::mojom::MediaInfoForVASTPtr& media_info) {
+  base::Value::Dict root;
+  root.Set("id", media_info->id);
+  root.Set("title", media_info->title);
+  root.Set("duration", media_info->duration);
+  root.Set("curTime", media_info->current_time);
+  root.Set("playbackrate", media_info->playback_rate);
+  root.Set("width", media_info->video_width);
+  root.Set("height", media_info->video_height);
+  root.Set("muted", media_info->isMuted);
+  root.Set("isPlaying", media_info->isPlaying);
+  root.Set("volume", media_info->volume);
+  root.Set("fullscreenoverlay", media_info->fullscreen_overlay);
+  root.Set("videourl", media_info->video_url);
+  root.Set("iconurl", media_info->icon_url);
+  root.Set("posterurl", media_info->poster_url);
+  auto json = base::WriteJson(root);
+  return json ? json.value() : std::string();
+}
+#endif  // ARKWEB_FULLSCREEN_VIDEO_OVERLAY
 #endif // ARKWEB_VIDEO_ASSISTANT
 
 #if BUILDFLAG(ARKWEB_NWEB_EX)
@@ -2150,7 +2175,19 @@ AlloyBrowserHostImplExt::OnFullScreenOverlayEnter(
       std::make_unique<CefMediaPlayerControllerImpl>(
           std::move(media_player_controller)),
       media_info);
-#endif // ARKWEB_NWEB_EX
+#elif BUILDFLAG(ARKWEB_FULLSCREEN_VIDEO_OVERLAY)
+  LOG(INFO) << "FullscreenVideoOverlay, OnFullScreenOverlayEnter.";
+  auto overlay_media_info = BuildMediaInfoForOverlay(media_info_ptr);
+  auto overlay_controller =
+      content::CreateFullscreenOverlayMediaPlayerController(
+          GetWebContents(), media_player_id);
+
+  listener = client_->OnFullScreenOverlayEnter(
+      std::make_unique<CefMediaPlayerControllerImpl>(
+          std::move(overlay_controller)),
+      overlay_media_info);
+#endif
+
   if (!listener) {
     return nullptr;
   }
