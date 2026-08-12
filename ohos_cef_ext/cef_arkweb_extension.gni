@@ -208,6 +208,8 @@ libcef_arkweb_sources = [
 
   "//cef/ohos_cef_ext/libcef/browser/net/ohos_url_rewrite_controller.h",
   "//cef/ohos_cef_ext/libcef/browser/net/ohos_url_rewrite_controller.cc",
+  "//cef/ohos_cef_ext/libcef/browser/cdp_handler.cpp",
+  "//cef/ohos_cef_ext/libcef/browser/cdp_handler.h",
 ]
 if (defined(arkweb_logger_report) && arkweb_logger_report) {
   libcef_arkweb_sources += [
