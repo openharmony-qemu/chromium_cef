@@ -1701,7 +1701,7 @@ std::unique_ptr<InterceptedRequestHandler> CreateInterceptedRequestHandler(
 
   browserPtr = CefBrowserHostBase::GetBrowserForHost(frame);
 #if BUILDFLAG(ARKWEB_NETWORK_LOAD)
-  if (browserPtr->browser_info()) {
+  if (browserPtr && browserPtr->browser_info()) {
     realFramePtr = browserPtr->browser_info()->GetFrameForHost(frame, true);
   }
 #endif
