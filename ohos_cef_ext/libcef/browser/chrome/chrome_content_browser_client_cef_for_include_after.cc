@@ -20,7 +20,7 @@
 #if BUILDFLAG(ARKWEB_NETWORK_SERVICE)
 BASE_FEATURE(kEnablePostQuantumKeyAgreement,
              "EnablePostQuantumKeyAgreement",
-             base::FEATURE_ENABLED_BY_DEFAULT);
+             base::FEATURE_DISABLED_BY_DEFAULT);
 #endif
 
 #if BUILDFLAG(ARKWEB_MULTI_WINDOW)
