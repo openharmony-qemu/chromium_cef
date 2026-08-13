@@ -7,12 +7,12 @@
 
 #include <memory>
 
+#include "arkweb/chromium_ext/components/safe_browsing/content/browser/ohos_sb_threat_type.h"
 #include "components/security_interstitials/content/security_interstitial_controller_client.h"
 #include "components/security_interstitials/content/security_interstitial_page.h"
 #include "components/security_interstitials/core/metrics_helper.h"
 #include "content/public/browser/web_contents.h"
 #include "libcef/browser/ohos_safe_browsing/ohos_sb_controller_client.h"
-#include "libcef/browser/ohos_safe_browsing/ohos_sb_threat_type.h"
 #include "url/gurl.h"
 
 namespace ohos_safe_browsing {
