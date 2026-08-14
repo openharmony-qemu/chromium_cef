@@ -771,18 +771,18 @@ void CefDevToolsFrontend::HandleMessageFromDevToolsFrontend(
         this, base::as_bytes(base::span(*protocol_message)));
   } else if (*method == "loadCompleted") {
 #if BUILDFLAG(ARKWEB_ARKWEB_EXTENSIONS)
+    if (inspected_contents_) {
 #if BUILDFLAG(ARKWEB_CRASHPAD)
-    if (!inspected_contents_) {
-      LOG(ERROR) << " func:" << __func__ << " inspected_contents_ is null.";
-      return;
-    }
-    int tab_id = cef::GetTabIdForWebContents(inspected_contents_.get());
+      int tab_id = cef::GetTabIdForWebContents(inspected_contents_.get());
 #else
-    int tab_id = cef::GetTabIdForWebContents(inspected_contents_);
+      int tab_id = cef::GetTabIdForWebContents(inspected_contents_);
 #endif
-    CallClientFunction("DevToolsAPI", "setInspectedTabId", base::Value(tab_id));
+      CallClientFunction("DevToolsAPI", "setInspectedTabId", base::Value(tab_id));
 
-    AddDevToolsExtensionsToClient();
+      AddDevToolsExtensionsToClient();
+    } else {
+      LOG(ERROR) << " func:" << __func__ << " inspected_contents_ is null, skip extensions block.";
+    }
 #endif // BUILDFLAG(ARKWEB_ARKWEB_EXTENSIONS)
 
     auto* rfh = web_contents()->GetPrimaryMainFrame();
