@@ -130,7 +130,9 @@
 
 #if BUILDFLAG(ARKWEB_SAFEBROWSING)
 #include "libcef/browser/ohos_safe_browsing/ohos_safe_browsing_tab_helper.h"
+#if BUILDFLAG(IS_ARKWEB_EXT)
 #include "arkweb/ohos_nweb_ex/overrides/ohos_nweb/src/cef_delegate/nweb_anti_fraud_detection_handler.h"
+#endif
 #include "libcef/browser/ohos_safe_browsing/ohos_sb_snapshot_info.h"
 #endif
 
@@ -216,7 +218,7 @@ using OhPasswordManagerClient = ChromePasswordManagerClient;
 #if BUILDFLAG(ARKWEB_EX_FALLBACK_PROXY)
 #include "cef/ohos_cef_ext/libcef/browser/fallback_proxy/fallback_proxy_service.h"
 #endif  // ARKWEB_EX_FALLBACK_PROXY
-#if BUILDFLAG(ARKWEB_SAFEBROWSING)
+#if BUILDFLAG(ARKWEB_SAFEBROWSING) && BUILDFLAG(IS_ARKWEB_EXT)
 #include "ohos_nweb_ex/overrides/cef/libcef/browser/alloy/alloy_arkweb_safebrowsing_af_detection_config.h"
 #endif  // ARKWEB_SAFEBROWSING
 
@@ -4169,6 +4171,7 @@ void ArkWebBrowserHostExtImpl::OnSafeBrowsingDetectionResult(
     return;
   }
 
+#if BUILDFLAG(IS_ARKWEB_EXT)
   if(safeBrowsingDetectionResult.is_content_check && 
       nweb_ex::AlloyArkwebSafebrowsingAFDetectionConfig::GetInstance()
       ->IsArkwebSafebrowsingAFDetectionEnabled()){
@@ -4196,8 +4199,8 @@ void ArkWebBrowserHostExtImpl::OnSafeBrowsingDetectionResult(
     }
     return;
   }
+#endif
 
-  
   ohos_safe_browsing::SafeBrowsingTabHelper* safe_browsing_tab_helper =
       ohos_safe_browsing::SafeBrowsingTabHelper::FromWebContents(web_contents);
 #if BUILDFLAG(ARKWEB_EX_FALLBACK_PROXY)
