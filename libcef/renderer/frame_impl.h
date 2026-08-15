@@ -101,7 +101,7 @@ class CefFrameImpl
                                         const CefString& request_method,
                                         bool user_gesture,
                                         bool is_redirect,
-                                        bool is_outermost_main_frame) {}
+                                        bool is_outermost_main_frame) { return false; }
 #endif
 
 #if BUILDFLAG(ARKWEB_ERROR_PAGE)
@@ -111,7 +111,7 @@ class CefFrameImpl
                                         bool is_redirect,
                                         bool is_outermost_main_frame,
                                         int error_code,
-                                        const CefString& error_text) {}
+                                        const CefString& error_text) { return ""; }
 #endif
 
  private:
