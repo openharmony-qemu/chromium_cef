@@ -14,8 +14,11 @@
  */
  
 #include "ohos_safe_browsing_config_util.h"
- 
+
+#include "arkweb/build/features/features.h"
+#if BUILDFLAG(IS_ARKWEB_EXT)
 #include "arkweb/ohos_nweb_ex/build/features/features.h"
+#endif
 #include "base/command_line.h"
 #include "base/memory/raw_ptr.h"
 #include "content/public/common/content_switches.h"
