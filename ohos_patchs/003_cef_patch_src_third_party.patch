@@ -91,7 +91,7 @@ index def4b446f..d48998241 100644
    return ConstUnwrap<Element>()->textContent();
  }
 diff --git a/src/third_party/blink/renderer/core/exported/web_view_impl.cc b/src/third_party/blink/renderer/core/exported/web_view_impl.cc
-index a80cf6f20..db2f334a1 100644
+index 6ce70e701..462aaff10 100644
 --- a/src/third_party/blink/renderer/core/exported/web_view_impl.cc
 +++ b/src/third_party/blink/renderer/core/exported/web_view_impl.cc
 @@ -257,8 +257,13 @@ void WebView::SetUseExternalPopupMenus(bool use_external_popup_menus) {
@@ -119,7 +119,7 @@ index a80cf6f20..db2f334a1 100644
        fullscreen_controller_(std::make_unique<FullscreenController>(this)),
        page_base_background_color_(
 diff --git a/src/third_party/blink/renderer/core/exported/web_view_impl.h b/src/third_party/blink/renderer/core/exported/web_view_impl.h
-index e4784453b..5dbbd3cd0 100644
+index 4d48d51d0..bf45d67e4 100644
 --- a/src/third_party/blink/renderer/core/exported/web_view_impl.h
 +++ b/src/third_party/blink/renderer/core/exported/web_view_impl.h
 @@ -140,7 +140,8 @@ class CORE_EXPORT WebViewImpl final : public WebView,
@@ -132,7 +132,7 @@ index e4784453b..5dbbd3cd0 100644
  
    // Returns whether frames under this WebView are backed by a compositor.
    bool does_composite() const { return does_composite_; }
-@@ -880,6 +881,8 @@ class CORE_EXPORT WebViewImpl final : public WebView,
+@@ -887,6 +888,8 @@ class CORE_EXPORT WebViewImpl final : public WebView,
    float fake_page_scale_animation_page_scale_factor_ = 0.f;
    bool fake_page_scale_animation_use_anchor_ = false;
  
