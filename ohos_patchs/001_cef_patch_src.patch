@@ -2736,10 +2736,10 @@ index 5695fd36ce..b109cefdee 100644
      // Guard against wrong tokens being passed accidentally.
      return nullptr;
 diff --git a/src/content/browser/renderer_host/navigation_request.cc b/src/content/browser/renderer_host/navigation_request.cc
-index 0ea91ae988..06face24c9 100644
+index 4bd496fee8..7c0dba9195 100644
 --- a/src/content/browser/renderer_host/navigation_request.cc
 +++ b/src/content/browser/renderer_host/navigation_request.cc
-@@ -8308,10 +8308,22 @@ NavigationRequest::GetOriginForURLLoaderFactoryBeforeResponseWithDebugInfo(
+@@ -8315,10 +8315,22 @@ NavigationRequest::GetOriginForURLLoaderFactoryBeforeResponseWithDebugInfo(
    bool use_opaque_origin =
        (sandbox_flags & network::mojom::WebSandboxFlags::kOrigin) ==
        network::mojom::WebSandboxFlags::kOrigin;
@@ -2763,7 +2763,7 @@ index 0ea91ae988..06face24c9 100644
    }
  
    return origin_and_debug_info;
-@@ -8419,11 +8431,20 @@ NavigationRequest::GetOriginForURLLoaderFactoryAfterResponseWithDebugInfo() {
+@@ -8426,11 +8438,20 @@ NavigationRequest::GetOriginForURLLoaderFactoryAfterResponseWithDebugInfo() {
        DetermineInitiatorRelationship(initiator_rfh,
                                       frame_tree_node_->current_frame_host()));
  
@@ -2787,10 +2787,10 @@ index 0ea91ae988..06face24c9 100644
    // If the target of this navigation will be rendered in a RenderFrameHost,
    // then verify that the chosen origin is allowed to be accessed from that
 diff --git a/src/content/browser/renderer_host/render_frame_host_impl.cc b/src/content/browser/renderer_host/render_frame_host_impl.cc
-index 2fa9e5beec..9693623528 100644
+index 87ddf4a5c3..153b4e4951 100644
 --- a/src/content/browser/renderer_host/render_frame_host_impl.cc
 +++ b/src/content/browser/renderer_host/render_frame_host_impl.cc
-@@ -9235,6 +9235,16 @@ void RenderFrameHostImpl::CreateNewWindow(
+@@ -9241,6 +9241,16 @@ void RenderFrameHostImpl::CreateNewWindow(
      return;
    }
  
@@ -2807,7 +2807,7 @@ index 2fa9e5beec..9693623528 100644
    // Otherwise, consume user activation before we proceed. In particular, it is
    // important to do this before we return from the |opener_suppressed| case
    // below.
-@@ -11605,6 +11615,7 @@ void RenderFrameHostImpl::CommitNavigation(
+@@ -11620,6 +11630,7 @@ void RenderFrameHostImpl::CommitNavigation(
    auto browser_calc_origin_to_commit =
        navigation_request->GetOriginToCommitWithDebugInfo();
    if (!process_lock.is_error_page() && !is_mhtml_subframe &&
@@ -2866,7 +2866,7 @@ index d2a73e1d5b..3badc005e7 100644
    RenderWidgetHostViewBase* GetRenderWidgetHostViewBase();
  
 diff --git a/src/content/browser/renderer_host/render_widget_host_view_aura.cc b/src/content/browser/renderer_host/render_widget_host_view_aura.cc
-index 674f56a955..ee6533bcaa 100644
+index 8485ab2890..4834e872f5 100644
 --- a/src/content/browser/renderer_host/render_widget_host_view_aura.cc
 +++ b/src/content/browser/renderer_host/render_widget_host_view_aura.cc
 @@ -6,6 +6,7 @@
@@ -2902,7 +2902,7 @@ index 674f56a955..ee6533bcaa 100644
  }
  
  #if BUILDFLAG(IS_WIN)
-@@ -2568,6 +2572,16 @@ void RenderWidgetHostViewAura::CreateAuraWindow(aura::client::WindowType type) {
+@@ -2577,6 +2581,16 @@ void RenderWidgetHostViewAura::CreateAuraWindow(aura::client::WindowType type) {
    window_->layer()->SetColor(GetBackgroundColor() ? *GetBackgroundColor()
                                                    : SK_ColorWHITE);
    UpdateFrameSinkIdRegistration();
@@ -4394,158 +4394,6 @@ index b950929cc8..31480fdc04 100644
      } else {
        assert(true, "$ohos_build_target target builds are not supported on ohos")
      }
-diff --git a/src/ohos/adapter/web_entry/cef/cef_loader.cc b/src/ohos/adapter/web_entry/cef/cef_loader.cc
-new file mode 100644
-index 0000000000..0cb35e8cf7
---- /dev/null
-+++ b/src/ohos/adapter/web_entry/cef/cef_loader.cc
-@@ -0,0 +1,96 @@
-+/*
-+ * Copyright (c) 2023-2025 Haitai FangYuan Co., Ltd.
-+ * Redistribution and use in source and binary forms, with or without modification,
-+ * are permitted provided that the following conditions are met:
-+ *
-+ * 1. Redistributions of source code must retain the above copyright notice, this list of
-+ *    conditions and the following disclaimer.
-+ *
-+ * 2. Redistributions in binary form must reproduce the above copyright notice, this list
-+ *    of conditions and the following disclaimer in the documentation and/or other materials
-+ *    provided with the distribution.
-+ *
-+ * 3. Neither the name of the copyright holder nor the names of its contributors may be used
-+ *    to endorse or promote products derived from this software without specific prior written
-+ *    permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
-+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
-+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
-+
-+#include "ohos/adapter/web_entry/cef/cef_loader.h"
-+
-+#include <accesstoken/ability_access_control.h>
-+
-+#include "ohos/adapter/common/logging.h"
-+#include "ohos/adapter/common/shared_library.h"
-+#include "ohos/adapter/dev_config/dev_config.h"
-+#include "ohos/adapter/device_info/device_info.h"
-+#include "ohos/adapter/web_entry/permission_constants.h"
-+
-+namespace ohos::adapter::web_entry {
-+namespace {
-+__attribute__((no_sanitize("cfi", "cfi-icall")))
-+bool CheckAdvSecMode() {
-+  uint32_t mode = -1;
-+  common::SharedLibrary shared_library_("/system/lib64/platformsdk/",
-+                                        "dsmm_innersdk.z");
-+  auto fn = shared_library_.GetFunction<int(const char*, uint32_t, const char*,
-+                                            uint32_t, uint32_t*)>(
-+      "AdvancedSecurityModeGetStateByFeature");
-+  if (fn != nullptr) {
-+    // returns 0 if success or errcode
-+    int32_t ret = fn("default", 7, "default", 7, &mode); // len:7
-+    if (ret == 0 && mode == 1) {
-+      return true;
-+    }
-+  }
-+  return false;
-+}
-+
-+bool ShouldDisableJit() {
-+  if (CheckAdvSecMode()) {
-+    return true;
-+  }
-+
-+  if (!OH_AT_CheckSelfPermission(
-+      PermissionConstants::ALLOW_WRITABLE_CODE_MEMORY)) {
-+    return true;
-+  }
-+
-+  return false;
-+}
-+
-+}  // namespace
-+
-+std::string CefLoader::GetEntryPoint(int process_type) {
-+  std::string entry_point;
-+  switch (process_type) {
-+    case ProcessType::kChromeMain:
-+      entry_point = "CefMain";
-+      break;
-+    case ProcessType::kCrashPadHandler:
-+      entry_point = "CrashpadHandlerMain";
-+      break;
-+    default:
-+      LOGE("GetEntryPoint nothing to do, unknown process type: %{public}d",
-+           process_type);
-+      break;
-+  }
-+  return entry_point;
-+}
-+
-+JSBIND_GLOBAL() {
-+  JSBIND_FUNCTION(ShouldDisableJit);
-+}
-+
-+}  // namespace ohos::adapter::web_entry
-diff --git a/src/ohos/adapter/web_entry/cef/cef_loader.h b/src/ohos/adapter/web_entry/cef/cef_loader.h
-new file mode 100644
-index 0000000000..457fff218c
---- /dev/null
-+++ b/src/ohos/adapter/web_entry/cef/cef_loader.h
-@@ -0,0 +1,44 @@
-+/*
-+ * Copyright (c) 2023-2025 Haitai FangYuan Co., Ltd.
-+ * Redistribution and use in source and binary forms, with or without modification,
-+ * are permitted provided that the following conditions are met:
-+ *
-+ * 1. Redistributions of source code must retain the above copyright notice, this list of
-+ *    conditions and the following disclaimer.
-+ *
-+ * 2. Redistributions in binary form must reproduce the above copyright notice, this list
-+ *    of conditions and the following disclaimer in the documentation and/or other materials
-+ *    provided with the distribution.
-+ *
-+ * 3. Neither the name of the copyright holder nor the names of its contributors may be used
-+ *    to endorse or promote products derived from this software without specific prior written
-+ *    permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
-+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
-+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
-+
-+#include "aki/jsbind.h"
-+#include "ohos/adapter/web_entry/web_loader.h"
-+
-+namespace ohos::adapter::web_entry {
-+
-+class CefLoader : public BasicLoader {
-+ public:
-+  CefLoader(const std::string& dir, const std::string& name)
-+      : BasicLoader(dir, name) {}
-+  CefLoader(const std::string& lib_path) : BasicLoader(lib_path) {}
-+
-+  std::string GetEntryPoint(int process_type) override;
-+};
-+
-+}  // namespace ohos::adapter::web_entry
 diff --git a/src/ohos/adapter/web_entry/web_entry.cc b/src/ohos/adapter/web_entry/web_entry.cc
 index 1bfbb89ca4..db955fa99b 100644
 --- a/src/ohos/adapter/web_entry/web_entry.cc
@@ -4754,46 +4602,18 @@ index 94086103bb..1981a21235
      {
        "name": "BrowserAbility_desc",
 diff --git a/src/ohos/app/ohos_hap/chromium/src/main/resources/base/profile/shortcuts_config.json b/src/ohos/app/ohos_hap/chromium/src/main/resources/base/profile/shortcuts_config.json
-index 63b0293bd5..ca642a457f 100644
+index 63b0293bd5..80c784a7ed 100644
 --- a/src/ohos/app/ohos_hap/chromium/src/main/resources/base/profile/shortcuts_config.json
 +++ b/src/ohos/app/ohos_hap/chromium/src/main/resources/base/profile/shortcuts_config.json
-@@ -1,18 +1,18 @@
--{
--  "shortcuts": [
--    {
--      "shortcutId": "OpenNewWindow",
--      "label": "$string:OpenNewWindow_label",
--      "wants": [
--        {
+@@ -5,7 +5,7 @@
+       "label": "$string:OpenNewWindow_label",
+       "wants": [
+         {
 -          "bundleName": "com.huawei.ohos_chromium",
--          "moduleName": "chromium",
--          "abilityName": "EntryAbility",
--          "parameters": {
--            "openInNewWindow": "true"
--          }
--        }
--      ]
--    }
--  ]
-+{
-+  "shortcuts": [
-+    {
-+      "shortcutId": "OpenNewWindow",
-+      "label": "$string:OpenNewWindow_label",
-+      "wants": [
-+        {
 +          "bundleName": "com.huawei.ohos_cef",
-+          "moduleName": "chromium",
-+          "abilityName": "EntryAbility",
-+          "parameters": {
-+            "openInNewWindow": "true"
-+          }
-+        }
-+      ]
-+    }
-+  ]
- }
-\ No newline at end of file
+           "moduleName": "chromium",
+           "abilityName": "EntryAbility",
+           "parameters": {
 diff --git a/src/ohos/app/ohos_hap/chromium/src/main/resources/en_US/element/string.json b/src/ohos/app/ohos_hap/chromium/src/main/resources/en_US/element/string.json
 old mode 100755
 new mode 100644
@@ -4932,6 +4752,42 @@ index ab84a154f7..156a8df8bc 100644
    private getFilterArray(filters: Array<Array<string>>, descriptions: Array<string>): Array<string> {
      const context = this.ctxAdapter.getContext();
      let defaultDescription = context.resourceManager.getStringSync(this.defaultDescriptionId);
+diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/PrintAdapter.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/PrintAdapter.ets
+index 149ed1663e..9a949ab948 100644
+--- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/PrintAdapter.ets
++++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/PrintAdapter.ets
+@@ -93,7 +93,7 @@ export class PrintAdapter extends BaseAdapter {
+   }
+ 
+   @LogMethod
+-  PrintPdfFiles(pdfData: ArrayBuffer) {
++  PrintPdfFiles(jobName: string, pdfData: ArrayBuffer) {
+     let printAdapter: print.PrintDocumentAdapter = {
+       onStartLayoutWrite(jobId: string,
+                          oldAttrs: print.PrintAttributes,
+@@ -113,7 +113,7 @@ export class PrintAdapter extends BaseAdapter {
+       colorMode: print.PrintColorMode.COLOR_MODE_MONOCHROME,
+       duplexMode: print.PrintDuplexMode.DUPLEX_MODE_NONE
+     }
+-    print.print('', printAdapter, printAttributes, this.ctxAdapter.getActiveContext())
++    print.print(jobName, printAdapter, printAttributes, this.ctxAdapter.getActiveContext())
+       .then(() => {
+         LogUtil.info(TAG, 'Succeeded in print pdf files.');
+       }).catch((err: BusinessError) => {
+@@ -122,11 +122,11 @@ export class PrintAdapter extends BaseAdapter {
+   }
+ 
+   @LogMethod
+-  showPrintTipsDialog() {
++  showPrintTipsDialog(isPermissionTip: boolean = false) {
+     try {
+       promptAction.showDialog({
+         title: $r('app.string.print_title'),
+-        message: $r('app.string.print_tip'),
++        message: isPermissionTip ? $r('app.string.print_tip_permission') : $r('app.string.print_tip'),
+         buttons: [
+           {
+             text: $r('app.string.print_ok'),
 diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/WebAppAdapter.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/WebAppAdapter.ets
 index e67702032a..2cf1fd4b7a 100644
 --- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/WebAppAdapter.ets
@@ -4981,8 +4837,49 @@ index bc80f9ada2..1747e1277d 100644
      JsBindingUtils.bindFunction("AppWindow.SetFullscreen", setFullscreen);
      JsBindingUtils.bindFunction("AppWindow.SetBounds", setBounds);
      JsBindingUtils.bindFunction("AppWindow.SetEnabled", setEnabled);
+diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/jsbindings/PrintAdapterBind.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/jsbindings/PrintAdapterBind.ets
+index 545f8f0af3..6ff20b8a72 100644
+--- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/jsbindings/PrintAdapterBind.ets
++++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/jsbindings/PrintAdapterBind.ets
+@@ -30,6 +30,7 @@
+ import JsBindingUtils from '../utils/JsBindingUtils';
+ import Inject from '../common/InjectModule';
+ import lazy { PrintAdapter } from '../adapter/PrintAdapter';
++import { PrintJobData } from '../interface/CommonInterface';
+ 
+ function implPrintAdapter(): PrintAdapter {
+   return Inject.getOrCreate(PrintAdapter);
+@@ -39,12 +40,16 @@ function showPrintDialog(value: string) {
+   implPrintAdapter().showPrintDialog(value);
+ }
+ 
+-function PrintPdfFiles(pdfData: ArrayBuffer) {
+-  implPrintAdapter().PrintPdfFiles(pdfData);
++function PrintPdfFiles(jobName: string, pdfData: ArrayBuffer) {
++  implPrintAdapter().PrintPdfFiles(jobName, pdfData);
+ }
+ 
+-function showPrintTipsDialog() {
+-  implPrintAdapter().showPrintTipsDialog();
++function showPrintTipsDialog(isPermissionTip: boolean = false) {
++  implPrintAdapter().showPrintTipsDialog(isPermissionTip);
++}
++
++function startPrint(printData: PrintJobData) {
++  implPrintAdapter().startPrint(printData);
+ }
+ 
+ export class PrintAdapterBind {
+@@ -52,5 +57,6 @@ export class PrintAdapterBind {
+     JsBindingUtils.bindFunction("PrintAdapter.ShowPrintDialog", showPrintDialog);
+     JsBindingUtils.bindFunction("PrintAdapter.PrintPdfFiles", PrintPdfFiles);
+     JsBindingUtils.bindFunction("PrintAdapter.ShowPrintTipsDialog", showPrintTipsDialog);
++    JsBindingUtils.bindFunction("PrintAdapter.startPrint", startPrint);
+   }
+ }
+\ No newline at end of file
 diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets
-index 0d32f97570..ba45b3639d 100644
+index 0d32f97570..b400f89e8f 100644
 --- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets
 +++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets
 @@ -28,6 +28,7 @@
@@ -4993,7 +4890,15 @@ index 0d32f97570..ba45b3639d 100644
  import { NativeContext } from "../interface/CommonInterface";
  import JsBindingUtils from "./JsBindingUtils";
  import { ContextType } from "../common/Constants";
-@@ -65,10 +66,48 @@ export class CmdArgsHelper {
+@@ -50,6 +51,7 @@ export class CmdArgsHelper {
+     "--enable-logging",
+     "--no-zygote",
+     "--disable-gpu-watchdog",
++    "--enable-print-preview",
+   ];
+   private static readonly BLOCKED_ARGS_NAME: Set<string> = new Set([
+     'ozone-platform',
+@@ -65,10 +67,48 @@ export class CmdArgsHelper {
      return JsBindingUtils.getNativeContext(ContextType.kMainProcess);
    }
  
@@ -5042,7 +4947,7 @@ index 0d32f97570..ba45b3639d 100644
      // pad添加 --in-process-gpu
      if (deviceInfo.deviceType === 'tablet') {
        vec_args.push("--in-process-gpu");
-@@ -80,7 +119,7 @@ export class CmdArgsHelper {
+@@ -80,7 +120,7 @@ export class CmdArgsHelper {
  
      let resDir = '--bundle-installation-dir=' + getContext().resourceDir;
      vec_args.push(resDir);
@@ -5051,6 +4956,36 @@ index 0d32f97570..ba45b3639d 100644
      if (appId !== undefined) {
        vec_args.push(appId);
      }
+diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/resources/en_US/element/string.json b/src/ohos/app/ohos_hap/web_engine/src/main/resources/en_US/element/string.json
+index 49a2cd8928..4317990e77 100644
+--- a/src/ohos/app/ohos_hap/web_engine/src/main/resources/en_US/element/string.json
++++ b/src/ohos/app/ohos_hap/web_engine/src/main/resources/en_US/element/string.json
+@@ -16,6 +16,10 @@
+       "name": "reason_print",
+       "value": "Print requires user_grant permission"
+     },
++    {
++      "name": "print_tip_permission",
++      "value": "Please apply print permission before printing!"
++    },
+     {
+       "name": "microphone",
+       "value": "Microphone requires user_grant permission"
+diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/resources/zh_CN/element/string.json b/src/ohos/app/ohos_hap/web_engine/src/main/resources/zh_CN/element/string.json
+index c9f3aca539..12b16551f1 100644
+--- a/src/ohos/app/ohos_hap/web_engine/src/main/resources/zh_CN/element/string.json
++++ b/src/ohos/app/ohos_hap/web_engine/src/main/resources/zh_CN/element/string.json
+@@ -32,6 +32,10 @@
+       "name": "print_tip",
+       "value": "预览数据未完成加载，请加载完毕后打印！"
+     },
++    {
++      "name": "print_tip_permission",
++      "value": "无打印权限，请申请后再进行打印！"
++    },
+     {
+       "name": "print_ok",
+       "value": "确认"
 diff --git a/src/ohos/build/build.sh b/src/ohos/build/build.sh
 index 2dd5f939e6..2db60ca4b6 100755
 --- a/src/ohos/build/build.sh
@@ -5376,7 +5311,7 @@ index 57713d234e..dbf788d783 100644
  
  bool ResourceRequest::SavesCookies() const {
 diff --git a/src/services/network/public/mojom/network_context.mojom b/src/services/network/public/mojom/network_context.mojom
-index 1508a9af11..9db35a80a6 100644
+index 02fae48966..b34b04bc29 100644
 --- a/src/services/network/public/mojom/network_context.mojom
 +++ b/src/services/network/public/mojom/network_context.mojom
 @@ -366,6 +366,9 @@ struct NetworkContextParams {
@@ -5515,6 +5450,33 @@ index 2c79ae48b7..81cd4a84b0 100644
    window->AddObserver(this);
    // Remember this mapping from hwnd to Window*.
    hwnd_root_window_map_[root_window_hwnd] = window;
+diff --git a/src/ui/aura/test/test_screen.cc b/src/ui/aura/test/test_screen.cc
+index 3950816070..9880bd2ed6 100644
+--- a/src/ui/aura/test/test_screen.cc
++++ b/src/ui/aura/test/test_screen.cc
+@@ -223,6 +223,10 @@ gfx::NativeWindow TestScreen::GetLocalProcessWindowAtPoint(
+ gfx::Point TestScreen::GetCursorScreenPoint(const int32_t display_id) {
+   return GetCursorScreenPoint();
+ }
++
++void TestScreen::OnDisplayAvailableAreaChange(uint64_t display_id) {
++  NOTIMPLEMENTED_LOG_ONCE();
++}
+ #endif
+ 
+ TestScreen::TestScreen(const gfx::Rect& screen_bounds) {
+diff --git a/src/ui/aura/test/test_screen.h b/src/ui/aura/test/test_screen.h
+index 74161de4cf..ad2845b8fb 100644
+--- a/src/ui/aura/test/test_screen.h
++++ b/src/ui/aura/test/test_screen.h
+@@ -79,6 +79,7 @@ class TestScreen : public display::ScreenBase, public WindowObserver {
+       const std::set<gfx::NativeWindow>& ignore,
+       const int32_t display_id) override;
+   gfx::Point GetCursorScreenPoint(const int32_t display_id) override;
++  void OnDisplayAvailableAreaChange(uint64_t display_id) override;
+ #endif
+ 
+  private:
 diff --git a/src/ui/base/l10n/l10n_util.cc b/src/ui/base/l10n/l10n_util.cc
 index 8fb60046df..ee75a9483d 100644
 --- a/src/ui/base/l10n/l10n_util.cc
@@ -7973,10 +7935,10 @@ index 3137b2f28d..6039700ff1 100644
    // Deactivates the widget, making the next window in the Z order the active
    // window.
 diff --git a/src/ui/views/widget/widget_delegate.h b/src/ui/views/widget/widget_delegate.h
-index 336b820e99..d08c1e7e7c 100644
+index 075eaa363f..57d40063f5 100644
 --- a/src/ui/views/widget/widget_delegate.h
 +++ b/src/ui/views/widget/widget_delegate.h
-@@ -396,6 +396,10 @@ class VIEWS_EXPORT WidgetDelegate {
+@@ -398,6 +398,10 @@ class VIEWS_EXPORT WidgetDelegate {
    // Returns true if the title text should be centered.
    bool ShouldCenterWindowTitleText() const;
  
@@ -8142,220 +8104,155 @@ index 0777e2fe71..546994cad2 100644
  
    // Returns a mask specifying which of the available DialogButtons are visible
    // for the dialog.
-diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/PrintAdapter.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/PrintAdapter.ets
-index 37e96f865f..efd90d1579 100644
---- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/PrintAdapter.ets
-+++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/adapter/PrintAdapter.ets
-@@ -93,7 +93,7 @@ export class PrintAdapter extends BaseAdapter {
-   }
- 
-   @LogMethod
--  PrintPdfFiles(pdfData: ArrayBuffer) {
-+  PrintPdfFiles(jobName: string, pdfData: ArrayBuffer) {
-     let printAdapter: print.PrintDocumentAdapter = {
-       onStartLayoutWrite(jobId: string,
-                          oldAttrs: print.PrintAttributes,
-@@ -113,7 +113,7 @@ export class PrintAdapter extends BaseAdapter {
-       colorMode: print.PrintColorMode.COLOR_MODE_MONOCHROME,
-       duplexMode: print.PrintDuplexMode.DUPLEX_MODE_NONE
-     }
--    print.print('', printAdapter, printAttributes, this.ctxAdapter.getActiveContext())
-+    print.print(jobName, printAdapter, printAttributes, this.ctxAdapter.getActiveContext())
-       .then(() => {
-         LogUtil.info(TAG, 'Succeeded in print pdf files.');
-       }).catch((err: BusinessError) => {
-@@ -122,11 +122,11 @@ export class PrintAdapter extends BaseAdapter {
-   }
- 
-   @LogMethod
--  showPrintTipsDialog() {
-+  showPrintTipsDialog(isPermissionTip: boolean = false) {
-     try {
-       promptAction.showDialog({
-         title: $r('app.string.print_title'),
--        message: $r('app.string.print_tip'),
-+        message: isPermissionTip ? $r('app.string.print_tip_permission') : $r('app.string.print_tip'),
-         buttons: [
-           {
-             text: $r('app.string.print_ok'),
-@@ -140,6 +140,7 @@ export class PrintAdapter extends BaseAdapter {
-       LogUtil.error(TAG, 'list file error: ' + JSON.stringify(error));
-     }
-     ;
+diff --git a/src/ohos/adapter/web_entry/cef/cef_loader.cc b/src/ohos/adapter/web_entry/cef/cef_loader.cc
+new file mode 100644
+index 0000000000..0cb35e8cf7
+--- /dev/null
++++ b/src/ohos/adapter/web_entry/cef/cef_loader.cc
+@@ -0,0 +1,96 @@
++/*
++ * Copyright (c) 2023-2025 Haitai FangYuan Co., Ltd.
++ * Redistribution and use in source and binary forms, with or without modification,
++ * are permitted provided that the following conditions are met:
++ *
++ * 1. Redistributions of source code must retain the above copyright notice, this list of
++ *    conditions and the following disclaimer.
++ *
++ * 2. Redistributions in binary form must reproduce the above copyright notice, this list
++ *    of conditions and the following disclaimer in the documentation and/or other materials
++ *    provided with the distribution.
++ *
++ * 3. Neither the name of the copyright holder nor the names of its contributors may be used
++ *    to endorse or promote products derived from this software without specific prior written
++ *    permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
++ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
++ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
++ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
++ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
++ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
++ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
++ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include "ohos/adapter/web_entry/cef/cef_loader.h"
++
++#include <accesstoken/ability_access_control.h>
++
++#include "ohos/adapter/common/logging.h"
++#include "ohos/adapter/common/shared_library.h"
++#include "ohos/adapter/dev_config/dev_config.h"
++#include "ohos/adapter/device_info/device_info.h"
++#include "ohos/adapter/web_entry/permission_constants.h"
++
++namespace ohos::adapter::web_entry {
++namespace {
++__attribute__((no_sanitize("cfi", "cfi-icall")))
++bool CheckAdvSecMode() {
++  uint32_t mode = -1;
++  common::SharedLibrary shared_library_("/system/lib64/platformsdk/",
++                                        "dsmm_innersdk.z");
++  auto fn = shared_library_.GetFunction<int(const char*, uint32_t, const char*,
++                                            uint32_t, uint32_t*)>(
++      "AdvancedSecurityModeGetStateByFeature");
++  if (fn != nullptr) {
++    // returns 0 if success or errcode
++    int32_t ret = fn("default", 7, "default", 7, &mode); // len:7
++    if (ret == 0 && mode == 1) {
++      return true;
++    }
 +  }
- 
-   @LogMethod
-   startPrint(printData: PrintJobData) {
-@@ -163,5 +164,4 @@ export class PrintAdapter extends BaseAdapter {
-       LogUtil.error(TAG, 'Failed to print the file. Error message: ' + JSON.stringify(error));
-     })
-   }
--  }
--}
-+}
-\ No newline at end of file
-diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/interface/CommonInterface.ts b/src/ohos/app/ohos_hap/web_engine/src/main/ets/interface/CommonInterface.ts
-index f53929c508..3c9168b5a1 100644
---- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/interface/CommonInterface.ts
-+++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/interface/CommonInterface.ts
-@@ -8,6 +8,7 @@ import type GestureEvent from '@ohos.multimodalInput.gestureEvent';
- import type ConfigurationConstant from '@ohos.app.ability.ConfigurationConstant';
- import type common from '@ohos.app.ability.common';
- import type window from '@ohos.window';
-+import print from '@ohos.print';
- 
- export class PowerMonitor {
-   OnSuspend: () => void;
-@@ -56,7 +57,7 @@ export interface WinLimits {
- export interface NativeContext {
-   runBrowser: (vec_args: string[]) => void;
-   BrowserDestroyed: () => boolean;
--  runOtherProcessType: (processType: number) => void;
-+  runArkProcess: (entryParams: string, fdsFrom: number[], fdsTo: number[]) => void;
-   registerLifecycle: () => void;
-   readImageFromReceiver: (receiver: image.ImageReceiver) => image.Image;
-   JSBind: JSBind;
-@@ -350,6 +351,33 @@ export interface PointCoordinate {
-   displayId: number,
- }
- 
-+export interface PrintJobData {
-+  printerId: string,
-+  jobName: string,
-+  copyNumber: number,
-+  isLandscape: boolean,
-+  colorMode: print.PrintColorMode,
-+  duplexMode: print.PrintDuplexMode,
-+  pageSize: PrintPageSize
-+  jobId: string,
-+  binaryData: ArrayBuffer,
-+  printQuality: print.PrintQuality,
-+  mediaType: string,
-+  isBorderless: boolean,
-+  isAutoRotate: boolean,
-+  isReverse: boolean,
-+  isCollate: boolean,
-+  isSequential: boolean,
-+  options: string
-+}
-+ 
-+export interface PrintPageSize {
-+  id: string,
-+  name: string,
-+  width: number,
-+  height: number
++  return false;
 +}
 +
- export enum BrowserCloseResponse {
-   kUndetermined,
-   kClosingContinue,
-diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/jsbindings/PrintAdapterBind.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/jsbindings/PrintAdapterBind.ets
-index 545f8f0af3..6ff20b8a72 100644
---- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/jsbindings/PrintAdapterBind.ets
-+++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/jsbindings/PrintAdapterBind.ets
-@@ -30,6 +30,7 @@
- import JsBindingUtils from '../utils/JsBindingUtils';
- import Inject from '../common/InjectModule';
- import lazy { PrintAdapter } from '../adapter/PrintAdapter';
-+import { PrintJobData } from '../interface/CommonInterface';
- 
- function implPrintAdapter(): PrintAdapter {
-   return Inject.getOrCreate(PrintAdapter);
-@@ -39,12 +40,16 @@ function showPrintDialog(value: string) {
-   implPrintAdapter().showPrintDialog(value);
- }
- 
--function PrintPdfFiles(pdfData: ArrayBuffer) {
--  implPrintAdapter().PrintPdfFiles(pdfData);
-+function PrintPdfFiles(jobName: string, pdfData: ArrayBuffer) {
-+  implPrintAdapter().PrintPdfFiles(jobName, pdfData);
- }
- 
--function showPrintTipsDialog() {
--  implPrintAdapter().showPrintTipsDialog();
-+function showPrintTipsDialog(isPermissionTip: boolean = false) {
-+  implPrintAdapter().showPrintTipsDialog(isPermissionTip);
++bool ShouldDisableJit() {
++  if (CheckAdvSecMode()) {
++    return true;
++  }
++
++  if (!OH_AT_CheckSelfPermission(
++      PermissionConstants::ALLOW_WRITABLE_CODE_MEMORY)) {
++    return true;
++  }
++
++  return false;
 +}
 +
-+function startPrint(printData: PrintJobData) {
-+  implPrintAdapter().startPrint(printData);
- }
- 
- export class PrintAdapterBind {
-@@ -52,5 +57,6 @@ export class PrintAdapterBind {
-     JsBindingUtils.bindFunction("PrintAdapter.ShowPrintDialog", showPrintDialog);
-     JsBindingUtils.bindFunction("PrintAdapter.PrintPdfFiles", PrintPdfFiles);
-     JsBindingUtils.bindFunction("PrintAdapter.ShowPrintTipsDialog", showPrintTipsDialog);
-+    JsBindingUtils.bindFunction("PrintAdapter.startPrint", startPrint);
-   }
- }
-\ No newline at end of file
-diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets b/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets
-index ba45b3639d..b400f89e8f 100644
---- a/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets
-+++ b/src/ohos/app/ohos_hap/web_engine/src/main/ets/utils/CmdArgsHelper.ets
-@@ -51,6 +51,7 @@ export class CmdArgsHelper {
-     "--enable-logging",
-     "--no-zygote",
-     "--disable-gpu-watchdog",
-+    "--enable-print-preview",
-   ];
-   private static readonly BLOCKED_ARGS_NAME: Set<string> = new Set([
-     'ozone-platform',
-diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/resources/en_US/element/string.json b/src/ohos/app/ohos_hap/web_engine/src/main/resources/en_US/element/string.json
-index 49a2cd8928..4317990e77 100644
---- a/src/ohos/app/ohos_hap/web_engine/src/main/resources/en_US/element/string.json
-+++ b/src/ohos/app/ohos_hap/web_engine/src/main/resources/en_US/element/string.json
-@@ -16,6 +16,10 @@
-       "name": "reason_print",
-       "value": "Print requires user_grant permission"
-     },
-+    {
-+      "name": "print_tip_permission",
-+      "value": "Please apply print permission before printing!"
-+    },
-     {
-       "name": "microphone",
-       "value": "Microphone requires user_grant permission"
-diff --git a/src/ohos/app/ohos_hap/web_engine/src/main/resources/zh_CN/element/string.json b/src/ohos/app/ohos_hap/web_engine/src/main/resources/zh_CN/element/string.json
-index c9f3aca539..12b16551f1 100644
---- a/src/ohos/app/ohos_hap/web_engine/src/main/resources/zh_CN/element/string.json
-+++ b/src/ohos/app/ohos_hap/web_engine/src/main/resources/zh_CN/element/string.json
-@@ -32,6 +32,10 @@
-       "name": "print_tip",
-       "value": "预览数据未完成加载，请加载完毕后打印！"
-     },
-+    {
-+      "name": "print_tip_permission",
-+      "value": "无打印权限，请申请后再进行打印！"
-+    },
-     {
-       "name": "print_ok",
-       "value": "确认"
-diff --git a/src/ui/aura/test/test_screen.cc b/src/ui/aura/test/test_screen.cc
-index 3950816070..9880bd2ed6 100644
---- a/src/ui/aura/test/test_screen.cc
-+++ b/src/ui/aura/test/test_screen.cc
-@@ -223,6 +223,10 @@ gfx::NativeWindow TestScreen::GetLocalProcessWindowAtPoint(
- gfx::Point TestScreen::GetCursorScreenPoint(const int32_t display_id) {
-   return GetCursorScreenPoint();
- }
++}  // namespace
 +
-+void TestScreen::OnDisplayAvailableAreaChange(uint64_t display_id) {
-+  NOTIMPLEMENTED_LOG_ONCE();
++std::string CefLoader::GetEntryPoint(int process_type) {
++  std::string entry_point;
++  switch (process_type) {
++    case ProcessType::kChromeMain:
++      entry_point = "CefMain";
++      break;
++    case ProcessType::kCrashPadHandler:
++      entry_point = "CrashpadHandlerMain";
++      break;
++    default:
++      LOGE("GetEntryPoint nothing to do, unknown process type: %{public}d",
++           process_type);
++      break;
++  }
++  return entry_point;
 +}
- #endif
- 
- TestScreen::TestScreen(const gfx::Rect& screen_bounds) {
-diff --git a/src/ui/aura/test/test_screen.h b/src/ui/aura/test/test_screen.h
-index 74161de4cf..ad2845b8fb 100644
---- a/src/ui/aura/test/test_screen.h
-+++ b/src/ui/aura/test/test_screen.h
-@@ -79,6 +79,7 @@ class TestScreen : public display::ScreenBase, public WindowObserver {
-       const std::set<gfx::NativeWindow>& ignore,
-       const int32_t display_id) override;
-   gfx::Point GetCursorScreenPoint(const int32_t display_id) override;
-+  void OnDisplayAvailableAreaChange(uint64_t display_id) override;
- #endif
- 
-  private:
++
++JSBIND_GLOBAL() {
++  JSBIND_FUNCTION(ShouldDisableJit);
++}
++
++}  // namespace ohos::adapter::web_entry
+diff --git a/src/ohos/adapter/web_entry/cef/cef_loader.h b/src/ohos/adapter/web_entry/cef/cef_loader.h
+new file mode 100644
+index 0000000000..457fff218c
+--- /dev/null
++++ b/src/ohos/adapter/web_entry/cef/cef_loader.h
+@@ -0,0 +1,44 @@
++/*
++ * Copyright (c) 2023-2025 Haitai FangYuan Co., Ltd.
++ * Redistribution and use in source and binary forms, with or without modification,
++ * are permitted provided that the following conditions are met:
++ *
++ * 1. Redistributions of source code must retain the above copyright notice, this list of
++ *    conditions and the following disclaimer.
++ *
++ * 2. Redistributions in binary form must reproduce the above copyright notice, this list
++ *    of conditions and the following disclaimer in the documentation and/or other materials
++ *    provided with the distribution.
++ *
++ * 3. Neither the name of the copyright holder nor the names of its contributors may be used
++ *    to endorse or promote products derived from this software without specific prior written
++ *    permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
++ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
++ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
++ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
++ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
++ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
++ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
++ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include "aki/jsbind.h"
++#include "ohos/adapter/web_entry/web_loader.h"
++
++namespace ohos::adapter::web_entry {
++
++class CefLoader : public BasicLoader {
++ public:
++  CefLoader(const std::string& dir, const std::string& name)
++      : BasicLoader(dir, name) {}
++  CefLoader(const std::string& lib_path) : BasicLoader(lib_path) {}
++
++  std::string GetEntryPoint(int process_type) override;
++};
++
++}  // namespace ohos::adapter::web_entry
