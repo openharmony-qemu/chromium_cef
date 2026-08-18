@@ -110,6 +110,7 @@
 #include "content/public/common/content_switches.h"
 #endif
 #if BUILDFLAG(ARKWEB_CSS_INPUT_TIME)
+#include "cef/ohos_cef_ext/libcef/browser/color_chooser/color_chooser_ohos.h"
 #include "cef/ohos_cef_ext/include/arkweb_dialog_handler_ext.h"
 #include "content/browser/ohos/date_time_chooser_ohos.h"
 #endif  // ARKWEB_CSS_INPUT_TIME
@@ -1399,6 +1400,18 @@ void AlloyBrowserHostImplExt::CloseDateTimeChooser() {
     }
   }
 }
+
+std::unique_ptr<content::ColorChooser>
+AlloyBrowserHostImplExt::OpenColorChooser(
+    content::WebContents* web_contents,
+    SkColor color,
+    const std::vector<blink::mojom::ColorSuggestionPtr>& suggestions) {
+  if (!client_) {
+    return nullptr;
+  }
+  return std::make_unique<ColorChooserOhos>(client_, web_contents, color,
+                                             suggestions);
+}
 #endif  // #if BUILDFLAG(ARKWEB_CSS_INPUT_TIME)
 
 #if BUILDFLAG(ARKWEB_CUSTOM_VIDEO_PLAYER)
@@ -2313,4 +2326,3 @@ void AlloyBrowserHostImplExt::OnRequestOpenDevTools(RequestOpenDevToolsParams* p
   }
 }
 #endif // ARKWEB_DEVTOOLS
-

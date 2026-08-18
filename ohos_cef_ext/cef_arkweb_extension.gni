@@ -214,6 +214,12 @@ if (defined(arkweb_logger_report) && arkweb_logger_report) {
     "//cef/ohos_cef_ext/include/cef_logger_callback_api_handler.h",
   ]
 }
+if (defined(arkweb_css_input_time) && arkweb_css_input_time) {
+  libcef_arkweb_sources += [
+    "//cef/ohos_cef_ext/libcef/browser/color_chooser/color_chooser_ohos.cc",
+    "//cef/ohos_cef_ext/libcef/browser/color_chooser/color_chooser_ohos.h",
+  ]
+}
 if (defined(arkweb_devtools) && arkweb_devtools) {
   libcef_arkweb_sources += [
     "//cef/ohos_cef_ext/libcef/browser/devtools/arkweb/devtools_message_handler.cc",
