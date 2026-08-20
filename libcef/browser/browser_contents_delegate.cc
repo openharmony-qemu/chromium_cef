@@ -743,7 +743,15 @@ void CefBrowserContentsDelegate::DidFinishNavigation(
     // If the error happened before commit then this call will originate from
     // RenderFrameHostImpl::OnDidFailProvisionalLoadWithError.
     // OnLoadStart/OnLoadEnd will not be called.
+#if BUILDFLAG(ARKWEB_EX_DOWNLOAD)
+    // Skip OnLoadError for download navigations. Download requests should
+    // not trigger onErrorReceive/onHttpErrorReceive callbacks.
+    if (!navigation_handle->IsDownload()) {
+      OnLoadError(frame.get(), navigation_handle->GetURL(), error_code);
+    }
+#else
     OnLoadError(frame.get(), navigation_handle->GetURL(), error_code);
+#endif
   }
 }
 
