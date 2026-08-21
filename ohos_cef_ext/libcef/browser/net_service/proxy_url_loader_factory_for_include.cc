@@ -78,23 +78,16 @@ static bool IsTargetResourceTypeValue(int resource_type) {
 }
 #endif
 
-  static void OnReceiveResponseExt(raw_ptr<InterceptedRequest> obj) {
-#if BUILDFLAG(ARKWEB_EX_DOWNLOAD)
-    bool must_download = content::download_utils::MustDownload(
-        nullptr, obj->request_.url, obj->current_response_->headers.get(),
-        obj->current_response_->mime_type);
-    bool known_mime_type =
-        blink::IsSupportedMimeType(obj->current_response_->mime_type);
-    obj->is_download_ = !obj->current_response_->intercepted_by_plugin &&
-                        (must_download || !known_mime_type);
-#endif
-
 #if BUILDFLAG(ARKWEB_NETWORK_BASE)
+  static void NotifyHttpErrorIfNeed(raw_ptr<InterceptedRequest> obj) {
+    bool skip_http_error_for_download = false;
+#if BUILDFLAG(ARKWEB_EX_DOWNLOAD)
+    skip_http_error_for_download = obj->is_download_ || obj->is_triggered_by_download_;
+#endif
     const uint32_t response_code_400 = 400;
-    if (obj->current_response_->headers &&
+    if (!skip_http_error_for_download &&
+        obj->current_response_->headers &&
         static_cast<uint32_t>(obj->current_response_->headers->response_code()) >= response_code_400) {
-      // The WebViewClient onReceivedHttpError callback will be invoked for any
-      // resource (such as main page, iframe, image, etc.) with status code >= 4
       auto error_reponse =
           ExtractHttpResponse(obj->current_response_->headers.get());
       CefRefPtr<ArkWebRequestImplExt> request = new ArkWebRequestImplExt();
@@ -108,10 +101,13 @@ static bool IsTargetResourceTypeValue(int resource_type) {
                                   error_reponse);
 #endif
     }
+  }
 #endif
+
 #if BUILDFLAG(ARKWEB_EXT_RECEIVE_RESPONSE)
-  if (base::CommandLine::ForCurrentProcess()->HasSwitch(::switches::kEnableNwebEx) && 
-      obj->current_response_->headers != nullptr) {
+  static void NotifyReceiveResponseIfNeed(raw_ptr<InterceptedRequest> obj) {
+    if (base::CommandLine::ForCurrentProcess()->HasSwitch(::switches::kEnableNwebEx) &&
+        obj->current_response_->headers != nullptr) {
       auto response_info =
           ExtractHttpResponse(obj->current_response_->headers.get());
       bool is_from_network = obj->current_response_->network_accessed;
@@ -127,7 +123,27 @@ static bool IsTargetResourceTypeValue(int resource_type) {
       obj->OnReceiveResponseForUIThread(new_request, is_request_gesture, transition_type,
                                         is_main_frame, is_redirect, obj->request_.resource_type,
                                         response_info, is_from_network);
+    }
   }
+#endif
+
+  static void OnReceiveResponseExt(raw_ptr<InterceptedRequest> obj) {
+#if BUILDFLAG(ARKWEB_EX_DOWNLOAD)
+    bool must_download = content::download_utils::MustDownload(
+        nullptr, obj->request_.url, obj->current_response_->headers.get(),
+        obj->current_response_->mime_type);
+    bool known_mime_type =
+        blink::IsSupportedMimeType(obj->current_response_->mime_type);
+    obj->is_download_ = !obj->current_response_->intercepted_by_plugin &&
+                        (must_download || !known_mime_type);
+#endif
+
+#if BUILDFLAG(ARKWEB_NETWORK_BASE)
+    NotifyHttpErrorIfNeed(obj);
+#endif
+
+#if BUILDFLAG(ARKWEB_EXT_RECEIVE_RESPONSE)
+    NotifyReceiveResponseIfNeed(obj);
 #endif
   }
 

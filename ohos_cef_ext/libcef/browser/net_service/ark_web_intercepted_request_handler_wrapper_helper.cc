@@ -78,6 +78,16 @@ void ArkWebInterceptedRequestHandlerWrapperHelper::OnRequestError(
     int error_code,
     bool safebrowsing_hit) {
   LOG(DEBUG) << "OnRequestError " << error_code;
+#if BUILDFLAG(ARKWEB_EX_DOWNLOAD)
+  // Skip error reporting for download requests. Download requests should
+  // not trigger onErrorReceive / onHttpErrorReceive callbacks.
+  if (request.is_download_request || request.is_triggered_by_download) {
+    LOG(DEBUG) << "OnRequestError skip download request, is_download_request="
+               << request.is_download_request
+               << ", is_triggered_by_download=" << request.is_triggered_by_download;
+    return;
+  }
+#endif
   if (browser && frame && error_code != net::ERR_ABORTED) {
     CefRefPtr<ArkWebRequestImplExt> arkweb_request = new ArkWebRequestImplExt();
     arkweb_request->SetURL(CefString(request.url.spec()));
