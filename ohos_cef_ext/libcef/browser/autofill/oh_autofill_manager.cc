@@ -47,6 +47,8 @@ const std::string EVENT_FILL = "fill";
 const std::string EVENT_UPDATE = "update";
 const std::string EVENT_CLOSE = "close";
 
+const std::string KEY_NODEID = "nodeId";
+const std::string KEY_NODEID_DEFAULT = "0";
 const std::string KEY_FOUCS = "focus";
 const std::string KEY_RECT_X = "x";
 const std::string KEY_RECT_Y = "y";
@@ -124,6 +126,11 @@ absl::optional<std::string> OhAutofillManager::FormDataToJson(
   for (const FormFieldData& field_data : form.fields()) {
     base::Value::List list;
     auto key = GetAttributeOrUniqueId(field_data);
+    auto renderer_id = KEY_NODEID_DEFAULT;
+    if (!field_data.renderer_id().is_null()) {
+      renderer_id = base::NumberToString(field_data.renderer_id().value());
+    }
+    list.Append(base::Value::Dict().Set(KEY_NODEID, renderer_id));
     list.Append(base::Value::Dict().Set(
         KEY_FOUCS, isFocusField(field_data, field) ? 1 : 0));
     list.Append(base::Value::Dict().Set(
