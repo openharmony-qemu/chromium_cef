@@ -55,6 +55,25 @@ class CefDateTimeChooserCallback : public virtual CefBaseRefCounted {
 
   virtual void Continue(bool success, double dialog_value) = 0;
 };
+
+///
+/// Callback interface for the color chooser.
+///
+/*--cef(source=library)--*/
+class CefColorChooserCallback : public virtual CefBaseRefCounted {
+ public:
+  ///
+  /// Continue with the selected color.
+  ///
+  /*--cef(capi_name=cont)--*/
+  virtual void Continue(uint32_t color) = 0;
+
+  ///
+  /// Cancel the color chooser.
+  ///
+  /*--cef()--*/
+  virtual void Cancel() = 0;
+};
 #endif  // BUILDFLAG(IS_ARKWEB)
 
 class CefDialogHandlerExt : public virtual CefDialogHandler {
@@ -142,6 +161,14 @@ class CefDialogHandlerExt : public virtual CefDialogHandler {
   ///
 
   virtual void ShowPasswordDialog(bool is_update, const CefString& url) {}
+
+  ///
+  /// Called to show the color chooser.
+  ///
+  /*--cef()--*/
+  virtual void OnColorChooserShow(
+      uint32_t initial_color,
+      CefRefPtr<CefColorChooserCallback> callback) {}
 
   ///
   /// trigger adblock switch from ui.

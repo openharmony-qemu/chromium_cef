@@ -434,23 +434,27 @@ PermissionStatus AlloyPermissionManager::GetPermissionStatus(
 #endif  //BUILDFLAG(ARKWEB_SENSOR)
 #if BUILDFLAG(ARKWEB_ARKWEB_EXTENSIONS)
   } else if (permission_type == PermissionType::NOTIFICATIONS) {
-    if ((*base::CommandLine::ForCurrentProcess()).HasSwitch(
+#if BUILDFLAG(ARKWEB_NWEB_EX)
+    if (!(*base::CommandLine::ForCurrentProcess()).HasSwitch(
         switches::kEnableNwebExPermission)) {
-      if (notification_permission_.count(requesting_origin)) {
-        return (PermissionStatus)notification_permission_[requesting_origin];
-      } else {
-        return PermissionStatus::ASK;
-      }
+      return PermissionStatus::DENIED;
     }
+#endif
+    if (notification_permission_.count(requesting_origin)) {
+      return (PermissionStatus)notification_permission_[requesting_origin];
+    }
+    return PermissionStatus::ASK;
   } else if (permission_type == PermissionType::GEOLOCATION) {
-    if ((*base::CommandLine::ForCurrentProcess()).HasSwitch(
+#if BUILDFLAG(ARKWEB_NWEB_EX)
+    if (!(*base::CommandLine::ForCurrentProcess()).HasSwitch(
         switches::kEnableNwebExPermission)) {
-      if (geolocation_permission_.count(requesting_origin)) {
-        return (PermissionStatus)geolocation_permission_[requesting_origin];
-      } else {
-        return PermissionStatus::ASK;
-      }
+      return PermissionStatus::DENIED;
     }
+#endif
+    if (geolocation_permission_.count(requesting_origin)) {
+      return (PermissionStatus)geolocation_permission_[requesting_origin];
+    }
+    return PermissionStatus::ASK;
 #endif // #if BUILDFLAG(ARKWEB_ARKWEB_EXTENSIONS)
 #if BUILDFLAG(ARKWEB_WEBRTC)
   } else if (permission_type == PermissionType::AUDIO_CAPTURE) {

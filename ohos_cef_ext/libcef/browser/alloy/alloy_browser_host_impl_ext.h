@@ -251,6 +251,11 @@ public:
 #if BUILDFLAG(ARKWEB_CSS_INPUT_TIME)
   void OpenDateTimeChooser() override;
   void CloseDateTimeChooser() override;
+  std::unique_ptr<content::ColorChooser> OpenColorChooser(
+      content::WebContents* web_contents,
+      SkColor color,
+      const std::vector<blink::mojom::ColorSuggestionPtr>& suggestions)
+      override;
 #endif  // ARKWEB_CSS_INPUT_TIME
 
 
