@@ -150,6 +150,9 @@ class InterceptedRequestHandler {
   virtual void OnRequestError(int32_t request_id,
                               const network::ResourceRequest& request,
                               int error_code,
+#if BUILDFLAG(ARKWEB_SCHEME_HANDLER)
+                              int custom_error_code,
+#endif
                               bool safebrowsing_hit) {}
 
 #if BUILDFLAG(ARKWEB_NETWORK_CONNINFO)

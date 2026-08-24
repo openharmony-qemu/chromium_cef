@@ -42,6 +42,7 @@ class ArkWebLoadHandlerExt : public virtual CefLoadHandler,
                                       bool is_main_frame,
                                       bool has_user_gesture,
                                       int error_code,
+                                      int custom_error_code,
                                       const CefString& error_text) {}
 
   ///

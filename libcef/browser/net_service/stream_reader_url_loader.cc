@@ -865,7 +865,13 @@ void StreamReaderURLLoader::OnReaderReadCompleted(int bytes_read) {
 void StreamReaderURLLoader::RequestComplete(int status_code) {
   DCHECK(thread_checker_.CalledOnValidThread());
 
+#if BUILDFLAG(ARKWEB_SCHEME_HANDLER)
+  int custom_error_code =
+      response_delegate_ ? response_delegate_->GetCustomErrorCode() : 0;
+  auto status = network::URLLoaderCompletionStatus(status_code, custom_error_code);
+#else
   auto status = network::URLLoaderCompletionStatus(status_code);
+#endif
   status.completion_time = base::TimeTicks::Now();
   status.encoded_data_length = total_bytes_read_ + header_length_;
   status.encoded_body_length = total_bytes_read_;
