@@ -415,11 +415,6 @@ void ArkWebRenderWidgetHostViewOSRExt::ReportAIGestureEvent(
     return;
   }
 
-  if (browser_impl_->settings().arkweb_agent_enabled != STATE_ENABLED) {
-    LOG(DEBUG) << "ReportAIGestureEvent is disabled.";
-    return;
-  }
-
   auto frame = browser_impl_->GetMainFrame();
   if (!frame || !frame->IsValid()) {
     LOG(ERROR) << "ReportAIGestureEvent frame invalid.";
