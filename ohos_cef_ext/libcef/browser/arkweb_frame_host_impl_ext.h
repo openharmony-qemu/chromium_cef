@@ -167,6 +167,23 @@ void SetIsFling(bool is_fling);
   int32_t ExecuteSelectCommandById(const std::string& id,
                                    const std::vector<int32_t>& indexes,
                                    const std::vector<std::string>& values);
+  int32_t ExecuteFocusCommand(const std::string& xpath,
+                              bool suppress_keyboard);
+  int32_t ExecuteInputModifyCommand(const std::string& content);
+  int32_t ExecuteInputInsertCommand(const std::string& content,
+                                    int32_t index);
+  int32_t ExecuteAutoFillCommand(const std::string& xpath,
+                                 const std::string& content,
+                                 int32_t index,
+                                 int32_t mode,
+                                 base::TimeDelta remaining_timeout);
+  int32_t ExecuteClickCommand(const std::string& xpath);
+  int32_t ExecuteScrollCommand(const std::string& xpath,
+                               const std::string& align,
+                               int32_t offset);
+  int32_t ExecuteInputSelectCommand(int32_t start_index,
+                                    int32_t finish_index);
+  int32_t ExecuteInputSetCursorCommand(int32_t index);
 #endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
 
 #if BUILDFLAG(ARKWEB_MEDIA)
@@ -250,6 +267,30 @@ void ExecuteAIPageInputCommandByIdOnIO(std::shared_ptr<std::promise<int32_t>> re
       mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote); // only in io thread
   void ExecuteSelectCommandByIdOnIO(std::shared_ptr<std::promise<int32_t>> result_promise,
       const std::string& id, const std::vector<int32_t> indexes, const std::vector<std::string> values,
+      mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote); // only in io thread
+  void ExecuteFocusCommandOnIO(std::shared_ptr<std::promise<int32_t>> result_promise,
+      const std::string& xpath, bool suppress_keyboard,
+      mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote); // only in io thread
+  void ExecuteInputModifyCommandOnIO(std::shared_ptr<std::promise<int32_t>> result_promise,
+      const std::string& content,
+      mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote); // only in io thread
+  void ExecuteInputInsertCommandOnIO(std::shared_ptr<std::promise<int32_t>> result_promise,
+      const std::string& content, int32_t index,
+      mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote); // only in io thread
+  void ExecuteAutoFillCommandOnIO(base::OnceCallback<void(int32_t)> callback,
+      const std::string& xpath, const std::string& content, int32_t index, int32_t mode,
+      mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote); // only in io thread
+  void ExecuteClickCommandOnIO(std::shared_ptr<std::promise<int32_t>> result_promise,
+      const std::string& xpath,
+      mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote); // only in io thread
+  void ExecuteScrollCommandOnIO(std::shared_ptr<std::promise<int32_t>> result_promise,
+      const std::string& xpath, const std::string& align, int32_t offset,
+      mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote); // only in io thread
+  void ExecuteInputSelectCommandOnIO(std::shared_ptr<std::promise<int32_t>> result_promise,
+      int32_t start_index, int32_t finish_index,
+      mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote); // only in io thread
+  void ExecuteInputSetCursorCommandOnIO(std::shared_ptr<std::promise<int32_t>> result_promise,
+      int32_t index,
       mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote); // only in io thread
   void OnIoRenderFrameDisconnect(); // only in io thread
   std::unique_ptr<mojo::Remote<cef::mojom::RenderFrame>, content::BrowserThread::DeleteOnIOThread>
