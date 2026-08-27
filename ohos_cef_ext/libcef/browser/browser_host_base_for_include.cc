@@ -41,6 +41,8 @@
 #include "ohos_cef_ext/libcef/browser/permission/alloy_access_query.h"
 #endif
 
+#include "cef/ohos_cef_ext/libcef/browser/useragent/arkweb_useragent_utils.h"
+
 static void StartDownloadExt(GURL& gurl,
                              content::WebContents* web_contents,
                              std::unique_ptr<download::DownloadUrlParameters>& params,
@@ -50,13 +52,11 @@ static void StartDownloadExt(GURL& gurl,
       gurl, content::Referrer(web_contents->GetLastCommittedURL(),
                               network::mojom::ReferrerPolicy::kDefault));
   params->set_referrer(referrer.url);
-  CefString custom_user_agent;
-  if (obj->AsAlloyBrowserHostImpl()) {
-    custom_user_agent = obj->AsAlloyBrowserHostImpl()->GetCustomUserAgent();
-  }
-  if (!custom_user_agent.empty()) {
+
+  std::string ua_string = arkweb_useragent_utils::GetUAStringForHost(web_contents, std::string(gurl.host()));
+  if (!ua_string.empty()) {
     params->add_request_header(net::HttpRequestHeaders::kUserAgent,
-                               custom_user_agent);
+                               ua_string);
   }
 }
 
