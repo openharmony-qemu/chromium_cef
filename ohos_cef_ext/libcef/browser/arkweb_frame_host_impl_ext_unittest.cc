@@ -26,6 +26,7 @@
 #include "arkweb/ohos_nweb/include/nweb_errors.h"
 #include "cef/libcef/browser/browser_info.h"
 #include "cef/ohos_cef_ext/libcef/browser/arkweb_frame_host_impl_ext.h"
+#include "content/public/test/browser_task_environment.h"
 
 using OHOS::NWeb::WebCommandErrorCode;
 
@@ -56,6 +57,7 @@ class ArkwebFrameHostExtImplTest : public ::testing::Test {
     frame_ = nullptr;
   }
 
+  content::BrowserTaskEnvironment task_environment_;
   scoped_refptr<CefBrowserInfo> browser_info_;
   CefRefPtr<ArkwebFrameHostExtImpl> frame_;
 };
@@ -88,6 +90,141 @@ TEST_F(ArkwebFrameHostExtImplTest,
        ExecuteSelectCommand_NoRenderFrame_ReturnsPageNotReady_0100) {
   auto result = frame_->ExecuteSelectCommand(
       "//select[@id='color']", {0, 1}, {"red", "blue"});
+  EXPECT_EQ(result,
+            static_cast<int32_t>(WebCommandErrorCode::PAGE_NOT_READY));
+}
+
+// ===== New Execute*Command guard checks =====
+// All new methods should return PAGE_NOT_READY when render_frame_host_ is null,
+// same pattern as ExecuteInputCommand/ExecuteSelectCommand.
+
+/**
+ * @tc.name: ExecuteFocusCommand_NoRenderFrame_ReturnsPageNotReady_0100
+ * @tc.desc: ExecuteFocusCommand returns PAGE_NOT_READY when render_frame_host_
+ *           is null.
+ * @tc.type: FUNC
+ */
+TEST_F(ArkwebFrameHostExtImplTest,
+       ExecuteFocusCommand_NoRenderFrame_ReturnsPageNotReady_0100) {
+  auto result = frame_->ExecuteFocusCommand("//input[@id='name']", true);
+  EXPECT_EQ(result,
+            static_cast<int32_t>(WebCommandErrorCode::PAGE_NOT_READY));
+}
+
+/**
+ * @tc.name: ExecuteInputModifyCommand_NoRenderFrame_ReturnsPageNotReady_0100
+ * @tc.desc: ExecuteInputModifyCommand returns PAGE_NOT_READY when
+ *           render_frame_host_ is null.
+ * @tc.type: FUNC
+ */
+TEST_F(ArkwebFrameHostExtImplTest,
+       ExecuteInputModifyCommand_NoRenderFrame_ReturnsPageNotReady_0100) {
+  auto result = frame_->ExecuteInputModifyCommand("hello");
+  EXPECT_EQ(result,
+            static_cast<int32_t>(WebCommandErrorCode::PAGE_NOT_READY));
+}
+
+/**
+ * @tc.name: ExecuteInputInsertCommand_NoRenderFrame_ReturnsPageNotReady_0100
+ * @tc.desc: ExecuteInputInsertCommand returns PAGE_NOT_READY when
+ *           render_frame_host_ is null.
+ * @tc.type: FUNC
+ */
+TEST_F(ArkwebFrameHostExtImplTest,
+       ExecuteInputInsertCommand_NoRenderFrame_ReturnsPageNotReady_0100) {
+  auto result = frame_->ExecuteInputInsertCommand("hello", 0);
+  EXPECT_EQ(result,
+            static_cast<int32_t>(WebCommandErrorCode::PAGE_NOT_READY));
+}
+
+/**
+ * @tc.name: ExecuteClickCommand_NoRenderFrame_ReturnsPageNotReady_0100
+ * @tc.desc: ExecuteClickCommand returns PAGE_NOT_READY when render_frame_host_
+ *           is null.
+ * @tc.type: FUNC
+ */
+TEST_F(ArkwebFrameHostExtImplTest,
+       ExecuteClickCommand_NoRenderFrame_ReturnsPageNotReady_0100) {
+  auto result = frame_->ExecuteClickCommand("//button[@id='submit']");
+  EXPECT_EQ(result,
+            static_cast<int32_t>(WebCommandErrorCode::PAGE_NOT_READY));
+}
+
+/**
+ * @tc.name: ExecuteScrollCommand_NoRenderFrame_ReturnsPageNotReady_0100
+ * @tc.desc: ExecuteScrollCommand returns PAGE_NOT_READY when render_frame_host_
+ *           is null.
+ * @tc.type: FUNC
+ */
+TEST_F(ArkwebFrameHostExtImplTest,
+       ExecuteScrollCommand_NoRenderFrame_ReturnsPageNotReady_0100) {
+  auto result = frame_->ExecuteScrollCommand("//div[@id='target']", "top", 0);
+  EXPECT_EQ(result,
+            static_cast<int32_t>(WebCommandErrorCode::PAGE_NOT_READY));
+}
+
+/**
+ * @tc.name: ExecuteInputSelectCommand_NoRenderFrame_ReturnsPageNotReady_0100
+ * @tc.desc: ExecuteInputSelectCommand returns PAGE_NOT_READY when
+ *           render_frame_host_ is null.
+ * @tc.type: FUNC
+ */
+TEST_F(ArkwebFrameHostExtImplTest,
+       ExecuteInputSelectCommand_NoRenderFrame_ReturnsPageNotReady_0100) {
+  auto result = frame_->ExecuteInputSelectCommand(0, 5);
+  EXPECT_EQ(result,
+            static_cast<int32_t>(WebCommandErrorCode::PAGE_NOT_READY));
+}
+
+/**
+ * @tc.name: ExecuteInputSetCursorCommand_NoRenderFrame_ReturnsPageNotReady_0100
+ * @tc.desc: ExecuteInputSetCursorCommand returns PAGE_NOT_READY when
+ *           render_frame_host_ is null.
+ * @tc.type: FUNC
+ */
+TEST_F(ArkwebFrameHostExtImplTest,
+       ExecuteInputSetCursorCommand_NoRenderFrame_ReturnsPageNotReady_0100) {
+  auto result = frame_->ExecuteInputSetCursorCommand(0);
+  EXPECT_EQ(result,
+            static_cast<int32_t>(WebCommandErrorCode::PAGE_NOT_READY));
+}
+
+/**
+ * @tc.name: ExecuteAIPageInputCommandByXPath_NoRenderFrame_ReturnsPageNotReady_0100
+ * @tc.desc: ExecuteAIPageInputCommandByXPath returns PAGE_NOT_READY when
+ *           render_frame_host_ is null.
+ * @tc.type: FUNC
+ */
+TEST_F(ArkwebFrameHostExtImplTest,
+       ExecuteAIPageInputCommandByXPath_NoRenderFrame_ReturnsPageNotReady_0100) {
+  auto result = frame_->ExecuteAIPageInputCommandByXPath(
+      "//input[@id='name']", "hello", "default");
+  EXPECT_EQ(result,
+            static_cast<int32_t>(WebCommandErrorCode::PAGE_NOT_READY));
+}
+
+/**
+ * @tc.name: ExecuteSelectCommandById_NoRenderFrame_ReturnsPageNotReady_0100
+ * @tc.desc: ExecuteSelectCommandById returns PAGE_NOT_READY when
+ *           render_frame_host_ is null.
+ * @tc.type: FUNC
+ */
+TEST_F(ArkwebFrameHostExtImplTest,
+       ExecuteSelectCommandById_NoRenderFrame_ReturnsPageNotReady_0100) {
+  auto result = frame_->ExecuteSelectCommandById("color", {0}, {});
+  EXPECT_EQ(result,
+            static_cast<int32_t>(WebCommandErrorCode::PAGE_NOT_READY));
+}
+
+/**
+ * @tc.name: ExecuteAIPageInputCommandById_NoRenderFrame_ReturnsPageNotReady_0100
+ * @tc.desc: ExecuteAIPageInputCommandById returns PAGE_NOT_READY when
+ *           render_frame_host_ is null.
+ * @tc.type: FUNC
+ */
+TEST_F(ArkwebFrameHostExtImplTest,
+       ExecuteAIPageInputCommandById_NoRenderFrame_ReturnsPageNotReady_0100) {
+  auto result = frame_->ExecuteAIPageInputCommandById("name", "hello", "default");
   EXPECT_EQ(result,
             static_cast<int32_t>(WebCommandErrorCode::PAGE_NOT_READY));
 }

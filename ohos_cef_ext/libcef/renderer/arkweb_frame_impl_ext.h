@@ -210,6 +210,38 @@ std::string OverrideErrorPage(const CefString& url,
       const std::vector<int32_t>& indexes,
       const std::vector<std::string>& values,
       cef::mojom::RenderFrame::ExecuteSelectCommandByIdCallback callback) override;
+  void ExecuteFocusCommand(
+      const std::string& xpath,
+      bool suppress_keyboard,
+      cef::mojom::RenderFrame::ExecuteFocusCommandCallback callback) override;
+  void ExecuteInputModifyCommand(
+      const std::string& content,
+      cef::mojom::RenderFrame::ExecuteInputModifyCommandCallback callback) override;
+  void ExecuteInputInsertCommand(
+      const std::string& content,
+      int32_t index,
+      cef::mojom::RenderFrame::ExecuteInputInsertCommandCallback callback) override;
+  void ExecuteAutoFillCommand(
+      const std::string& xpath,
+      const std::string& content,
+      int32_t index,
+      int32_t mode,
+      cef::mojom::RenderFrame::ExecuteAutoFillCommandCallback callback) override;
+  void ExecuteClickCommand(
+      const std::string& xpath,
+      cef::mojom::RenderFrame::ExecuteClickCommandCallback callback) override;
+  void ExecuteScrollCommand(
+      const std::string& xpath,
+      const std::string& align,
+      int32_t offset,
+      cef::mojom::RenderFrame::ExecuteScrollCommandCallback callback) override;
+  void ExecuteInputSelectCommand(
+      int32_t start_index,
+      int32_t finish_index,
+      cef::mojom::RenderFrame::ExecuteInputSelectCommandCallback callback) override;
+  void ExecuteInputSetCursorCommand(
+      int32_t index,
+      cef::mojom::RenderFrame::ExecuteInputSetCursorCommandCallback callback) override;
   void Clone(mojo::PendingReceiver<cef::mojom::RenderFrame> receiver) override {
     receivers_.Add(this, std::move(receiver));
   }
