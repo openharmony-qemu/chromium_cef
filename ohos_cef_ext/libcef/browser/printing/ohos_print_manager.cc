@@ -882,7 +882,7 @@ void OhosPrintManager::SetAccessibilityTree(
 void OhosPrintManager::SetupScriptedPrintPreview(
     SetupScriptedPrintPreviewCallback callback) {}
 
-void OhosPrintManager::ShowScriptedPrintPreview(bool source_is_modifiable) {}
+void OhosPrintManager::ShowScriptedPrintPreview() {}
 
 void OhosPrintManager::GetPrintPreviewParams(
     GetPrintPreviewParamsCallback callback) {}
