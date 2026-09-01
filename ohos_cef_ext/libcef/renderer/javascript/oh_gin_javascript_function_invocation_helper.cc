@@ -14,6 +14,7 @@
 #include "base/values.h"
 #include "base/memory/read_only_shared_memory_region.h"
 #include "base/memory/platform_shared_memory_region.h"
+#include "base/trace_event/trace_event.h"
 #include "content/public/renderer/v8_value_converter.h"
 #include "libcef/common/javascript/oh_gin_javascript_bridge_errors.h"
 #include "libcef/common/javascript/oh_gin_javascript_bridge_value.h"
@@ -188,6 +189,7 @@ OhGinJavascriptFunctionInvocationHelper::InvokeJavascriptMethod(
     content::mojom::OhGinJavascriptBridgeError& error,
     gin::Arguments* args,
     OhGinJavascriptBridgeObject* object) {
+  TRACE_EVENT0("cef", "OhGinJavascriptBridgeHostMsg_InvokeMethod");
   auto* remote = object->GetRemote();
   if (!remote) {
     error = content::mojom::OhGinJavascriptBridgeError::kOhGinJavascriptBridgeObjectIsGone;
@@ -244,7 +246,7 @@ OhGinJavascriptFunctionInvocationHelper::InvokeJavascriptMethodFlowbuf(
   if (dispatcher_->IsAsyncMethod(object->object_id(), method_name_)) {
     return InvokeJavascriptMethod(arguments, error, args, object);
   }
-
+  TRACE_EVENT0("cef", "OhGinJavascriptBridgeHostMsg_InvokeMethodFlowbuf");
   auto flowbufferAdapter =
       OHOS::NWeb::OhosAdapterHelper::GetInstance().CreateFlowbufferAdapter();
   if (!flowbufferAdapter || (object->object_id() >= DEFAULT_ID)) {

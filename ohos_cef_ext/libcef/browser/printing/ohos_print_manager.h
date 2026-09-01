@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "base/memory/raw_ptr.h"
+#include "base/memory/weak_ptr.h"
 #include "components/printing/browser/print_manager.h"
 #include "components/printing/common/print.mojom-forward.h"
 #include "content/public/browser/web_contents_user_data.h"
@@ -92,7 +93,7 @@ class OhosPrintManager : public printing::PrintManager,
                                        void** adapter);
   void SetPrintBackground(bool enable);
   bool GetPrintBackground();
-  void CheckForCancel(int32_t preview_ui_id,
+  void CheckForCancel(const base::UnguessableToken& preview_ui_id,
                       int32_t request_id,
                       CheckForCancelCallback callback) override;
   void RequestPrintPreview(mojom::RequestPrintPreviewParamsPtr params) override;
@@ -123,8 +124,7 @@ class OhosPrintManager : public printing::PrintManager,
   void PrintPdfRequested() override;
 
   static void RunCallback(const std::string& jobId, int32_t result);
-  static void OnDidPrintDocumentWritingDone(
-      const PdfWritingDoneCallback& callback,
+  void OnDidPrintDocumentWritingDone(
       DidPrintDocumentCallback did_print_document_cb,
       uint32_t page_count);
 
@@ -167,6 +167,8 @@ class OhosPrintManager : public printing::PrintManager,
   static bool print_backgrounds_;
   base::WeakPtr<content::WebContents> weak_ptr_web_contents_;
   WEB_CONTENTS_USER_DATA_KEY_DECL();
+
+  base::WeakPtrFactory<OhosPrintManager> weak_ptr_factory_{this};
 };
 
 }  // namespace printing

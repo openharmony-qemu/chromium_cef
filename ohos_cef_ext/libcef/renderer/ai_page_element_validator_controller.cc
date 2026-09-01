@@ -184,7 +184,7 @@ std::string ValidateElementIdResult(blink::WebLocalFrame *frame,
   }
 
   if (parsed->document_scope_token != current_document_scope_token) {
-    return BuildStatusJson(false, "documentScope not match");
+    return BuildStatusJson(false, "documentToken not match");
   }
 
   std::set<int> wanted_dom_node_ids = {parsed->dom_node_id};

@@ -68,6 +68,10 @@
 #include "arkweb/chromium_ext/content/public/common/content_switches_ext.h"
 #endif
 
+#if BUILDFLAG(ARKWEB_BUGFIX_CRASH) && BUILDFLAG(IS_ARKWEB_EXT)
+#include "arkweb/ohos_nweb_ex/overrides/cef/libcef/browser/alloy/alloy_ark_web_global_config.h"
+#endif
+
 #if BUILDFLAG(ARKWEB_EXT_RECEIVE_RESPONSE)
 #include "arkweb/ohos_nweb/src/nweb_url_resource_request_impl.h"
 #include "arkweb/ohos_nweb/src/cef_delegate/nweb_url_resource_response_impl.h"
@@ -2183,6 +2187,16 @@ void ProxyURLLoaderFactory::MaybeDestroySelf() {
   if (target_factory_.is_bound() || !requests_.empty()) {
     return;
   }
+
+#if BUILDFLAG(ARKWEB_BUGFIX_CRASH) && BUILDFLAG(IS_ARKWEB_EXT)
+  if (!proxy_receivers_.empty() &&
+      nweb_ex::AlloyArkWebGlobalConfig::GetInstance()
+          ->ExperimentalFeatureEnable()) {
+    LOG(WARNING) << "ProxyURLLoaderFactoryDestroy proxyReceiversCount:"
+                 << proxy_receivers_.size() << " message:clearpProxyReceivers";
+    proxy_receivers_.Clear();
+  }
+#endif
 
   destroyed_ = true;
 

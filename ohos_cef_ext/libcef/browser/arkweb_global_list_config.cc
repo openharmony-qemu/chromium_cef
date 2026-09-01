@@ -101,7 +101,7 @@ void ArkwebGlobalListConfig::SetGlobalListConfigPath(
   }
   pref_service_->SetString(prefs::kGlobalListConfigVersion, version);
   base::ThreadPool::PostTaskAndReplyWithResult(
-      FROM_HERE, {base::MayBlock(), base::TaskPriority::BEST_EFFORT},
+      FROM_HERE, {base::MayBlock(), base::TaskPriority::USER_VISIBLE},
       base::BindOnce(&ArkwebGlobalListConfig::ParsingConfigFile,
                      base::Unretained(this), config_path),
       base::BindOnce(&ArkwebGlobalListConfig::OnConfigFileReadDone,

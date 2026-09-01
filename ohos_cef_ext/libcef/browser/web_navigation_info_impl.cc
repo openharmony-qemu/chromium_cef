@@ -24,6 +24,7 @@ using CefWebNavigationInfoKeys::kAttemptType;
 using CefWebNavigationInfoKeys::kDnsAddressList;
 using CefWebNavigationInfoKeys::kDnsHost;
 using CefWebNavigationInfoKeys::kDnsInfo;
+using CefWebNavigationInfoKeys::kDnsRecordTruncation;
 using CefWebNavigationInfoKeys::kDnsResult;
 using CefWebNavigationInfoKeys::kDnsTransition;
 using CefWebNavigationInfoKeys::kRequestAttemptResult;
@@ -156,6 +157,8 @@ CefWebNavigationInfoImpl::CefWebNavigationInfoImpl(
     // DNS info
     auto dns_dict = CreateDnsInfoDict(attempt.dns_info);
     SetAddressList(dns_dict, kDnsAddressList, attempt.dns_info.address_list);
+    SetAddressList(dns_dict, kDnsRecordTruncation,
+                   attempt.dns_info.truncation_ips);
     attempt_dict->SetDictionary(kDnsInfo, dns_dict);
 
     // SSL info
