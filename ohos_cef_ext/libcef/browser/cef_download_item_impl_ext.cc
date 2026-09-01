@@ -14,6 +14,10 @@ const char kNWebId[] = "nweb_id";
 const char kRequestMethod[] = "request_method";
 #endif
 
+#if BUILDFLAG(ARKWEB_EXT_DOWNLOAD)
+#include "content/browser/devtools/protocol/devtools_download_manager_delegate.h"
+#endif
+
 CefDownloadItemImplExt::CefDownloadItemImplExt(download::DownloadItem* value)
     : CefDownloadItemImpl(value) {}
 
@@ -219,5 +223,19 @@ std::vector<CefString> CefDownloadItemImplExt::GetUrlChain() {
     urlChain.push_back(gurl.spec());
   }
   return urlChain;
+}
+
+bool CefDownloadItemImplExt::IsFromCDPAllowAndName() {
+  CEF_VALUE_VERIFY_RETURN(false, false);
+  // Check if this download was marked as allowAndName by
+  // DevToolsDownloadManagerDelegate::DetermineDownloadTarget.
+  // Does NOT consume the marker — it is cleaned up automatically when the
+  // DownloadItem is destroyed. NWebDownloadHandlerDelegate caches the guid
+  // in suggested_file_name_for_guid_map on first check, so subsequent
+  // OnDownloadUpdated calls use the cached value without re-checking.
+  const download::DownloadItemImpl& item_impl =
+      static_cast<const download::DownloadItemImpl&>(const_value());
+  return item_impl.GetUserData(content::protocol::kArkWebAllowAndNameKey) !=
+         nullptr;
 }
 #endif
