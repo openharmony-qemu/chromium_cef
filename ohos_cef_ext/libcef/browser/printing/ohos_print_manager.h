@@ -102,7 +102,7 @@ class OhosPrintManager : public printing::PrintManager,
       const ui::AXTreeUpdate& accessibility_tree) override;
   void SetupScriptedPrintPreview(
       SetupScriptedPrintPreviewCallback callback) override;
-  void ShowScriptedPrintPreview(bool source_is_modifiable) override;
+  void ShowScriptedPrintPreview() override;
   void GetPrintPreviewParams(GetPrintPreviewParamsCallback callback) override;
   void SetRfhId(content::GlobalRenderFrameHostId rfhId);
   content::GlobalRenderFrameHostId GetRfhId();
