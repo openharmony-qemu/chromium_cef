@@ -206,6 +206,7 @@ FallbackProxyService::CreateFallbackProxyInfoConfig() const {
   config->proxy_connect_timeout = config_->GetProxyConnectTimeout();
   config->malicious_url_check_wait_time =
       config_->GetMaliciousUrlCheckWaitTime();
+  config->proxy_whitelist_domains = config_->GetProxyWhitelistDomains();
   return config;
 }
 
