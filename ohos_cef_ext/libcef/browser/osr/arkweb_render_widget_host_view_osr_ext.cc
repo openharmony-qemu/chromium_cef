@@ -60,6 +60,14 @@
 #include "cef/ohos_cef_ext/libcef/browser/osr/arkweb_touch_selection_controller_client_osr_ext.h"
 #include "cef/ohos_cef_ext/libcef/browser/osr/arkweb_render_widget_host_view_osr_utils.h"
 #include "components/input/render_widget_host_input_event_router.h"
+#if BUILDFLAG(ARKWEB_COMPOSITE_RENDER)
+#include "chrome/browser/translate/chrome_translate_client.h"
+#include "components/translate/core/browser/translate_driver.h"
+#include "components/translate/core/common/language_detection_details.h"
+#include "content/public/browser/web_contents.h"
+#include "mojo/public/cpp/bindings/associated_remote.h"
+#include "chrome/common/chrome_render_frame.mojom.h"
+#endif
 #include "content/browser/renderer_host/frame_tree.h"
 #include "content/browser/renderer_host/render_view_host_delegate_view.h"
 #include "content/browser/renderer_host/render_widget_host_view_base.h"
@@ -271,6 +279,25 @@ ArkWebRenderWidgetHostViewOSRExt::ArkWebRenderWidgetHostViewOSRExt(
 
 #if BUILDFLAG(ARKWEB_EXT_PULL_TO_REFRESH) || BUILDFLAG(ARKWEB_PULL_TO_REFRESH)
   CreateOverscrollControllerIfPossible();
+#endif
+}
+
+ArkWebRenderWidgetHostViewOSRExt::~ArkWebRenderWidgetHostViewOSRExt() {
+#if BUILDFLAG(ARKWEB_COMPOSITE_RENDER)
+  if (translate_driver_) {
+    translate_driver_->RemoveLanguageDetectionObserver(this);
+    translate_driver_ = nullptr;
+  }
+  // Dispatch any pending callbacks with empty details to avoid permanent hang.
+  if (!pending_language_callbacks_.empty()) {
+    ArkWebLanguageDetectionDetails empty_details;
+    for (auto& callback : pending_language_callbacks_) {
+      if (callback) {
+        callback->OnWebLanguageDetected(empty_details);
+      }
+    }
+    pending_language_callbacks_.clear();
+  }
 #endif
 }
 
@@ -1019,6 +1046,150 @@ std::string ArkWebRenderWidgetHostViewOSRExt::GetCurrentLanguage() {
   }
   LOG(INFO) << "[CefRenderWidgetHostViewOSR::GetCurrentLanguage] Returning final language identifier: " << language_;
   return language_;
+}
+
+void ArkWebRenderWidgetHostViewOSRExt::OnLanguageDetermined(
+    const translate::LanguageDetectionDetails& details) {
+  language_details_.url = details.url.possibly_invalid_spec();
+  language_details_.content_language = details.content_language;
+  language_details_.html_root_language = details.html_root_language;
+  language_details_.model_detected_language = details.model_detected_language;
+  language_details_.adopted_language = details.adopted_language;
+
+  // Dispatch all pending callbacks now that detection has completed.
+  for (auto& callback : pending_language_callbacks_) {
+    if (callback) {
+      callback->OnWebLanguageDetected(language_details_);
+    }
+  }
+  pending_language_callbacks_.clear();
+}
+
+void ArkWebRenderWidgetHostViewOSRExt::OnTranslateDriverDestroyed(
+    translate::TranslateDriver* driver) {
+  translate_driver_ = nullptr;
+  // The driver is gone, so OnLanguageDetermined will never arrive.
+  // Dispatch pending callbacks with empty details to avoid permanent hang.
+  if (!pending_language_callbacks_.empty()) {
+    ArkWebLanguageDetectionDetails empty_details;
+    for (auto& callback : pending_language_callbacks_) {
+      if (callback) {
+        callback->OnWebLanguageDetected(empty_details);
+      }
+    }
+    pending_language_callbacks_.clear();
+  }
+}
+
+void ArkWebRenderWidgetHostViewOSRExt::GetWebLanguageAsync(
+    CefRefPtr<CefWebLanguageDetectedCallback> callback) {
+  // Cache hit: return the cached language details directly without
+  // re-triggering detection in the child process.
+  if (!language_details_.IsEmpty()) {
+    if (callback) {
+      callback->OnWebLanguageDetected(language_details_);
+    }
+    return;
+  }
+  // Cache miss: queue the callback and register observer.
+  // Then trigger IPC as a fallback—if native DidMeaningfulLayout hasn't fired
+  // yet, OnLanguageDetermined will arrive from the native path first.
+  // If native detection already passed, the IPC ensures we get a result
+  // instead of waiting forever.
+  if (callback) {
+    pending_language_callbacks_.push_back(std::move(callback));
+  }
+  RegisterLanguageDetectionObserver();
+  if (!translate_driver_) {
+    // Observer registration failed (e.g. no ChromeTranslateClient yet).
+    // Dispatch pending callbacks with empty details to avoid permanent hang.
+    ArkWebLanguageDetectionDetails empty_details;
+    for (auto& cb : pending_language_callbacks_) {
+      if (cb) {
+        cb->OnWebLanguageDetected(empty_details);
+      }
+    }
+    pending_language_callbacks_.clear();
+    return;
+  }
+  if (!TriggerReCapturePageText()) {
+    // IPC could not be sent (e.g. no main frame). Dispatch pending callbacks
+    // with empty details to avoid permanent hang.
+    ArkWebLanguageDetectionDetails empty_details;
+    for (auto& cb : pending_language_callbacks_) {
+      if (cb) {
+        cb->OnWebLanguageDetected(empty_details);
+      }
+    }
+    pending_language_callbacks_.clear();
+  }
+}
+
+void ArkWebRenderWidgetHostViewOSRExt::RegisterLanguageDetectionObserver() {
+  if (translate_driver_) {
+    return;  // Already registered.
+  }
+  if (!browser_impl_ || !browser_impl_->web_contents()) {
+    return;
+  }
+  ChromeTranslateClient* client =
+      ChromeTranslateClient::FromWebContents(browser_impl_->web_contents());
+  if (!client) {
+    return;
+  }
+  translate_driver_ = client->GetTranslateDriver();
+  if (translate_driver_) {
+    translate_driver_->AddLanguageDetectionObserver(this);
+  }
+}
+
+bool ArkWebRenderWidgetHostViewOSRExt::TriggerReCapturePageText() {
+  if (!browser_impl_ || !browser_impl_->web_contents()) {
+    return false;
+  }
+  content::RenderFrameHost* rfh =
+      browser_impl_->web_contents()->GetPrimaryMainFrame();
+  if (!rfh) {
+    return false;
+  }
+  mojo::AssociatedRemote<chrome::mojom::ChromeRenderFrame> remote;
+  rfh->GetRemoteAssociatedInterfaces()->GetInterface(&remote);
+  remote->CapturePageTextForTranslate();
+  return true;
+}
+
+void ArkWebRenderWidgetHostViewOSRExt::SaveLanguageDetailsForBFCache() {
+  bf_cache_language_details_ = language_details_;
+}
+
+void ArkWebRenderWidgetHostViewOSRExt::RestoreLanguageDetailsForBFCache() {
+  language_details_ = bf_cache_language_details_;
+  // After restoring, dispatch any callbacks that were queued while the page
+  // was in BFCache.
+  for (auto& callback : pending_language_callbacks_) {
+    if (callback) {
+      callback->OnWebLanguageDetected(language_details_);
+    }
+  }
+  pending_language_callbacks_.clear();
+}
+
+void ArkWebRenderWidgetHostViewOSRExt::ClearLanguageCache(
+    bool is_same_document, bool reload) {
+  // Mirror LanguageState::DidNavigate: same-document navigations and reloads
+  // do not reset language state because the page content has not changed.
+  if (is_same_document || reload) {
+    return;
+  }
+  // Normal main-frame navigation: clear the cached language details.
+  ArkWebLanguageDetectionDetails empty_details;
+  for (auto& callback : pending_language_callbacks_) {
+    if (callback) {
+      callback->OnWebLanguageDetected(empty_details);
+    }
+  }
+  pending_language_callbacks_.clear();
+  language_details_.Reset();
 }
 #endif
 

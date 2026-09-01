@@ -414,6 +414,8 @@ private:
   void SetFitContentMode(int mode) override;
   void SetShouldFrameSubmissionBeforeDraw(bool should) override;
   std::string GetCurrentLanguage() override;
+  void GetWebLanguageAsync(
+      CefRefPtr<CefWebLanguageDetectedCallback> callback) override;
 #endif  // BUILDFLAG(ARKWEB_COMPOSITE_RENDER)
 
 #if BUILDFLAG(ARKWEB_VIDEO_ASSISTANT)

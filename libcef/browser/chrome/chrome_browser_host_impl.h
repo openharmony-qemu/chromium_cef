@@ -183,6 +183,12 @@ class ChromeBrowserHostImpl : public ArkWebBrowserHostExtImpl {
 #if BUILDFLAG(ARKWEB_COMPOSITE_RENDER)
   void SetShouldFrameSubmissionBeforeDraw(bool should) override {}
   std::string GetCurrentLanguage() override { return ""; }
+  void GetWebLanguageAsync(
+      CefRefPtr<CefWebLanguageDetectedCallback> callback) override {
+    if (callback) {
+      callback->OnWebLanguageDetected(ArkWebLanguageDetectionDetails());
+    }
+  }
 #endif  // BUILDFLAG(ARKWEB_COMPOSITE_RENDER)
 
   raw_ptr<Browser> browser_ = nullptr;

@@ -1046,6 +1046,8 @@ source_set("libcef_static") {
     "//base:base_static",
     "//cc",
     "//chrome:dependencies",
+    "//chrome/browser/translate",
+    "//chrome/common:mojo_bindings",
     "//chrome:packed_resources",
     "//chrome:resources",
     "//chrome:strings",

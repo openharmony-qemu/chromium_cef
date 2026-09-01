@@ -1672,6 +1672,18 @@ std::string AlloyBrowserHostImplExt::GetCurrentLanguage() {
   }
   return platform_delegate_->AsArkWebCefBrowserPlatformDelegateExt()->GetCurrentLanguage();
 }
+
+void AlloyBrowserHostImplExt::GetWebLanguageAsync(
+    CefRefPtr<CefWebLanguageDetectedCallback> callback) {
+  if (!platform_delegate_) {
+    if (callback) {
+      callback->OnWebLanguageDetected(ArkWebLanguageDetectionDetails());
+    }
+    return;
+  }
+  platform_delegate_->AsArkWebCefBrowserPlatformDelegateExt()->GetWebLanguageAsync(
+      std::move(callback));
+}
 #endif  // BUILDFLAG(ARKWEB_COMPOSITE_RENDER)
 
 
