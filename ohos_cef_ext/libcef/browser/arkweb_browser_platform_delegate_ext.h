@@ -24,6 +24,10 @@
 #include "arkweb/ohos_nweb/src/capi/nweb_extension_javascript_item.h"
 #endif
 
+#if BUILDFLAG(ARKWEB_COMPOSITE_RENDER)
+#include "cef/ohos_cef_ext/include/arkweb_browser_ext.h"
+#endif
+
 class CefBrowserPlatformDelegate;
 // Provides platform-specific implementations of browser functionality. All
 // methods are called on the browser process UI thread unless otherwise
@@ -76,6 +80,8 @@ class ArkWebCefBrowserPlatformDelegateExt : public CefBrowserPlatformDelegate {
   virtual void SetFitContentMode(int mode) {}
   virtual void SetShouldFrameSubmissionBeforeDraw(bool should) {}
   virtual std::string GetCurrentLanguage() {}
+  virtual void GetWebLanguageAsync(
+      CefRefPtr<CefWebLanguageDetectedCallback> callback) {}
 #endif  // BUILDFLAG(ARKWEB_COMPOSITE_RENDER)
 
 #if BUILDFLAG(ARKWEB_SAME_LAYER)

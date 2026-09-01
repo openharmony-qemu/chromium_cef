@@ -49,6 +49,10 @@
 #include "arkweb/ohos_nweb_ex/build/features/features.h"
 #endif
 
+#if BUILDFLAG(ARKWEB_COMPOSITE_RENDER)
+#include "cef/ohos_cef_ext/include/arkweb_language_detection_details.h"
+#endif
+
 #if BUILDFLAG(ARKWEB_READER_MODE)
 #include "arkweb/ohos_nweb/src/capi/nweb_extension_distill_item.h"
 #endif // ARKWEB_READER_MODE
@@ -114,6 +118,14 @@ class CefDistillCallback : public virtual CefBaseRefCounted {
   virtual void OnDistillCallback(uint64_t request_id, const std::string& distill_info) = 0;
 };
 #endif // ARKWEB_READER_MODE
+
+#if BUILDFLAG(ARKWEB_COMPOSITE_RENDER)
+class CefWebLanguageDetectedCallback : public CefBaseRefCounted {
+ public:
+  virtual void OnWebLanguageDetected(
+      const ArkWebLanguageDetectionDetails& details) = 0;
+};
+#endif
 
 /* ---------- ohos webview add begin --------- */
 ///
@@ -1570,6 +1582,15 @@ class ArkWebBrowserHostExt : public virtual CefBrowserHost,
   ///
   /*--cef()--*/
   virtual std::string GetCurrentLanguage() = 0;
+
+  ///
+  /// Get language detection details asynchronously.
+  /// If cache is empty, triggers re-detection from renderer and waits for
+  /// result via the native LanguageDetectionObserver.
+  ///
+  /*--cef()--*/
+  virtual void GetWebLanguageAsync(
+      CefRefPtr<CefWebLanguageDetectedCallback> callback) = 0;
 #endif
 
 #if BUILDFLAG(ARKWEB_MAXIMIZE_RESIZE)

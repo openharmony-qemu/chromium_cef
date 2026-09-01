@@ -435,6 +435,19 @@ std::string CefBrowserPlatformDelegateOsrExt::GetCurrentLanguage()
   }
   return view->AsArkWebRenderWidgetHostViewOSRExt()->GetCurrentLanguage();
 }
+
+void CefBrowserPlatformDelegateOsrExt::GetWebLanguageAsync(
+    CefRefPtr<CefWebLanguageDetectedCallback> callback) {
+  CefRenderWidgetHostViewOSR* view = GetOSRHostView();
+  if (!view) {
+    if (callback) {
+      callback->OnWebLanguageDetected(ArkWebLanguageDetectionDetails());
+    }
+    return;
+  }
+  view->AsArkWebRenderWidgetHostViewOSRExt()->GetWebLanguageAsync(
+      std::move(callback));
+}
 #endif
 #if BUILDFLAG(ARKWEB_SAME_LAYER)
 void CefBrowserPlatformDelegateOsrExt::OnNativeEmbedLifecycleChange(
