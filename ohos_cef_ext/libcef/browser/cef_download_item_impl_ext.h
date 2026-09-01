@@ -39,6 +39,7 @@ class CefDownloadItemImplExt : public CefDownloadItemExt,
   CefString GetContextType() override;
   int GetConflictAction() override;
   std::vector<CefString> GetUrlChain() override;
+  bool IsFromCDPAllowAndName() override;
 };
 
 #endif  // CEF_LIBCEF_BROWSER_DOWNLOAD_ITEM_IMPL_H_
