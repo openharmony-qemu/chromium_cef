@@ -145,5 +145,12 @@ class CefDownloadItemExt : public virtual CefBaseRefCounted {
   ///
   /*--cef()--*/
   virtual std::vector<CefString> GetUrlChain() {return {};}
+
+  ///
+  /// Returns true if this download was initiated via CDP allowAndName behavior.
+  /// Does NOT consume the marker — it is auto-cleaned on DownloadItem destruction.
+  ///
+  /*--cef()--*/
+  virtual bool IsFromCDPAllowAndName() { return false; }
 };
 #endif
