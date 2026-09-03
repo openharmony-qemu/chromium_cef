@@ -359,8 +359,14 @@ OhosPrintManager* OhosPrintManager::GetOhosPrintManagerToUse(
 }
 
 void OhosPrintManager::PdfWritingDone(int page_count) {
-  pdf_writing_done_callback().Run(page_count);
-  fd_ = -1;
+  // Invalidate the file descriptor so it doesn't get reused.
+  fd_ = base::kInvalidFd;
+  // Trigger the callback to notify the embedding application that printing is
+  // done. A non-positive `page_count` value (<=0) will be presented as an error
+  // callback to the application.
+  if (pdf_writing_done_callback()) {
+    pdf_writing_done_callback().Run(page_count);
+  }
 }
 
 OHOS::NWeb::PrintAttributesAdapter OhosPrintManager::CreateCustomOptions()
@@ -523,11 +529,18 @@ void OhosPrintManager::ScriptedPrint(
     printing::mojom::ScriptedPrintParamsPtr scripted_params,
     ScriptedPrintCallback callback) {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+
+  content::RenderFrameHost* render_frame_host = GetCurrentTargetFrame();
+  if (!render_frame_host || !render_frame_host->IsActive()) {
+    // Only active RFHs should try to print.
+    std::move(callback).Run(nullptr);
+    return;
+  }
   auto params = printing::mojom::PrintPagesParams::New();
   params->params = printing::mojom::PrintParams::New();
 
   if (scripted_params->is_scripted &&
-      GetCurrentTargetFrame()->IsNestedWithinFencedFrame()) {
+      render_frame_host->IsNestedWithinFencedFrame()) {
     LOG(ERROR) << "Script Print is not allowed.";
     std::move(callback).Run(std::move(params));
     return;
@@ -554,16 +567,13 @@ void OhosPrintManager::DidPrintDocument(
     DidPrintDocumentCallback callback) {
   LOG(INFO) << "OhosPrintManager::DidPrintDocument";
   if (params->document_cookie != cookie()) {
+    PdfWritingDone(0);
     std::move(callback).Run(false);
     return;
   }
 
   const printing::mojom::DidPrintContentParams& content = *params->content;
   if (!content.metafile_data_region.IsValid()) {
-    NOTREACHED() << "invalid memory handle";
-    if (weak_ptr_web_contents_) {
-      weak_ptr_web_contents_->Stop();
-    }
     PdfWritingDone(0);
     std::move(callback).Run(false);
     return;
@@ -572,29 +582,20 @@ void OhosPrintManager::DidPrintDocument(
   auto data = base::RefCountedSharedMemoryMapping::CreateFromWholeRegion(
       content.metafile_data_region);
   if (!data) {
-    NOTREACHED() << "couldn't map";
-    if (weak_ptr_web_contents_) {
-      weak_ptr_web_contents_->Stop();
-    }
     PdfWritingDone(0);
     std::move(callback).Run(false);
     return;
   }
 
   if (number_pages() > printing::kMaxPageCount) {
-    if (weak_ptr_web_contents_) {
-      weak_ptr_web_contents_->Stop();
-    }
     PdfWritingDone(0);
     std::move(callback).Run(false);
     return;
   }
-
-  DCHECK(pdf_writing_done_callback());
   task_runner_->PostTaskAndReplyWithResult(
       FROM_HERE, base::BindOnce(&SaveDataToFd, fd_, number_pages(), data),
       base::BindOnce(&OhosPrintManager::OnDidPrintDocumentWritingDone,
-                     pdf_writing_done_callback(), std::move(callback)));
+                     weak_ptr_factory_.GetWeakPtr(), std::move(callback)));
 }
 
 // static
@@ -614,14 +615,11 @@ void OhosPrintManager::RunCallback(const std::string& jobId, int32_t result) {
 
 // static
 void OhosPrintManager::OnDidPrintDocumentWritingDone(
-    const PdfWritingDoneCallback& callback,
     DidPrintDocumentCallback did_print_document_cb,
     uint32_t page_count) {
   LOG(INFO) << "OhosPrintManager::OnDidPrintDocumentWritingDone";
   DCHECK_LE(page_count, printing::kMaxPageCount);
-  if (callback) {
-    callback.Run(base::checked_cast<int>(page_count));
-  }
+  PdfWritingDone(base::checked_cast<int>(page_count));
   std::move(did_print_document_cb).Run(true);
   RunCallback(print_job_id_, PRINT_JOB_CREATE_FILE_COMPLETED_SUCCESS);
 }
@@ -870,7 +868,7 @@ bool OhosPrintManager::GetPrintBackground() {
   return !!should_print_background_;
 }
 
-void OhosPrintManager::CheckForCancel(int32_t preview_ui_id,
+void OhosPrintManager::CheckForCancel(const base::UnguessableToken& preview_ui_id,
                                       int32_t request_id,
                                       CheckForCancelCallback callback) {}
 

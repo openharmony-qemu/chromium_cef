@@ -15,6 +15,14 @@
 
 #include "arkweb/build/features/features.h"
 
+#include "base/feature_list.h"
+
+#if BUILDFLAG(ARKWEB_NETWORK_SERVICE)
+BASE_FEATURE(kEnablePostQuantumKeyAgreement,
+             "EnablePostQuantumKeyAgreement",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+#endif
+
 #if BUILDFLAG(ARKWEB_MULTI_WINDOW)
 #include "base/timer/timer.h"
 #include "cef/ohos_cef_ext/libcef/browser/arkweb_browser_info_manager_utils.h"
@@ -213,6 +221,14 @@ void ArkWebInnerConfigureNetworkContextParamsBefore(
 void ArkWebInnerConfigureNetworkContextParamsAfter(
     content::BrowserContext* context,
     network::mojom::NetworkContextParams* network_context_params) {
+#if BUILDFLAG(ARKWEB_NETWORK_SERVICE)
+  if (network_context_params->initial_ssl_config) {
+    if (!base::FeatureList::IsEnabled(kEnablePostQuantumKeyAgreement)) {
+      network_context_params->initial_ssl_config
+          ->post_quantum_key_agreement_enabled = false;
+    }
+  }
+#endif
 #if BUILDFLAG(ARKWEB_CACHE)
   // Restore http_cache_max_size after ProfileNetworkContextService
   // overwrites it with prefs:kDiskCacheSize

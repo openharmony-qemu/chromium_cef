@@ -208,6 +208,8 @@ libcef_arkweb_sources = [
 
   "//cef/ohos_cef_ext/libcef/browser/net/ohos_url_rewrite_controller.h",
   "//cef/ohos_cef_ext/libcef/browser/net/ohos_url_rewrite_controller.cc",
+  "//cef/ohos_cef_ext/libcef/browser/cdp_handler.cpp",
+  "//cef/ohos_cef_ext/libcef/browser/cdp_handler.h",
 ]
 if (defined(arkweb_logger_report) && arkweb_logger_report) {
   libcef_arkweb_sources += [
@@ -260,7 +262,6 @@ arkweb_url_trust_list_sources = [
   "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_sb_block_page.h",
   "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_sb_controller_client.h",
   "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_sb_prefs.h",
-  "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_sb_threat_type.h",
   "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_sb_snapshot_info.cc",
   "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_sb_snapshot_info.h",
   "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_url_trust_list_interface.h",
@@ -277,6 +278,8 @@ arkweb_anti_tracking_placeholder_source = [
   "//cef/ohos_cef_ext/libcef/browser/anti_tracking/anti_tracking_delegate_ohos.cc",
 ]
 arkweb_safebrowsing_sources = [
+  "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_safe_browsing_config_util.cc",
+  "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_safe_browsing_config_util.h",
   "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_safe_browsing_tab_helper.cc",
   "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_safe_browsing_tab_helper.h",
   "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_sb_client.cc",

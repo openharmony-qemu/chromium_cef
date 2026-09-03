@@ -141,30 +141,6 @@ void OhGinJavascriptBridgeDispatcher::OnRemoveNamedObject(
   named_objects_.erase(iter);
 }
 
-std::unique_ptr<base::Value>
-OhGinJavascriptBridgeDispatcher::InvokeJavascriptMethodFlowbuf(
-    ObjectID object_id,
-    const std::string& method_name,
-    const base::Value::List& arguments,
-    int fd,
-    content::mojom::OhGinJavascriptBridgeError* error) {
-  std::string url;
-  blink::WebLocalFrame* frame = render_frame()->GetWebFrame();
-  url = frame->GetDocument().Url().GetString().Utf8();
-  base::Value::List result_wrapper;
-#if BUILDFLAG(CONTENT_ENABLE_LEGACY_IPC)
-  IPC::Message* msg = new OhGinJavascriptBridgeHostMsg_InvokeMethod(
-      routing_id(), object_id, url, method_name, arguments, &result_wrapper,
-      error);
-  msg->WriteAttachment(new IPC::internal::PlatformFileAttachment(fd));
-  render_frame()->Send(msg);
-#endif  // CONTENT_ENABLE_LEGACY_IPC
-  if (result_wrapper.empty()) {
-    return nullptr;
-  }
-  return base::Value::ToUniquePtrValue(result_wrapper[0].Clone());
-}
-
 OhGinJavascriptBridgeObject* OhGinJavascriptBridgeDispatcher::GetObject(
     const ObjectID object_id) {
   if (!render_frame() || !render_frame()->GetWebFrame()) {
