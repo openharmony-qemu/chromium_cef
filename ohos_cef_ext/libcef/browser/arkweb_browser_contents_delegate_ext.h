@@ -88,6 +88,8 @@ class ArkWebBrowserContentsDelegateExt : public CefBrowserContentsDelegate {
 #endif
 
 #if BUILDFLAG(ARKWEB_INPUT_EVENTS)
+  void RenderFrameHostChanged(content::RenderFrameHost* old_host,
+                              content::RenderFrameHost* new_host) override;
   void RequestPointerLock(content::WebContents* web_contents,
                           bool user_gesture,
                           bool last_unlocked_by_target) override;

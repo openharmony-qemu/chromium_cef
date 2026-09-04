@@ -11,11 +11,13 @@
 #include "cef/libcef/browser/browser_platform_delegate.h"
 #include "cef/libcef/browser/native/cursor_util.h"
 #include "cef/libcef/common/frame_util.h"
+#include "cef/ohos_cef_ext/libcef/browser/arkweb_browser_host_ext.h"
 #include "chrome/browser/ui/views/sad_tab_view.h"
 #include "chrome/common/chrome_result_codes.h"
 #include "components/input/native_web_keyboard_event.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/browser/web_contents/web_contents_impl.h"
+#include "content/public/browser/browser_thread.h"
 #include "content/public/browser/focused_node_details.h"
 #include "content/public/browser/keyboard_event_processing_result.h"
 #include "content/public/browser/navigation_entry.h"
@@ -104,6 +106,29 @@ class DataResubmissionCallbackImpl : public CefCallback {
 ArkWebBrowserContentsDelegateExt::ArkWebBrowserContentsDelegateExt(
     scoped_refptr<CefBrowserInfo> browser_info)
     : CefBrowserContentsDelegate(browser_info) {}
+
+#if BUILDFLAG(ARKWEB_INPUT_EVENTS)
+void ArkWebBrowserContentsDelegateExt::RenderFrameHostChanged(
+    content::RenderFrameHost* old_host,
+    content::RenderFrameHost* new_host) {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+  CefBrowserContentsDelegate::RenderFrameHostChanged(old_host, new_host);
+  if (!new_host || new_host->GetParent()) {
+    return;
+  }
+
+  auto cef_browser = browser();
+  if (!cef_browser) {
+    return;
+  }
+  auto cef_browser_host = cef_browser->GetHost();
+  if (!cef_browser_host) {
+    return;
+  }
+  static_cast<ArkWebBrowserHostExtImpl*>(cef_browser_host.get())
+      ->ApplyStoredOverscrollModeToCurrentMainFrame();
+}
+#endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
 
 #if BUILDFLAG(ARKWEB_RENDER_PROCESS_MODE)
 void ArkWebBrowserContentsDelegateExt::OnRefreshAccessedHistory(
