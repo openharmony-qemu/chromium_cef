@@ -464,6 +464,7 @@ class ArkWebBrowserHostExtImpl : public ArkWebBrowserHostExt,
   void GetLastHitData(int& type, CefString& extra_data) override;
   uint64_t GetCurrentTimestamp();
   void SetOverscrollMode(int overScrollMode) override;
+  void ApplyStoredOverscrollModeToCurrentMainFrame();
   void SetScrollable(bool enable, int scrollType) override;
   bool IsElementExist(CefString& xPath) override;
   int32_t ExecuteInputCommand(const std::string& xpath,
@@ -938,6 +939,9 @@ void SetAsyncStackId(uint64_t stackId) override;
   uint64_t last_zoom_time_ = 0;
   bool scrollable_ = true;
   int scrollType_ = -1;
+  base::Lock overscroll_mode_lock_;
+  bool has_stored_overscroll_mode_ GUARDED_BY(overscroll_mode_lock_) = false;
+  int stored_overscroll_mode_ GUARDED_BY(overscroll_mode_lock_) = 0;
 #endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
 #if BUILDFLAG(ARKWEB_BACKGROUND_COLOR)
   void UpdateBackgroundColor(int color);

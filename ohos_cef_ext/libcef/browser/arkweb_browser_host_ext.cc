@@ -2157,10 +2157,28 @@ void ArkWebBrowserHostExtImpl::GetAIPageElementRects(
 }
 
 void ArkWebBrowserHostExtImpl::SetOverscrollMode(int overscrollMode) {
+  {
+    base::AutoLock lock(overscroll_mode_lock_);
+    stored_overscroll_mode_ = overscrollMode;
+    has_stored_overscroll_mode_ = true;
+  }
+  ApplyStoredOverscrollModeToCurrentMainFrame();
+}
+
+void ArkWebBrowserHostExtImpl::ApplyStoredOverscrollModeToCurrentMainFrame() {
+  int overscroll_mode = 0;
+  {
+    base::AutoLock lock(overscroll_mode_lock_);
+    if (!has_stored_overscroll_mode_) {
+      return;
+    }
+    overscroll_mode = stored_overscroll_mode_;
+  }
+
   auto frame = GetMainFrame();
   if (frame && frame->IsValid()) {
     static_cast<ArkwebFrameHostExtImpl*>(frame.get())
-        ->SetOverscrollMode(overscrollMode);
+        ->SetOverscrollMode(overscroll_mode);
   }
 }
 #endif  // defined(ARKWEB_INPUT_EVENTS)
