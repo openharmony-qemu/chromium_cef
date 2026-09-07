@@ -350,6 +350,7 @@ void OhAutofillManager::ForwardDataToPasswordManager(
   password_manager->AsChromePasswordManagerClientExt()->FillData(page_url, username, password, is_other_account);
   is_password_popup_show_ = false;
   popup_hide_helper_.reset();
+  popup_web_contents_.reset();
 }
 
 bool OhAutofillManager::IsUsernamePasswordFormField(FormRendererId form_id,
@@ -397,10 +398,13 @@ void OhAutofillManager::PopupShow() {
     return;
   }
 
+  popup_web_contents_ = contents->GetWeakPtr();
+
   AutofillPopupHideHelper::HidingParams hiding_params = {
       .hide_on_web_contents_lost_focus = false};
-  AutofillPopupHideHelper::HidingCallback hiding_callback =
-      base::BindRepeating(&OhAutofillManager::Hide, base::Unretained(this));
+  AutofillPopupHideHelper::HidingCallback hiding_callback = base::BindRepeating(
+      &OhAutofillManager::Hide, weak_ptr_factory_.GetWeakPtr(),
+      contents->GetWeakPtr());
   AutofillPopupHideHelper::PictureInPictureDetectionCallback
       pip_detection_callback = base::BindRepeating([]() { return false; });
 
@@ -409,11 +413,35 @@ void OhAutofillManager::PopupShow() {
       std::move(hiding_callback), std::move(pip_detection_callback));
 }
 
-void OhAutofillManager::Hide(SuggestionHidingReason reason) {
+void OhAutofillManager::OnAutofillManagerStateChanged(AutofillManager&,
+                                                      LifecycleState,
+                                                      LifecycleState current) {
+  if (!is_password_popup_show_ ||
+      (current != LifecycleState::kPendingReset &&
+       current != LifecycleState::kPendingDeletion)) {
+    return;
+  }
+
+  // ContentAutofillDriverFactory can reset or destroy this manager before the
+  // popup helper receives the corresponding WebContentsObserver callback.
+  HidePopup(popup_web_contents_.get());
+}
+
+void OhAutofillManager::Hide(
+    base::WeakPtr<content::WebContents> popup_web_contents,
+    SuggestionHidingReason reason) {
   if (reason == SuggestionHidingReason::kTabGone ||
-      reason == SuggestionHidingReason::kContentAreaMoved) {
+      reason == SuggestionHidingReason::kContentAreaMoved ||
+      reason == SuggestionHidingReason::kRendererEvent) {
     LOG(INFO) << "PopupHide, reason = " << static_cast<int>(reason);
-    HidePopup();
+    if (reason == SuggestionHidingReason::kRendererEvent) {
+      // Lifecycle and deletion notifications are delivered after the tracked
+      // frame becomes inactive. Use the WebContents captured when the popup
+      // was shown rather than resolving it through the inactive frame.
+      HidePopup(popup_web_contents.get());
+    } else {
+      HidePopup();
+    }
   }
 }
 #endif
@@ -595,6 +623,10 @@ void OhAutofillManager::HidePopup() {
   }
 
   auto* contents = content::WebContents::FromRenderFrameHost(rfh);
+  HidePopup(contents);
+}
+
+void OhAutofillManager::HidePopup(content::WebContents* contents) {
   if (!contents) {
     LOG(ERROR) << "webcontents is nullptr";
     return;
@@ -616,6 +648,7 @@ void OhAutofillManager::HidePopup() {
   is_show_ = false;
   is_password_popup_show_ = false;
   popup_hide_helper_.reset();
+  popup_web_contents_.reset();
 #if BUILDFLAG(ARKWEB_DATALIST)
   autofill_client->HideAutofillPopup();
 #endif  // BUILDFLAG(ARKWEB_DATALIST)
@@ -635,6 +668,7 @@ void OhAutofillManager::Reset() {
     form_.reset(nullptr);
   }
   popup_hide_helper_.reset();
+  popup_web_contents_.reset();
   has_server_prediction_ = false;
 }
 
