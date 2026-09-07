@@ -98,6 +98,10 @@ constexpr int32_t APPLICATION_API_10 = 10;
 #include "ohos_nweb_ex/overrides/cef/libcef/browser/alloy/alloy_ark_web_global_config.h"
 #endif
 
+#if BUILDFLAG(ARKWEB_NO_STATE_PREFETCH)
+#include "base/base_switches.h"
+#endif // BUILDFLAG(ARKWEB_NO_STATE_PREFETCH)
+
 namespace {
 
 #if BUILDFLAG(IS_ARKWEB)
@@ -942,6 +946,23 @@ ChromeContentBrowserClientCef::GetWebContentsViewDelegate(
   // WebContents::Create() so we don't yet have an associated BrowserHost.
   return CreateWebContentsViewDelegate(web_contents);
 }
+
+#if BUILDFLAG(ARKWEB_NO_STATE_PREFETCH)
+bool ChromeContentBrowserClientCef::ShouldPreconnectNavigation(
+    content::RenderFrameHost* render_frame_host) {
+  // ArkWeb uses onInterceptRequest to load content locally. A navigation
+  // preconnect would establish a TCP+TLS connection to the original URL's
+  // server before interception takes effect.
+  if (base::CommandLine::ForCurrentProcess() &&
+      base::CommandLine::ForCurrentProcess()->HasSwitch(
+          switches::kDisableAutoPreconnect)) {
+    return false;
+  }
+
+  return ChromeContentBrowserClient::ShouldPreconnectNavigation(
+      render_frame_host);
+}
+#endif // BUILDFLAG(ARKWEB_NO_STATE_PREFETCH)
 
 CefRefPtr<CefRequestContextImpl>
 ChromeContentBrowserClientCef::request_context() const {
