@@ -64,9 +64,6 @@ OhGinJavascriptBridgeDispatcherHost::OhGinJavascriptBridgeDispatcherHost(
           OhGinJavascriptBridgeDispatcherHost>(
           content::GetUIThreadTaskRunner({})),
       content::WebContentsObserver(web_contents), client_(client) {
-  async_task_runner_ = base::ThreadPool::CreateSingleThreadTaskRunner(
-      {base::TaskPriority::USER_BLOCKING},
-      base::SingleThreadTaskRunnerThreadMode::DEDICATED);
 }
 
 OhGinJavascriptBridgeDispatcherHost::~OhGinJavascriptBridgeDispatcherHost() {
@@ -1492,7 +1489,7 @@ void OhGinJavascriptBridgeDispatcherHost::InvokeMethod(const std::string& method
   bool isAsyncthread = false;
   OnHasAsyncThreadMethod(object_receivers_.current_context().second, method_name, &isAsyncthread);
   if (isAsyncthread) {
-    async_task_runner_->PostTask(
+    OhGinJavascriptBridgeDispatcherHost::GetTaskRunner()->PostTask(
         FROM_HERE, base::BindOnce(&OhGinJavascriptBridgeDispatcherHost::InvokeMethodInternal,
                                   base::WrapRefCounted(this),
                                   object_receivers_.current_context().first,
@@ -1543,7 +1540,7 @@ void OhGinJavascriptBridgeDispatcherHost::InvokeMethodAsync(const std::string& m
 
   if (object_receivers_.current_context().second >=
     OhGinJavascriptBridgeDispatcherHost::MIN_NATIVE_OBJ_ID) {
-    async_task_runner_->PostTask(
+    OhGinJavascriptBridgeDispatcherHost::GetTaskRunner()->PostTask(
         FROM_HERE, base::BindOnce(&OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodAsync,
                                   base::WrapRefCounted(this),
                                   object_receivers_.current_context().first,
@@ -1679,6 +1676,15 @@ void OhGinJavascriptBridgeDispatcherHost::SetLastCallingFrameInfosOnUIThread(
     javascriptInjector->SetLastCallingFrameUrl(document_url);
     javascriptInjector->SetLastCallingFrameInfo(frame_info);
   }
+}
+
+// static
+scoped_refptr<base::SingleThreadTaskRunner> OhGinJavascriptBridgeDispatcherHost::GetTaskRunner() {
+  static scoped_refptr<base::SingleThreadTaskRunner> async_task_runner =
+      base::ThreadPool::CreateSingleThreadTaskRunner(
+          {base::TaskPriority::USER_BLOCKING},
+          base::SingleThreadTaskRunnerThreadMode::DEDICATED);
+  return async_task_runner;
 }
 
 }  // namespace NWEB

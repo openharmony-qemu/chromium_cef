@@ -265,6 +265,8 @@ class OhGinJavascriptBridgeDispatcherHost
   void SetLastCallingFrameInfosOnUIThread(const content::GlobalRenderFrameHostId& global_id,
                                           const std::string& document_url);
 
+  static scoped_refptr<base::SingleThreadTaskRunner> GetTaskRunner();
+
   // js property name and object id
   using MethodPair = std::pair<std::string, std::unordered_set<std::string>>;
   using ObjectMethodMap = std::map<ObjectID, MethodPair>;
@@ -283,7 +285,6 @@ class OhGinJavascriptBridgeDispatcherHost
   std::unordered_map<int32_t, std::unordered_set<std::string>>
       async_object_id_map_;
   CefRefPtr<ArkWebClientExt> client_;
-  scoped_refptr<base::SingleThreadTaskRunner> async_task_runner_;
 
   mojo::ReceiverSet<content::mojom::OhGinJavascriptBridgeHost, content::GlobalRenderFrameHostId>
       receivers_;
