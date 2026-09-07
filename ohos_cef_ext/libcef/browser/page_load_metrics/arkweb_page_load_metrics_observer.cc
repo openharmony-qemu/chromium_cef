@@ -31,6 +31,7 @@
 #if BUILDFLAG(ARKWEB_NETWORK_DFX)
 #include "ohos_nweb/src/sysevent/event_reporter.h"
 #if BUILDFLAG(ARKWEB_NWEB_EX)
+#include "net/cert/cert_status_flags.h"
 #include "net/http/http_connection_info.h"
 #include "arkweb/ohos_nweb_ex/overrides/cef/libcef/browser/page_load_metrics/nweb_page_load_metrics_shim.h"
 #if BUILDFLAG(ARKWEB_EX_FALLBACK_PROXY)
@@ -106,7 +107,15 @@ OhPageLoadMetricsObserver::ObservePolicy OhPageLoadMetricsObserver::OnStart(
   web_performance_timing_.navigation_id = navigation_id_;
   int64_t input_time = GetCurrentTimestampMS();
   web_performance_timing_.input_time = input_time;
+  web_performance_timing_.actual_navigation_start = GetNavigationStartTime();
   web_performance_timing_.is_paint_done = false;
+  navigation_url_ = navigation_handle->GetURL();
+  web_performance_timing_.current_connection_type =
+      net::NetworkChangeNotifier::GetConnectionType();
+  if (network_quality_tracker_) {
+    web_performance_timing_.effective_connection_type =
+        network_quality_tracker_->GetEffectiveConnectionType();
+  }
   ReportFirstMeaningfulPaintDone(web_performance_timing_);
 #endif
 
@@ -212,6 +221,10 @@ OhPageLoadMetricsObserver::OnCommit(
 #endif
 
 #if BUILDFLAG(ARKWEB_NWEB_EX) && BUILDFLAG(ARKWEB_NETWORK_DFX)
+  const std::optional<net::SSLInfo>& ssl_info = navigation_handle->GetSSLInfo();
+  web_performance_timing_.is_ssl_cert_error =
+      ssl_info.has_value() && net::IsCertStatusError(ssl_info->cert_status);
+
   net::HttpConnectionInfo connection_info = 
       navigation_handle->GetConnectionInfo();
   page_load_report_metrics_.did_use_quic = IsQuicOrHttp3(connection_info);
@@ -453,6 +466,18 @@ void OhPageLoadMetricsObserver::ReportLargestContentfulPaint(
 }
 
 #if BUILDFLAG(ARKWEB_NETWORK_DFX)
+void OhPageLoadMetricsObserver::OnFirstInputInPage(
+    const page_load_metrics::mojom::PageLoadTiming& timing) {
+  if (!timing.interactive_timing ||
+      !timing.interactive_timing->first_input_delay.has_value()) {
+    return;
+  }
+
+  base::TimeDelta first_input_delay =
+      timing.interactive_timing->first_input_delay.value();
+  web_performance_timing_.first_input_delay = first_input_delay.InMilliseconds();
+}
+
 page_load_metrics::PageLoadMetricsObserver::ObservePolicy
 OhPageLoadMetricsObserver::OnRedirect(
     content::NavigationHandle* navigation_handle) {
@@ -519,6 +544,12 @@ void OhPageLoadMetricsObserver::OnLoadEventEnd(
       << web_performance_timing_.dom_content_loaded_event_end
       << " loadEvent:" << web_performance_timing_.load_event_start << "-"
       << web_performance_timing_.load_event_end;
+#endif
+
+#if BUILDFLAG(ARKWEB_NWEB_EX)
+  std::vector<content::WebContentsImpl*> all_web_contents =
+      content::WebContentsImpl::GetAllWebContents();
+  web_performance_timing_.total_web_contents = all_web_contents.size();
 #endif
 }
 
@@ -601,12 +632,12 @@ void OhPageLoadMetricsObserver::ReportPerformanceTiming() {
 
 #if BUILDFLAG(ARKWEB_CRASHPAD)
     web_performance_timing_.render_init_block = render_init_block_.load(std::memory_order_relaxed);
-    ReportPageLoadTimeStats(web_performance_timing_);
+    ReportPageLoadTimeStats(web_performance_timing_, navigation_url_);
     web_performance_timing_.Reset();
     render_init_block_.store(-1, std::memory_order_relaxed);
 #else
     web_performance_timing_.render_init_block = render_init_block_;
-    ReportPageLoadTimeStats(web_performance_timing_);
+    ReportPageLoadTimeStats(web_performance_timing_, navigation_url_);
     web_performance_timing_.Reset();
     render_init_block_ = -1;
 #endif
