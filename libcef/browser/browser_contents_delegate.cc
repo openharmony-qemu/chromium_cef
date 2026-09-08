@@ -95,7 +95,7 @@ constexpr char kTabsUpdateStatusKey[] = "status";
 #endif
 
 #if BUILDFLAG(ARKWEB_NETWORK_LOAD)
-const std::string FAILING_URL = "arkweb-error://webdata/";
+constexpr char FAILING_URL[] = "arkweb-error://webdata/";
 #endif
 
 }  // namespace
@@ -603,7 +603,7 @@ void CefBrowserContentsDelegate::DidFinishNavigation(
 
 #if BUILDFLAG(ARKWEB_NETWORK_LOAD)
   std::string navUrl = navigation_handle->GetURL().spec();
-  if (navigation_handle->IsInPrimaryMainFrame() && (navUrl != FAILING_URL) &&
+  if (navigation_handle->IsInPrimaryMainFrame() && (navUrl.compare(FAILING_URL) != 0) &&
       error_code != net::OK && !navigation_handle->IsDownload()) {
     const auto global_id = frame_util::GetGlobalId(navigation_handle);
     CefRefPtr<CefFrameHostImpl> frame =
@@ -767,7 +767,8 @@ void CefBrowserContentsDelegate::DidFailLoad(
   OnLoadEnd(frame, validated_url, error_code);
 #if BUILDFLAG(ARKWEB_NETWORK_LOAD)
   // Keep same behavior with webview onPageStareted and onPageFinished.
-  if (render_frame_host && render_frame_host->IsInPrimaryMainFrame() && (validated_url.spec() != FAILING_URL)) {
+  if (render_frame_host && render_frame_host->IsInPrimaryMainFrame() &&
+      (validated_url.spec().compare(FAILING_URL) != 0)) {
     if (error_code == net::ERR_ABORTED) {
       AsArkWebBrowserContentsDelegateExt()->OnLoadFinished(frame, frame->GetURL());
     } else if (error_code == net::ERR_HTTP_RESPONSE_CODE_FAILURE) {
@@ -797,7 +798,7 @@ void CefBrowserContentsDelegate::DidFinishLoad(
 
   OnLoadEnd(frame, validated_url, http_status_code);
 #if BUILDFLAG(ARKWEB_NETWORK_LOAD)
-  if (render_frame_host->IsInPrimaryMainFrame() && (validated_url.spec() != FAILING_URL)) {
+  if (render_frame_host->IsInPrimaryMainFrame() && (validated_url.spec().compare(FAILING_URL) != 0)) {
     last_did_finish_load_url_ = validated_url.spec();
   }
 #endif
