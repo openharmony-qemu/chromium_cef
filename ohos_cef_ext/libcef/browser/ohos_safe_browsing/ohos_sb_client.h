@@ -89,7 +89,12 @@ class SbClient : public content::WebContentsObserver {
 
   void NotifySafeBrowsingResult(OhosSbBlockingPageInfo& info, bool is_unprocessed);
 
-  std::unique_ptr<SbBlockPage> CreateSbBlockPage(const OhosSbBlockingPageInfo& blocking_page_info);
+  std::unique_ptr<SbBlockPage> CreateSbBlockPage(
+      const OhosSbBlockingPageInfo& blocking_page_info, const std::optional<std::string>& html);
+
+  void OverrideAndDisplayBlockingPage(
+      const OhosSbBlockingPageInfo& blocking_page_info,
+      base::OnceCallback<void(const std::optional<std::string>&)> show_interstitial_callback);
 
   static bool InMaliciousAllowlist(const PrefService* prefs,
                                    const std::string& url,
@@ -104,10 +109,7 @@ class SbClient : public content::WebContentsObserver {
   void NavigationEntryCommitted(
       const content::LoadCommittedDetails& load_details) override;
 
-  void DisplayBlockingPage(const GURL& url,
-                           int policy,
-                           OHSBThreatType block_type,
-                           const std::string& app_locale);
+  void DisplayBlockingPage(const OhosSbBlockingPageInfo& blocking_page_info, const std::optional<std::string>& html);
 
   void ReportBlockingPage(
       content::NavigationEntry* entry,
@@ -126,8 +128,17 @@ class SbClient : public content::WebContentsObserver {
 
   void NotifySafeBrowsingCheckFinish(OHSBThreatType threat_type);
 
+  void NotifySafeBrowsingHit(const GURL& url,
+                             int code,
+                             OHSBThreatType block_type,
+                             int policy,
+                             int64_t response_key);
+ 
+
   raw_ptr<PrefService> prefs_;
   bool incognito_mode_{false};
+
+  base::WeakPtrFactory<SbClient> weak_ptr_factory_{this};
 };
 
 }  // namespace ohos_safe_browsing

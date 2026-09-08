@@ -281,7 +281,11 @@ void SbClient::ShowBlockingPage() {
       }
 
       if (is_display_block_page) {
-        DisplayBlockingPage(url, policy, block_type, lang);
+        OverrideAndDisplayBlockingPage(
+            blocking_page_info,
+            base::BindOnce(&SbClient::DisplayBlockingPage,
+                            weak_ptr_factory_.GetWeakPtr(),
+                            blocking_page_info));
         return;
       }
 
@@ -454,9 +458,11 @@ void SbClient::HandleBlockingPage(
       info.info_hw_code, info.info_policy, info.info_original_block_type);
 
   if (is_display_block_page) {
-    DisplayBlockingPage(
-        info.info_url, info.info_policy,
-        info.info_block_type, base::i18n::GetConfiguredLocale());
+    OverrideAndDisplayBlockingPage(
+        info,
+        base::BindOnce(&SbClient::DisplayBlockingPage,
+                        weak_ptr_factory_.GetWeakPtr(),
+                        info));
   }
 }
 
@@ -580,13 +586,50 @@ void SbClient::NotifySafeBrowsingResult(OhosSbBlockingPageInfo& info, bool is_un
       info.info_hw_code, info.info_policy, info.info_original_block_type);
 }
 
-std::unique_ptr<SbBlockPage> SbClient::CreateSbBlockPage(const OhosSbBlockingPageInfo& blocking_page_info) {
+std::unique_ptr<SbBlockPage> SbClient::CreateSbBlockPage(
+    const OhosSbBlockingPageInfo& blocking_page_info, const std::optional<std::string>& html) {
   std::unique_ptr<SbControllerClient> controller = std::make_unique<SbControllerClient>(
       web_contents(), prefs_, blocking_page_info.info_url, base::i18n::GetConfiguredLocale(), incognito_mode_);
   std::unique_ptr<SbBlockPage> block_page = std::make_unique<SbBlockPage>(
       web_contents(), blocking_page_info.info_url, blocking_page_info.info_policy,
       blocking_page_info.info_block_type, std::move(controller));
+  if (html) {
+    block_page->SetHTMLContents(*html);
+  }
   return block_page;
+}
+
+void SbClient::OverrideAndDisplayBlockingPage(
+    const OhosSbBlockingPageInfo& blocking_page_info,
+    base::OnceCallback<void(const std::optional<std::string>&)> show_interstitial_callback) {
+  if (!web_contents() || web_contents()->IsBeingDestroyed()) {
+    return;
+  }
+ 
+  GURL url = blocking_page_info.info_url;
+  int policy = blocking_page_info.info_policy;
+  OHSBThreatType block_type = blocking_page_info.info_block_type;
+  LOG(INFO) << "SafeBrowsing " << __func__ << ", policy: " << policy
+            << ", type: " << block_type;
+ 
+  // Check if external SafeBrowsing interstitial mode is enabled
+  if (web_contents()->IsSafeBrowsingExternalInterstitialEnabled()) {
+    auto* tab_helper =
+        SafeBrowsingTabHelper::FromWebContents(web_contents());
+    if (!tab_helper) {
+      LOG(ERROR) << "safe browsing tab helper not exist";
+      return;
+    }
+    auto response = std::make_unique<CefSafeBrowsingResponse>(
+        web_contents(), blocking_page_info, std::move(show_interstitial_callback));
+    int64_t response_key = response->response_key();
+    tab_helper->RegisterCefSafeBrowsingResponse(response_key, std::move(response));
+ 
+    NotifySafeBrowsingHit(url, blocking_page_info.info_hw_code, block_type, policy, response_key);
+    return;
+  }
+ 
+  std::move(show_interstitial_callback).Run(std::nullopt);
 }
 
 SbClient::BlockingPageInfoCache::BlockingPageInfoCache(content::WebContents* web_contents, bool incognito_mode)
@@ -620,27 +663,22 @@ bool SbClient::BlockingPageInfoCache::HasBlockingPageInfoForUrl(const GURL& url)
   return ohos_sb_blocking_page_info_cache_.contains(url);
 }
 
-void SbClient::DisplayBlockingPage(const GURL& url,
-                                   int policy,
-                                   OHSBThreatType block_type,
-                                   const std::string& app_locale) {
+void SbClient::DisplayBlockingPage(
+    const OhosSbBlockingPageInfo& blocking_page_info, const std::optional<std::string>& html) {
   if (!web_contents() || web_contents()->IsBeingDestroyed()) {
     return;
   }
-  LOG(INFO) << "SafeBrowsing " << __func__ << ", policy: " << policy
-            << ", type: " << block_type;
+  LOG(INFO) << "SafeBrowsing " << __func__ << ", policy: " << blocking_page_info.info_policy
+            << ", type: " << blocking_page_info.info_block_type;
   if (SafeBrowsingConfigUtil::GetInstance().OptimizeEnable() &&
       web_contents() && !web_contents()->IsBeingDestroyed()) {
     web_contents()->Stop();
   }
 
-  auto controller = std::make_unique<SbControllerClient>(
-      web_contents(), prefs_, url, app_locale, incognito_mode_);
-  std::unique_ptr<SbBlockPage> blocking_page = std::make_unique<SbBlockPage>(
-      web_contents(), url, policy, block_type, std::move(controller));
+  std::unique_ptr<SbBlockPage> blocking_page = CreateSbBlockPage(blocking_page_info, html);
   base::WeakPtr<content::NavigationHandle> error_page_navigation_handle =
       web_contents()->GetController().LoadPostCommitErrorPage(
-          web_contents()->GetPrimaryMainFrame(), url,
+          web_contents()->GetPrimaryMainFrame(), blocking_page_info.info_url,
           blocking_page->GetHTMLContents());
   if (error_page_navigation_handle.get()) {
     security_interstitials::SecurityInterstitialTabHelper::
@@ -767,6 +805,37 @@ void SbClient::NotifySafeBrowsingCheckDetail(int code,
 
   load_handler->AsArkWebLoadHandlerExt()->OnSafeBrowsingCheckDetail(
       code, policy, threat);
+}
+
+void SbClient::NotifySafeBrowsingHit(const GURL& url,
+                                     int code,
+                                     OHSBThreatType block_type,
+                                     int policy,
+                                     int64_t response_key) {
+  if (!web_contents()) {
+    LOG(WARNING) << "NotifySafeBrowsingHit: web_contents is null";
+    return;
+  }
+ 
+  CefRefPtr<AlloyBrowserHostImpl> browser =
+      AlloyBrowserHostImpl::GetBrowserForContents(web_contents());
+  if (!browser.get()) {
+    LOG(WARNING) << "NotifySafeBrowsingHit: browser is null";
+    return;
+  }
+  CefRefPtr<CefClient> client = browser->GetClient();
+  if (!client.get()) {
+    LOG(WARNING) << "NotifySafeBrowsingHit: client is null";
+    return;
+  }
+  CefRefPtr<CefLoadHandler> load_handler = client->GetLoadHandler();
+  if (!load_handler.get()) {
+    LOG(WARNING) << "NotifySafeBrowsingHit: load_handler is null";
+    return;
+  }
+  int threat = static_cast<int>(block_type);
+  load_handler->AsArkWebLoadHandlerExt()->OnSafeBrowsingHit(
+      url.spec(), code, policy, threat, response_key);
 }
 
 WEB_CONTENTS_USER_DATA_KEY_IMPL(SbClient::BlockingPageInfoCache);

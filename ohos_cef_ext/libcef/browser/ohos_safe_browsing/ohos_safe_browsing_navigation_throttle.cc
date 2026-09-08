@@ -103,12 +103,17 @@ OhosSafeBrowsingNavigationThrottle::WillFailRequest() {
     return content::NavigationThrottle::DEFER;
   }
 
-  if (needs_show_blocking_page_) {
+  if (!needs_show_blocking_page_) {
+    return content::NavigationThrottle::PROCEED;
+  }
+
+  if (display_blocking_page_completed_) {
     return content::NavigationThrottle::ThrottleCheckResult(
       CANCEL, net::ERR_BLOCKED_BY_CLIENT, error_page_content_);
   }
 
-  return content::NavigationThrottle::PROCEED;
+  is_defer_ = true;
+  return content::NavigationThrottle::DEFER;
 }
 
 void OhosSafeBrowsingNavigationThrottle::CheckEvilUrlAndMaybeRetry() {
@@ -133,16 +138,12 @@ void OhosSafeBrowsingNavigationThrottle::CheckEvilUrlAndMaybeRetry() {
           url, blocking_page_info.info_block_type, blocking_page_info.info_policy,
           blocking_page_info.info_hw_code, handle->GetNetErrorCode());
 #endif
-          
       sb_client->NotifySafeBrowsingResult(blocking_page_info, false);
-      std::unique_ptr<SbBlockPage> blocking_page = sb_client->CreateSbBlockPage(blocking_page_info);
-      security_interstitials::SecurityInterstitialTabHelper::AssociateBlockingPage(
-          handle, std::move(blocking_page));
-      error_page_content_ = blocking_page->GetHTMLContents();
-      if (is_defer_) {
-        CancelDeferredNavigation(content::NavigationThrottle::ThrottleCheckResult(
-            CANCEL, net::ERR_BLOCKED_BY_CLIENT, error_page_content_));
-      }
+      sb_client->OverrideAndDisplayBlockingPage(
+          blocking_page_info,
+          base::BindOnce(&OhosSafeBrowsingNavigationThrottle::DisplayBlockingPage,
+                          weak_ptr_factory_.GetWeakPtr(),
+                          blocking_page_info));
       return;
     }
 
@@ -165,6 +166,30 @@ void OhosSafeBrowsingNavigationThrottle::CheckEvilUrlAndMaybeRetry() {
     if (is_defer_) {
       Resume();
     }
+  }
+}
+
+void OhosSafeBrowsingNavigationThrottle::DisplayBlockingPage(
+    const OhosSbBlockingPageInfo& blocking_page_info, const std::optional<std::string>& html) {
+  LOG(INFO) << "SafeBrowsing " << __func__ << ", policy: " << blocking_page_info.info_policy
+            << ", type: " << blocking_page_info.info_block_type;
+  content::NavigationHandle* handle = navigation_handle();
+  content::WebContents* web_contents = handle->GetWebContents();
+  SbClient* sb_client = GetSbClient(web_contents);
+  if (!sb_client) {
+    LOG(ERROR) << "DisplayBlockingPage has no sb_client.";
+    return;
+  }
+ 
+  std::unique_ptr<SbBlockPage> blocking_page = sb_client->CreateSbBlockPage(blocking_page_info, html);
+  error_page_content_ = blocking_page->GetHTMLContents();
+  security_interstitials::SecurityInterstitialTabHelper::AssociateBlockingPage(
+      handle, std::move(blocking_page));
+  display_blocking_page_completed_ = true;
+ 
+  if (is_defer_) {
+    CancelDeferredNavigation(content::NavigationThrottle::ThrottleCheckResult(
+        CANCEL, net::ERR_BLOCKED_BY_CLIENT, error_page_content_));
   }
 }
 

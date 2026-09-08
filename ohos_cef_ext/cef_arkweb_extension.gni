@@ -292,6 +292,8 @@ arkweb_safebrowsing_sources = [
   "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_sb_url_loader_throttle.h",
   "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/safe_browsing_metrics_collector.cc",
   "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/safe_browsing_metrics_collector.h",
+  "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/cef_safe_browsing_response.cc",
+  "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/cef_safe_browsing_response.h",
 ]
 
 arkweb_libcef_render_sources = [

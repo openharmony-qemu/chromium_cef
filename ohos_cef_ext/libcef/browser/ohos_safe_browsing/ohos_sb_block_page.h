@@ -53,14 +53,19 @@ class SbBlockPage : public SecurityInterstitialPage {
   bool IsUrlTrustListBlocked() const override;
 #endif
 
+  void SetHTMLContents(const std::string& html_contents) { html_contents_ = html_contents; };
+
  private:
   static std::unique_ptr<MetricsHelper> GetMetricsHelper(const GURL& url);
 
   void HandleCommand(
       security_interstitials::SecurityInterstitialCommand command);
 
+  std::string GetDefaultHTMLContents();
+
   OHSBThreatType block_type_;
   int policy_;
+  std::string html_contents_;
 };
 
 }  // namespace ohos_safe_browsing

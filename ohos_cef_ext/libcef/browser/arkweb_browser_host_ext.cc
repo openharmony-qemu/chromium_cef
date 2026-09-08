@@ -4307,6 +4307,21 @@ bool ArkWebBrowserHostExtImpl::IsSafeBrowsingDetectionDisabled() const {
   return GetWebContents()->IsSafeBrowsingDetectionDisabled();
 }
 
+void ArkWebBrowserHostExtImpl::EnableSafeBrowsingExternalInterstitial(bool enable) {
+  if (!GetWebContents()) {
+    return;
+  }
+  GetWebContents()->EnableSafeBrowsingExternalInterstitial(enable);
+}
+
+bool ArkWebBrowserHostExtImpl::IsSafeBrowsingExternalInterstitialEnabled() const {
+  if (!GetWebContents()) {
+    return false;
+  }
+
+  return GetWebContents()->IsSafeBrowsingExternalInterstitialEnabled();
+}
+
 void ArkWebBrowserHostExtImpl::HandleSafeBrowsingDetection(
     const std::string& url) {
   if (client_) {
@@ -4408,6 +4423,57 @@ void ArkWebBrowserHostExtImpl::OnSafeBrowsingDetectionResult(
   }
 
   safe_browsing_tab_helper->OnDetectionResult(safeBrowsingDetectionResult);
+}
+
+void ArkWebBrowserHostExtImpl::SafeBrowsingResponseShowInterstitial(
+    int64_t response_key, const std::string& html) const {
+  ohos_safe_browsing::SafeBrowsingTabHelper* safe_browsing_tab_helper = GetSafeBrowsingTabHelper();
+  if (!safe_browsing_tab_helper) {
+    LOG(ERROR) << "SafeBrowsingResponseShowInterstitial has no safe_browsing_tab_helper.";
+    return;
+  }
+
+  safe_browsing_tab_helper->SafeBrowsingResponseShowInterstitial(response_key, html);
+}
+
+void ArkWebBrowserHostExtImpl::SafeBrowsingResponseProceed(int64_t response_key) const {
+  ohos_safe_browsing::SafeBrowsingTabHelper* safe_browsing_tab_helper = GetSafeBrowsingTabHelper();
+  if (!safe_browsing_tab_helper) {
+    LOG(ERROR) << "SafeBrowsingResponseProceed has no safe_browsing_tab_helper.";
+    return;
+  }
+
+  safe_browsing_tab_helper->SafeBrowsingResponseProceed(response_key);
+}
+
+void ArkWebBrowserHostExtImpl::SafeBrowsingResponseBackToSafety(int64_t response_key) const {
+  ohos_safe_browsing::SafeBrowsingTabHelper* safe_browsing_tab_helper = GetSafeBrowsingTabHelper();
+  if (!safe_browsing_tab_helper) {
+    LOG(ERROR) << "SafeBrowsingResponseBackToSafety has no safe_browsing_tab_helper.";
+    return;
+  }
+
+  safe_browsing_tab_helper->SafeBrowsingResponseBackToSafety(response_key);
+}
+
+void ArkWebBrowserHostExtImpl::SafeBrowsingResponseDelete(int64_t response_key) {
+  ohos_safe_browsing::SafeBrowsingTabHelper* safe_browsing_tab_helper = GetSafeBrowsingTabHelper();
+  if (!safe_browsing_tab_helper) {
+    LOG(ERROR) << "SafeBrowsingResponseDelete has no safe_browsing_tab_helper.";
+    return;
+  }
+
+  safe_browsing_tab_helper->SafeBrowsingResponseDelete(response_key);
+}
+
+ohos_safe_browsing::SafeBrowsingTabHelper* ArkWebBrowserHostExtImpl::GetSafeBrowsingTabHelper() const {
+  auto web_contents = GetWebContents();
+  if (!web_contents) {
+    LOG(ERROR) << "GetSafeBrowsingTabHelper  web_contents is nullptr";
+    return nullptr;
+  }
+
+  return ohos_safe_browsing::SafeBrowsingTabHelper::FromWebContents(web_contents);
 }
 #endif  // BUILDFLAG(ARKWEB_SAFEBROWSING)
 
