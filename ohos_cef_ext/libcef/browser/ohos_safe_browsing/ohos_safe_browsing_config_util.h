@@ -22,6 +22,10 @@ class SafeBrowsingConfigUtil {
   static SafeBrowsingConfigUtil& GetInstance();
   
   bool OptimizeEnable();
+
+  int GetMaliciousUrlCheckWaitTime();
+
+  bool SbOverlayErrorPage();
 };
 }
 #endif

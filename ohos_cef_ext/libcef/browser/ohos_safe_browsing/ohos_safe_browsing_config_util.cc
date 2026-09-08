@@ -44,4 +44,24 @@ bool SafeBrowsingConfigUtil::OptimizeEnable() {
   return base::CommandLine::ForCurrentProcess()->HasSwitch(switches::kEnableSafeBrowserOptimize);
 }
  
+int SafeBrowsingConfigUtil::GetMaliciousUrlCheckWaitTime() {
+#if BUILDFLAG(ARKWEB_EXT_SAFEBROWSING)
+  auto safeBrowsingConfig =
+      raw_ptr<nweb_ex::AlloyArkWebSafeBrowsingConfig>(nweb_ex::AlloyArkWebSafeBrowsingConfig::GetInstance());
+  return safeBrowsingConfig->GetMaliciousUrlCheckWaitTime();
+#else
+  return 0;
+#endif
+}
+
+bool SafeBrowsingConfigUtil::SbOverlayErrorPage() {
+#if BUILDFLAG(ARKWEB_EXT_SAFEBROWSING)
+  auto safeBrowsingConfig =
+      raw_ptr<nweb_ex::AlloyArkWebSafeBrowsingConfig>(nweb_ex::AlloyArkWebSafeBrowsingConfig::GetInstance());
+  return safeBrowsingConfig->SbOverlayErrorPage();
+#else
+  return false;
+#endif
+}
+ 
 }  // namespace ohos_safe_browsing

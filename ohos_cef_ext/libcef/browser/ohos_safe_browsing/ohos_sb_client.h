@@ -81,7 +81,15 @@ class SbClient : public content::WebContentsObserver {
                                  int hw_code,
                                  const GURL& redirect_url);
 
-  bool ShouldShowBlockingPage(const OhosSbBlockingPageInfo& info);
+  bool ShouldShowBlockingPage(const OhosSbBlockingPageInfo& info) const;
+
+  bool ShouldBlockCurrentUrl(const GURL& url) const;
+
+  bool CheckAndBlockRedirectChain(const std::vector<GURL>& server_redirect_chain) const;
+
+  void NotifySafeBrowsingResult(OhosSbBlockingPageInfo& info, bool is_unprocessed);
+
+  std::unique_ptr<SbBlockPage> CreateSbBlockPage(const OhosSbBlockingPageInfo& blocking_page_info);
 
   static bool InMaliciousAllowlist(const PrefService* prefs,
                                    const std::string& url,

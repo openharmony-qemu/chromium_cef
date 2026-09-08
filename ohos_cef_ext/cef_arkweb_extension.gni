@@ -280,12 +280,16 @@ arkweb_anti_tracking_placeholder_source = [
 arkweb_safebrowsing_sources = [
   "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_safe_browsing_config_util.cc",
   "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_safe_browsing_config_util.h",
+  "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_safe_browsing_navigation_throttle.cc",
+  "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_safe_browsing_navigation_throttle.h",
   "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_safe_browsing_tab_helper.cc",
   "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_safe_browsing_tab_helper.h",
   "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_sb_client.cc",
   "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_sb_client.h",
   "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_sb_malicious_allowlist.cc",
   "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_sb_malicious_allowlist.h",
+  "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_sb_url_loader_throttle.cc",
+  "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_sb_url_loader_throttle.h",
   "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/safe_browsing_metrics_collector.cc",
   "//cef/ohos_cef_ext/libcef/browser/ohos_safe_browsing/safe_browsing_metrics_collector.h",
 ]

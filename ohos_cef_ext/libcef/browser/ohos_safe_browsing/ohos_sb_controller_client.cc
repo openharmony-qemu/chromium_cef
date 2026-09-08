@@ -95,14 +95,13 @@ void SbControllerClient::Reload() {
       std::string(url_.has_host() ? url_.host() : url_.spec()), incognito_mode_);
   if (ohos_safe_browsing::SafeBrowsingConfigUtil::GetInstance().OptimizeEnable()) {
     content::NavigationEntry* entry = web_contents_->GetController().GetPostCommitErrorReplacedEntry();
-    if (!entry) {
-      LOG(ERROR) << "post commit error replaced entry is nullptr";
-      return;
+    if (entry) {
+      ohos_safe_browsing::NavigationEntrySafeBrowsingData* safe_browsing_data =
+          ohos_safe_browsing::NavigationEntrySafeBrowsingData::GetOrCreate(entry);
+      safe_browsing_data->SetPreviouslyShownBlockingPageInfo(ohos_safe_browsing::OhosSbBlockingPageInfo());
+    } else {
+      LOG(WARNING) << "post commit error replaced entry is nullptr";
     }
-
-    ohos_safe_browsing::NavigationEntrySafeBrowsingData* safe_browsing_data =
-        ohos_safe_browsing::NavigationEntrySafeBrowsingData::GetOrCreate(entry);
-    safe_browsing_data->SetPreviouslyShownBlockingPageInfo(ohos_safe_browsing::OhosSbBlockingPageInfo());
   }
   web_contents_->GetController().Reload(content::ReloadType::NORMAL, true);
 #endif  // BUILDFLAG(ARKWEB_SAFEBROWSING)
