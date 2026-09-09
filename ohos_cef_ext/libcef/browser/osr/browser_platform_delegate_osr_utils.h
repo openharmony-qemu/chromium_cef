@@ -46,6 +46,9 @@ public:
 #if BUILDFLAG(ARKWEB_VSYNC_SCHEDULE)
     void UpdateBypassVsyncCondition(CefRenderWidgetHostViewOSR* view);
 #endif
+#if BUILDFLAG(ARKWEB_DFX_DUMP)
+    void UpdateAsyncStackId(CefRenderWidgetHostViewOSR* view);
+#endif
 
 #if BUILDFLAG(ARKWEB_OFFLINE_WEB_EVICT_BACK_BUFFERS)
     void EvictFrameBackBuffersWhenNWebWasHidden();

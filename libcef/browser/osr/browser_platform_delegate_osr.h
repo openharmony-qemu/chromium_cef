@@ -162,6 +162,9 @@ class CefBrowserPlatformDelegateOsr
 #if BUILDFLAG(ARKWEB_VSYNC_SCHEDULE)
   int32_t condition_ = 0;
 #endif
+#if BUILDFLAG(ARKWEB_DFX_DUMP)
+  uint64_t stackId_ = 0;
+#endif
 };
 
 #endif  // CEF_LIBCEF_BROWSER_OSR_BROWSER_PLATFORM_DELEGATE_OSR_H_
