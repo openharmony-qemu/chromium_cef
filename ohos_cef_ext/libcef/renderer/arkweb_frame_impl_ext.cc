@@ -971,6 +971,134 @@ void ArkwebFrameExtImpl::ExecuteSelectCommand(
   std::move(callback).Run(result);
 }
 
+void ArkwebFrameExtImpl::ExecuteFocusCommand(
+    const std::string& xpath,
+    bool suppress_keyboard,
+    cef::mojom::RenderFrame::ExecuteFocusCommandCallback callback) {
+  int32_t result =
+      static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::FAILED);
+  auto render_frame = content::RenderFrame::FromWebFrame(frame_);
+  if (!render_frame) {
+    LOG(ERROR) << "ExecuteFocusCommand: render_frame NULL";
+    std::move(callback).Run(result);
+    return;
+  }
+  result = render_frame->ExecuteFocusCommand(xpath, suppress_keyboard);
+  std::move(callback).Run(result);
+}
+
+void ArkwebFrameExtImpl::ExecuteInputModifyCommand(
+    const std::string& content,
+    cef::mojom::RenderFrame::ExecuteInputModifyCommandCallback callback) {
+  int32_t result =
+      static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::FAILED);
+  auto render_frame = content::RenderFrame::FromWebFrame(frame_);
+  if (!render_frame) {
+    LOG(ERROR) << "ExecuteInputModifyCommand: render_frame NULL";
+    std::move(callback).Run(result);
+    return;
+  }
+  result = render_frame->ExecuteInputModifyCommand(content);
+  std::move(callback).Run(result);
+}
+
+void ArkwebFrameExtImpl::ExecuteInputInsertCommand(
+    const std::string& content,
+    int32_t index,
+    cef::mojom::RenderFrame::ExecuteInputInsertCommandCallback callback) {
+  int32_t result =
+      static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::FAILED);
+  auto render_frame = content::RenderFrame::FromWebFrame(frame_);
+  if (!render_frame) {
+    LOG(ERROR) << "ExecuteInputInsertCommand: render_frame NULL";
+    std::move(callback).Run(result);
+    return;
+  }
+  result = render_frame->ExecuteInputInsertCommand(content, index);
+  std::move(callback).Run(result);
+}
+
+void ArkwebFrameExtImpl::ExecuteAutoFillCommand(
+    const std::string& xpath,
+    const std::string& content,
+    int32_t index,
+    int32_t mode,
+    cef::mojom::RenderFrame::ExecuteAutoFillCommandCallback callback) {
+  int32_t result =
+      static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::FAILED);
+  auto render_frame = content::RenderFrame::FromWebFrame(frame_);
+  if (!render_frame) {
+    LOG(ERROR) << "ExecuteAutoFillCommand: render_frame NULL";
+    std::move(callback).Run(result);
+    return;
+  }
+  result = render_frame->ExecuteAutoFillCommand(xpath, content, index, mode);
+  std::move(callback).Run(result);
+}
+
+void ArkwebFrameExtImpl::ExecuteClickCommand(
+    const std::string& xpath,
+    cef::mojom::RenderFrame::ExecuteClickCommandCallback callback) {
+  int32_t result =
+      static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::FAILED);
+  auto render_frame = content::RenderFrame::FromWebFrame(frame_);
+  if (!render_frame) {
+    LOG(ERROR) << "ExecuteClickCommand: render_frame NULL";
+    std::move(callback).Run(result);
+    return;
+  }
+  result = render_frame->ExecuteClickCommand(xpath);
+  std::move(callback).Run(result);
+}
+
+void ArkwebFrameExtImpl::ExecuteScrollCommand(
+    const std::string& xpath,
+    const std::string& align,
+    int32_t offset,
+    cef::mojom::RenderFrame::ExecuteScrollCommandCallback callback) {
+  int32_t result =
+      static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::FAILED);
+  auto render_frame = content::RenderFrame::FromWebFrame(frame_);
+  if (!render_frame) {
+    LOG(ERROR) << "ExecuteScrollCommand: render_frame NULL";
+    std::move(callback).Run(result);
+    return;
+  }
+  result = render_frame->ExecuteScrollCommand(xpath, align, offset);
+  std::move(callback).Run(result);
+}
+
+void ArkwebFrameExtImpl::ExecuteInputSelectCommand(
+    int32_t start_index,
+    int32_t finish_index,
+    cef::mojom::RenderFrame::ExecuteInputSelectCommandCallback callback) {
+  int32_t result =
+      static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::FAILED);
+  auto render_frame = content::RenderFrame::FromWebFrame(frame_);
+  if (!render_frame) {
+    LOG(ERROR) << "ExecuteInputSelectCommand: render_frame NULL";
+    std::move(callback).Run(result);
+    return;
+  }
+  result = render_frame->ExecuteInputSelectCommand(start_index, finish_index);
+  std::move(callback).Run(result);
+}
+
+void ArkwebFrameExtImpl::ExecuteInputSetCursorCommand(
+    int32_t index,
+    cef::mojom::RenderFrame::ExecuteInputSetCursorCommandCallback callback) {
+  int32_t result =
+      static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::FAILED);
+  auto render_frame = content::RenderFrame::FromWebFrame(frame_);
+  if (!render_frame) {
+    LOG(ERROR) << "ExecuteInputSetCursorCommand: render_frame NULL";
+    std::move(callback).Run(result);
+    return;
+  }
+  result = render_frame->ExecuteInputSetCursorCommand(index);
+  std::move(callback).Run(result);
+}
+
 void ArkwebFrameExtImpl::SetFocusByPosition(
     float x,
     float y,

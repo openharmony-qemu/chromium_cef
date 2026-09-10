@@ -219,6 +219,45 @@ const char kNWebId[] = "nweb_id";
 namespace {
 
 #if BUILDFLAG(ARKWEB_INPUT_EVENTS)
+
+constexpr int32_t kAIPageBrowserHostUiHopTimeoutMs = 4000;
+ 
+int32_t PostAIPageIntCommandToUiAndWait(base::OnceCallback<int32_t()> command) {
+  if (CEF_CURRENTLY_ON_UIT()) {
+    return std::move(command).Run();
+  }
+ 
+  if (CEF_CURRENTLY_ON_IOT()) {
+    LOG(ERROR) << "[AIPageCmd] sync browser host command cannot hop from IO thread";
+    return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::FAILED);
+  }
+ 
+  auto result_promise = std::make_shared<std::promise<int32_t>>();
+  std::future<int32_t> result_future = result_promise->get_future();
+ 
+  CEF_POST_TASK(
+      CEF_UIT,
+      base::BindOnce(
+          [](std::shared_ptr<std::promise<int32_t>> promise,
+             base::OnceCallback<int32_t()> command) {
+            if (promise) {
+              promise->set_value(std::move(command).Run());
+            }
+          },
+          result_promise, std::move(command)));
+ 
+  auto status = result_future.wait_for(
+      std::chrono::milliseconds(kAIPageBrowserHostUiHopTimeoutMs));
+  if (status == std::future_status::ready) {
+    return result_future.get();
+  }
+ 
+  LOG(ERROR) << "[AIPageCmd] browser host UI hop timeout";
+  return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::FAILED);
+}
+#endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
+
+#if BUILDFLAG(ARKWEB_INPUT_EVENTS)
 static float DEFAULT_MIN_ZOOM_FACTOR = 0.01f;
 static float DEFAULT_MAX_ZOOM_FACTOR = 100.0f;
 
@@ -1692,6 +1731,179 @@ int32_t ArkWebBrowserHostExtImpl::ExecuteSelectCommand(
         ->ExecuteSelectCommand(xpath, indexes, values);
   }
   LOG(ERROR) << "ExecuteSelectCommand: main frame is null or invalid";
+  return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
+}
+
+int32_t ArkWebBrowserHostExtImpl::ExecuteFocusCommand(
+    const std::string& xpath,
+    bool suppress_keyboard) {
+  if (!CEF_CURRENTLY_ON_UIT()) {
+    CefRefPtr<ArkWebBrowserHostExtImpl> self(this);
+    return PostAIPageIntCommandToUiAndWait(base::BindOnce(
+        [](CefRefPtr<ArkWebBrowserHostExtImpl> self, std::string xpath,
+           bool suppress_keyboard) {
+          return self->ExecuteFocusCommand(xpath, suppress_keyboard);
+        },
+        self, xpath, suppress_keyboard));
+  }
+
+  auto frame = GetMainFrame();
+  if (frame && frame->IsValid()) {
+    return static_cast<ArkwebFrameHostExtImpl*>(frame.get())
+        ->ExecuteFocusCommand(xpath, suppress_keyboard);
+  }
+  LOG(ERROR) << "ExecuteFocusCommand: main frame is null or invalid";
+  return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
+}
+
+int32_t ArkWebBrowserHostExtImpl::ExecuteInputModifyCommand(
+    const std::string& content) {
+  if (!CEF_CURRENTLY_ON_UIT()) {
+    CefRefPtr<ArkWebBrowserHostExtImpl> self(this);
+    return PostAIPageIntCommandToUiAndWait(base::BindOnce(
+        [](CefRefPtr<ArkWebBrowserHostExtImpl> self, std::string content) {
+          return self->ExecuteInputModifyCommand(content);
+        },
+        self, content));
+  }
+
+  auto frame = GetMainFrame();
+  if (frame && frame->IsValid()) {
+    return static_cast<ArkwebFrameHostExtImpl*>(frame.get())
+        ->ExecuteInputModifyCommand(content);
+  }
+  LOG(ERROR) << "ExecuteInputModifyCommand: main frame is null or invalid";
+  return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
+}
+
+int32_t ArkWebBrowserHostExtImpl::ExecuteInputInsertCommand(
+    const std::string& content,
+    int32_t index) {
+  if (!CEF_CURRENTLY_ON_UIT()) {
+    CefRefPtr<ArkWebBrowserHostExtImpl> self(this);
+    return PostAIPageIntCommandToUiAndWait(base::BindOnce(
+        [](CefRefPtr<ArkWebBrowserHostExtImpl> self, std::string content,
+           int32_t index) {
+          return self->ExecuteInputInsertCommand(content, index);
+        },
+        self, content, index));
+  }
+
+  auto frame = GetMainFrame();
+  if (frame && frame->IsValid()) {
+    return static_cast<ArkwebFrameHostExtImpl*>(frame.get())
+        ->ExecuteInputInsertCommand(content, index);
+  }
+  LOG(ERROR) << "ExecuteInputInsertCommand: main frame is null or invalid";
+  return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
+}
+
+int32_t ArkWebBrowserHostExtImpl::ExecuteAutoFillCommand(
+    const std::string& xpath,
+    const std::string& content,
+    int32_t index,
+    int32_t mode,
+    int32_t remaining_timeout_ms) {
+  auto remaining_timeout = base::Milliseconds(remaining_timeout_ms);
+  if (!CEF_CURRENTLY_ON_UIT()) {
+    CefRefPtr<ArkWebBrowserHostExtImpl> self(this);
+    return PostAIPageIntCommandToUiAndWait(base::BindOnce(
+        [](CefRefPtr<ArkWebBrowserHostExtImpl> self, std::string xpath,
+           std::string content, int32_t index, int32_t mode,
+           int32_t remaining_timeout_ms) {
+          return self->ExecuteAutoFillCommand(
+              xpath, content, index, mode, remaining_timeout_ms);
+        },
+        self, xpath, content, index, mode, remaining_timeout_ms));
+  }
+
+  auto frame = GetMainFrame();
+  if (frame && frame->IsValid()) {
+    return static_cast<ArkwebFrameHostExtImpl*>(frame.get())
+        ->ExecuteAutoFillCommand(xpath, content, index, mode, remaining_timeout);
+  }
+  LOG(ERROR) << "ExecuteAutoFillCommand: main frame is null or invalid";
+  return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
+}
+
+int32_t ArkWebBrowserHostExtImpl::ExecuteClickCommand(
+    const std::string& xpath) {
+  if (!CEF_CURRENTLY_ON_UIT()) {
+    CefRefPtr<ArkWebBrowserHostExtImpl> self(this);
+    return PostAIPageIntCommandToUiAndWait(base::BindOnce(
+        [](CefRefPtr<ArkWebBrowserHostExtImpl> self, std::string xpath) {
+          return self->ExecuteClickCommand(xpath);
+        },
+        self, xpath));
+  }
+  auto frame = GetMainFrame();
+  if (frame && frame->IsValid()) {
+    return static_cast<ArkwebFrameHostExtImpl*>(frame.get())
+        ->ExecuteClickCommand(xpath);
+  }
+  LOG(ERROR) << "ExecuteClickCommand: main frame is null or invalid";
+  return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
+}
+
+int32_t ArkWebBrowserHostExtImpl::ExecuteScrollCommand(
+    const std::string& xpath,
+    const std::string& align,
+    int32_t offset) {
+  if (!CEF_CURRENTLY_ON_UIT()) {
+    CefRefPtr<ArkWebBrowserHostExtImpl> self(this);
+    return PostAIPageIntCommandToUiAndWait(base::BindOnce(
+        [](CefRefPtr<ArkWebBrowserHostExtImpl> self, std::string xpath,
+           std::string align, int32_t offset) {
+          return self->ExecuteScrollCommand(xpath, align, offset);
+        },
+        self, xpath, align, offset));
+  }
+  auto frame = GetMainFrame();
+  if (frame && frame->IsValid()) {
+    return static_cast<ArkwebFrameHostExtImpl*>(frame.get())
+        ->ExecuteScrollCommand(xpath, align, offset);
+  }
+  LOG(ERROR) << "ExecuteScrollCommand: main frame is null or invalid";
+  return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
+}
+
+int32_t ArkWebBrowserHostExtImpl::ExecuteInputSelectCommand(
+    int32_t start_index,
+    int32_t finish_index) {
+  if (!CEF_CURRENTLY_ON_UIT()) {
+    CefRefPtr<ArkWebBrowserHostExtImpl> self(this);
+    return PostAIPageIntCommandToUiAndWait(base::BindOnce(
+        [](CefRefPtr<ArkWebBrowserHostExtImpl> self, int32_t start_index,
+           int32_t finish_index) {
+          return self->ExecuteInputSelectCommand(start_index, finish_index);
+        },
+        self, start_index, finish_index));
+  }
+  auto frame = GetMainFrame();
+  if (frame && frame->IsValid()) {
+    return static_cast<ArkwebFrameHostExtImpl*>(frame.get())
+        ->ExecuteInputSelectCommand(start_index, finish_index);
+  }
+  LOG(ERROR) << "ExecuteInputSelectCommand: main frame is null or invalid";
+  return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
+}
+
+int32_t ArkWebBrowserHostExtImpl::ExecuteInputSetCursorCommand(
+    int32_t index) {
+  if (!CEF_CURRENTLY_ON_UIT()) {
+    CefRefPtr<ArkWebBrowserHostExtImpl> self(this);
+    return PostAIPageIntCommandToUiAndWait(base::BindOnce(
+        [](CefRefPtr<ArkWebBrowserHostExtImpl> self, int32_t index) {
+          return self->ExecuteInputSetCursorCommand(index);
+        },
+        self, index));
+  }
+  auto frame = GetMainFrame();
+  if (frame && frame->IsValid()) {
+    return static_cast<ArkwebFrameHostExtImpl*>(frame.get())
+        ->ExecuteInputSetCursorCommand(index);
+  }
+  LOG(ERROR) << "ExecuteInputSetCursorCommand: main frame is null or invalid";
   return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
 }
 
