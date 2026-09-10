@@ -225,6 +225,13 @@ CefDevToolsMessageHandler::CefDevToolsMessageHandler(
         }
         return Result{false, {}};
       }, weak_factory_.GetWeakPtr());
+  method_handlers_["getHostConfig"] = base::BindRepeating(
+      [](base::WeakPtr<CefDevToolsMessageHandler> self, const base::Value::List& params) {
+        if (self) {
+          return self->GetHostConfig(params);
+        }
+        return Result{false, {}};
+      }, weak_factory_.GetWeakPtr());
 
   protocol_message_handlers_["Page.bringToFront"] = base::BindRepeating(
       [](base::WeakPtr<CefDevToolsMessageHandler> self, const base::Value::List& params) {
@@ -261,6 +268,10 @@ dock_mode_changed_(false) {
                           base::Unretained(this));
   method_handlers_["setIsDocked"] = base::BindRepeating(
       &CefDevToolsMessageHandler::SetDockMode, base::Unretained(this));
+  method_handlers_["getHostConfig"] = base::BindRepeating(
+      // method_handlers_ is a private member of this,
+      // never lives longer than this.
+      &CefDevToolsMessageHandler::GetHostConfig, base::Unretained(this));
 
   protocol_message_handlers_["Page.bringToFront"] = base::BindRepeating(
       &CefDevToolsMessageHandler::PageBringToFront, base::Unretained(this));
@@ -550,6 +561,16 @@ Result CefDevToolsMessageHandler::SetDockMode(const base::Value::List& params) {
   dock_mode_changed_ = true;
  
   return {true, {}};
+}
+
+Result CefDevToolsMessageHandler::GetHostConfig(const base::Value::List&) {
+  base::Value::Dict response_dict;
+
+  base::Value::Dict flexible_layout_dict;
+  flexible_layout_dict.Set("verticalDrawerEnabled", true);
+  response_dict.Set("devToolsFlexibleLayout", std::move(flexible_layout_dict));
+
+  return {true, base::Value(std::move(response_dict))};
 }
 
 Result CefDevToolsMessageHandler::PageBringToFront(const base::Value::List&) {

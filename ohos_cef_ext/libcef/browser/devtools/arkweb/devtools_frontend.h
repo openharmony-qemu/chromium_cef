@@ -159,6 +159,8 @@ class CefDevToolsFrontend : public content::WebContentsObserver,
   bool open_new_window_for_popups() const {
     return open_new_window_for_popups_;
   }
+
+  bool ReloadInspectedWebContents(bool bypass_cache);
 #endif  // BUILDFLAG(ARKWEB_DEVTOOLS)
 
  private:

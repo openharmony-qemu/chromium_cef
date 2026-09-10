@@ -1671,3 +1671,17 @@ void CefDevToolsFrontend::AddDevToolsExtensionsToClient() {
                      base::Value(std::move(results)));
 }
 #endif // BUILDFLAG(ARKWEB_ARKWEB_EXTENSIONS)
+
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+bool CefDevToolsFrontend::ReloadInspectedWebContents(bool bypass_cache) {
+  // Only route reload via front-end if the agent is attached.
+  if (!inspected_contents_ ||
+      inspected_contents_->GetCrashedStatus() !=
+          base::TERMINATION_STATUS_STILL_RUNNING) {
+    return false;
+  }
+  CallClientFunction("DevToolsAPI", "reloadInspectedPage",
+                     base::Value(bypass_cache));
+  return true;
+}
+#endif  // BUILDFLAG(ARKWEB_DEVTOOLS)

@@ -51,6 +51,10 @@
 #include "ohos_cef_ext/libcef/browser/browser_host_base_for_include.cc"
 #endif
 
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+#include "ohos_cef_ext/libcef/browser/devtools/arkweb/devtools_frontend.h"
+#endif  // BUILDFLAG(ARKWEB_DEVTOOLS)
+
 namespace {
 
 // Associates a CefBrowserHostBase instance with a WebContents. This object will
@@ -1203,6 +1207,20 @@ bool CefBrowserHostBase::IsLoading() {
 }
 
 void CefBrowserHostBase::Reload() {
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+  if (CEF_CURRENTLY_ON_UIT()) {
+    CefDevToolsFrontend* devtools_frontend =
+        CefDevToolsFrontend::FindByInspectedContents(GetWebContents());
+    if (devtools_frontend) {
+      const bool bypass_cache = false;
+      if (devtools_frontend->ReloadInspectedWebContents(bypass_cache)) {
+        LOG(INFO) << "Reload handled by devtools";
+        return;
+      }
+    }
+  }
+#endif  // BUILDFLAG(ARKWEB_DEVTOOLS)
+
 #if BUILDFLAG(ARKWEB_EXT_RECEIVE_RESPONSE)
   ReloadEx(-1);
 #else
@@ -1224,6 +1242,20 @@ void CefBrowserHostBase::Reload() {
 }
 
 void CefBrowserHostBase::ReloadIgnoreCache() {
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+  if (CEF_CURRENTLY_ON_UIT()) {
+    CefDevToolsFrontend* devtools_frontend =
+        CefDevToolsFrontend::FindByInspectedContents(GetWebContents());
+    if (devtools_frontend) {
+      const bool bypass_cache = true;
+      if (devtools_frontend->ReloadInspectedWebContents(bypass_cache)) {
+        LOG(INFO) << "ReloadIgnoreCache handled by devtools";
+        return;
+      }
+    }
+  }
+#endif  // BUILDFLAG(ARKWEB_DEVTOOLS)
+
   auto callback = base::BindOnce(&CefBrowserHostBase::ReloadIgnoreCache, this);
   if (!CEF_CURRENTLY_ON_UIT()) {
     CEF_POST_TASK(CEF_UIT, std::move(callback));
