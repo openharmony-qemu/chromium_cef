@@ -71,6 +71,8 @@ class OhPageLoadMetricsObserver
       const page_load_metrics::mojom::PageLoadTiming& timing) override;
 
 #if BUILDFLAG(ARKWEB_NETWORK_DFX)
+  void OnFirstInputInPage(
+      const page_load_metrics::mojom::PageLoadTiming& timing) override;
   ObservePolicy OnRedirect(
       content::NavigationHandle* navigation_handle) override;
   void OnDomContentLoadedEventStart(
@@ -128,6 +130,7 @@ class OhPageLoadMetricsObserver
   bool reported_buffered_metrics_ = false;
   uint32_t main_frame_request_redirect_count_ = 0;
   OhWebPerformanceTiming web_performance_timing_;
+  GURL navigation_url_;
 #if BUILDFLAG(ARKWEB_CRASHPAD)
   static std::atomic<int64_t> navigation_start_timestamp_;
   static std::atomic<int64_t> render_init_block_;
