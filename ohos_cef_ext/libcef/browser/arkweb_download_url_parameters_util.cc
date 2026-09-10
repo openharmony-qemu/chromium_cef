@@ -69,10 +69,10 @@ void ParseDownloadUrlParamsIntoClass(
           net::HttpUtil::IsValidHeaderName(header_name)) {
         params->add_request_header(header_name, header_value);
         LOG(DEBUG) << "[ARKWEB_DOWNLOADER] set valid header: " << header_name
-                   << " = " << header_value;
+                   << " = ***" ;
       } else {
         LOG(WARNING) << "[ARKWEB_DOWNLOADER] skip invalid header - name: '"
-                     << header_name << "', value: '" << header_value << "'";
+                     << header_name << "', value: '***'";
       }
 
       current_pos = line_end + 2;
