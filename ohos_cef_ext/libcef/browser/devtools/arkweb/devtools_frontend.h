@@ -51,6 +51,9 @@ namespace content {
 class NavigationHandle;
 class RenderViewHost;
 class WebContents;
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+class ScopedAccessibilityMode;
+#endif  // BUILDFLAG(ARKWEB_DEVTOOLS)
 }  // namespace content
 
 class PrefService;
@@ -159,6 +162,8 @@ class CefDevToolsFrontend : public content::WebContentsObserver,
   bool open_new_window_for_popups() const {
     return open_new_window_for_popups_;
   }
+
+  bool ReloadInspectedWebContents(bool bypass_cache);
 #endif  // BUILDFLAG(ARKWEB_DEVTOOLS)
 
  private:
@@ -265,6 +270,8 @@ class CefDevToolsFrontend : public content::WebContentsObserver,
   // 合理性：使用NoDestructor避免进程退出时析构顺序问题，与Chrome的GetDevToolsWindowInstances()设计对齐
   // 必要性：FindByInspectedContents需要遍历所有存活实例，构造/析构时需注册/注销，无此注册表则opener链查找无法实现
   static std::unordered_set<CefDevToolsFrontend*>& GetLiveInstances();
+
+  std::unique_ptr<content::ScopedAccessibilityMode> scoped_accessibility_mode_;
 #endif // BUILDFLAG(ARKWEB_DEVTOOLS)
 
   base::WeakPtrFactory<CefDevToolsFrontend> weak_factory_;
