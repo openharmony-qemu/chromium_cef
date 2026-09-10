@@ -915,6 +915,10 @@ void StartDownloadWithParams(
 void SetAsyncStackId(uint64_t stackId) override;
 #endif
 
+#if BUILDFLAG(ARKWEB_BLANK_SCREEN_DETECTION)
+  void NotifyBlankScreenViewResize(uint32_t width, uint32_t height) override;
+#endif
+
  private:
 #if BUILDFLAG(ARKWEB_SAFEBROWSING)
   ohos_safe_browsing::SafeBrowsingTabHelper* GetSafeBrowsingTabHelper() const;

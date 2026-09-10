@@ -3272,6 +3272,21 @@ void ArkWebRenderWidgetHostViewOSRExt::OnDetectedBlankScreen(
 }
 #endif
 
+#if BUILDFLAG(ARKWEB_BLANK_SCREEN_MONITOR)
+void ArkWebRenderWidgetHostViewOSRExt::OnMonitoredBlankScreen(
+    const std::string& url,
+    int32_t reason,
+    const std::string& extra_msg) {
+  if (!browser_impl_.get() || !browser_impl_->GetClient().get()) {
+    return;
+  }
+  CefRefPtr<ArkWebRenderHandlerExt> handler =
+      browser_impl_->GetClient()->GetRenderHandler();
+  CHECK(handler);
+  handler->OnMonitoredBlankScreen(url, reason, extra_msg);
+}
+#endif
+
 #if BUILDFLAG(ARKWEB_FIRST_SCREEN_PAINT)
 void ArkWebRenderWidgetHostViewOSRExt::OnFirstScreenPaint(const std::string &url,
                                                           int64_t navigationStartTime, int64_t firstScreenPaintTime) {
