@@ -207,6 +207,34 @@ interface RenderFrame {
                        array<string> values)
       => (int32 result);
 
+  [EnableIf=arkweb_input_events, Sync]
+  ExecuteFocusCommand(string xpath, bool suppress_keyboard)
+      => (int32 result);
+
+  [EnableIf=arkweb_input_events, Sync]
+  ExecuteInputModifyCommand(string content) => (int32 result);
+
+  [EnableIf=arkweb_input_events, Sync]
+  ExecuteInputInsertCommand(string content, int32 index) => (int32 result);
+
+  // Batch autofill: combines xpath-based element lookup + fill in one call.
+  // mode: 0=Overwrite (SetValue without Focus), 1=Insert (Focus + insert at index)
+  [EnableIf=arkweb_input_events, Sync]
+  ExecuteAutoFillCommand(string xpath, string content, int32 index, int32 mode)
+      => (int32 result);
+
+  [EnableIf=arkweb_input_events, Sync]
+  ExecuteClickCommand(string xpath) => (int32 result);
+
+  [EnableIf=arkweb_input_events, Sync]
+  ExecuteScrollCommand(string xpath, string align, int32 offset) => (int32 result);
+
+  [EnableIf=arkweb_input_events, Sync]
+  ExecuteInputSelectCommand(int32 start_index, int32 finish_index) => (int32 result);
+
+  [EnableIf=arkweb_input_events, Sync]
+  ExecuteInputSetCursorCommand(int32 index) => (int32 result);
+
   [EnableIf=arkweb_optimize_parser_budget]
   SetOptimizeParserBudgetEnabled(bool enable);
 
