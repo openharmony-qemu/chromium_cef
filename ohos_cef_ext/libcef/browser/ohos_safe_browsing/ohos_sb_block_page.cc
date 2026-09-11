@@ -86,7 +86,17 @@ void SbBlockPage::HandleCommand(
 
   // CMD_PROCEED
   if (command == security_interstitials::CMD_PROCEED) {
-    controller()->Reload();
+    bool not_allow_proceed =
+        (policy_ == OHSBPolicyType::POLICY_CHILD_MODE_PROHIBIT_ACCESS) ||
+        (policy_ == OHSBPolicyType::POLICY_FORBIDDEN_PROHIBIT_ACCESS);
+
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+    not_allow_proceed = not_allow_proceed || IsUrlTrustListBlocked();
+#endif
+    
+    if (!not_allow_proceed) {
+      controller()->Reload();
+    }
   }
 }
 
