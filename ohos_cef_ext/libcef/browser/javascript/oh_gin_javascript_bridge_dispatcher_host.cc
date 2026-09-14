@@ -17,6 +17,7 @@
 #include "content/browser/renderer_host/render_frame_host_impl.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "content/public/browser/browser_thread.h"
+#include "content/public/browser/site_isolation_policy.h"
 #include "content/public/browser/web_contents.h"
 #include "libcef/browser/thread_util.h"
 #include "libcef/browser/javascript/oh_javascript_injector.h"
@@ -152,7 +153,44 @@ void OhGinJavascriptBridgeDispatcherHost::DidFinishNavigation(content::Navigatio
     LOG(ERROR) << "DidFinishNavigation get site instance failed";
     return;
   }
-  GURL site_instance_gurl = site_instance->GetSiteURL();
+  site_instance_gurl_ = site_instance->GetSiteURL();
+}
+
+bool OhGinJavascriptBridgeDispatcherHost::IsSameSite(const GURL& document_gurl) {
+  if (!content::SiteIsolationPolicy::UseDedicatedProcessesForAllSites()) {
+    return true;
+  }
+
+  if (!site_instance_gurl_.SchemeIsHTTPOrHTTPS() ||
+      site_instance_gurl_.possibly_invalid_spec() == "http://unisolated.invalid/") {
+    return true;
+  }
+
+  if (document_gurl.scheme().empty() ||
+      document_gurl.scheme() != site_instance_gurl_.scheme()) {
+    LOG(INFO) << "IsSameSite scheme not same";
+    return false;
+  }
+
+  if (document_gurl.host().empty() ||
+      document_gurl.host() != site_instance_gurl_.host()) {
+    const size_t suffix_length = site_instance_gurl_.GetHost().length() + 1;
+    const std::string url_host = document_gurl.GetHost();
+
+    if (url_host.length() <= suffix_length) {
+      LOG(INFO) << "IsSameSite host not same";
+      return false;
+    } else {
+      const size_t dot_pos = url_host.length() - suffix_length;
+      const std::string host_suffix = url_host.substr(dot_pos + 1);
+      if (url_host[dot_pos] != '.' ||
+          host_suffix != site_instance_gurl_.host()) {
+        LOG(INFO) << "IsSameSite host not subdomain";
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 void OhGinJavascriptBridgeDispatcherHost::RenderFrameCreated(
@@ -269,6 +307,9 @@ void OhGinJavascriptBridgeDispatcherHost::ParseJsProxyPermissionJson(
         }
         const base::Value::List* list_val =
             dict_val->FindList("urlPermissionList");
+        if (!list_val) {
+          continue;
+        }
         for (const auto& val : *list_val) {
           JsProxyPermissionConfigData data;
           std::map<std::string, JsProxyPermissionConfigData*> config_map_tmp;
@@ -1021,9 +1062,13 @@ bool OhGinJavascriptBridgeDispatcherHost::CheckIsInJsPermission(
   LOG(DEBUG) << "OhGinJavascriptBridgeDispatcherHost::CheckIsInJsPermission: "
              << ", method_name: " << method_name << ", object_id: " << object_id
              << ", is_async: " << is_async;
+  PermissionMap map_tmp;
   GURL gurl(document_url);
-  PermissionMap map_tmp = is_async ? javascript_async_permission_map_
-                                   : javascript_sync_permission_map_;
+  {
+    std::unique_lock<std::shared_mutex> lock(share_mutex_);
+    map_tmp = is_async ? javascript_async_permission_map_
+                       : javascript_sync_permission_map_;
+  }
   if (map_tmp.empty() || map_tmp.find(object_id) == map_tmp.end()) {
     LOG(DEBUG) << "OhGinJavascriptBridgeDispatcherHost::CheckIsInJsPermission: "
                   "permission map is empty or no object_id("
@@ -1479,7 +1524,7 @@ void OhGinJavascriptBridgeDispatcherHost::InvokeMethod(const std::string& method
                                                        const std::string& document_url,
                                                        base::Value::List arguments,
                                                        InvokeMethodCallback callback) {
-  if (!web_contents()) {
+  if (!web_contents() || !IsSameSite(GURL(document_url))) {
     base::Value::List wrapped_result;
     std::move(callback).Run(content::mojom::OhGinJavascriptBridgeError::kOhGinJavascriptBridgeObjectIsGone,
         std::move(wrapped_result));
@@ -1534,7 +1579,7 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodCallback(content::mojom:
 void OhGinJavascriptBridgeDispatcherHost::InvokeMethodAsync(const std::string& method_name,
                                                             const std::string& document_url,
                                                             base::Value::List arguments) {
-  if (!web_contents()) {
+  if (!web_contents() || !IsSameSite(GURL(document_url))) {
     return;
   }
 
@@ -1558,7 +1603,7 @@ void OhGinJavascriptBridgeDispatcherHost::InvokeMethodFlowbuf(const std::string&
                                                               base::Value::List arguments,
                                                               base::ReadOnlySharedMemoryRegion flowbuf_region,
                                                               InvokeMethodFlowbufCallback callback) {
-  if (!web_contents()) {
+  if (!web_contents() || !IsSameSite(GURL(document_url))) {
     base::Value::List wrapped_result;
     std::move(callback).Run(content::mojom::OhGinJavascriptBridgeError::kOhGinJavascriptBridgeObjectIsGone,
         std::move(wrapped_result));
