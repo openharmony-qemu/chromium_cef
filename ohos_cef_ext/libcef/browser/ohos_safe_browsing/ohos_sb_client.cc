@@ -154,10 +154,11 @@ void SbClient::NavigationEntryCommitted(
               << " is_new_navigation: " << is_new_navigation
               << " is_blocking_page: " << is_blocking_page;
     if (!is_new_navigation && is_blocking_page) {
+      const std::vector<GURL>& redirect_chain = safe_browsing_data->GetRedirectChain();
       ReportBlockingPage(load_details.entry, previously_shown_blocking_page_info,
-                         safe_browsing_data->GetRedirectChain().front(),
-                         safe_browsing_data->GetRedirectChain().back(),
-                         safe_browsing_data->GetRedirectChain().size(),
+                         redirect_chain.empty() ? GURL() : redirect_chain.front(),
+                         redirect_chain.empty() ? GURL() : redirect_chain.back(),
+                         redirect_chain.size(),
                          safe_browsing_data->GetIsNewIntercept(), true);
       HandleBlockingPage(previously_shown_blocking_page_info, safe_browsing_data, false);
       return;
@@ -371,7 +372,11 @@ void SbClient::EvaluateAndDisplayBlockPage() {
     }
 
     if (current_index == web_contents()->GetController().GetLastCommittedEntryIndex()) {
-      last_url = current_entry->GetRedirectChain().back();
+      const std::vector<GURL>& redirect_chain = current_entry->GetRedirectChain();
+      if (redirect_chain.empty()) {
+        break;
+      }
+      last_url = redirect_chain.back();
     }
     redirect_chain_size += 1;
     
@@ -395,7 +400,11 @@ void SbClient::EvaluateAndDisplayBlockPage() {
     }
 
     if (!current_safe_browsing_data->is_js_redirect()) {
-      first_url = current_entry->GetRedirectChain().front();
+      const std::vector<GURL>& redirect_chain = current_entry->GetRedirectChain();
+      if (redirect_chain.empty()) {
+        break;
+      }
+      first_url = redirect_chain.front();
       break;
     }
   }
