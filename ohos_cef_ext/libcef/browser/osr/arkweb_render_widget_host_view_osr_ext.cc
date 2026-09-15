@@ -97,6 +97,11 @@
 #include "cef/ohos_cef_ext/libcef/browser/arkweb_frame_host_impl_ext.h"
 #endif
 
+#if BUILDFLAG(ARKWEB_SYNC_RENDER)
+#include "cef/ohos_cef_ext/libcef/browser/osr/arkweb_web_contents_view_osr_ext.h"
+#include "content/browser/web_contents/web_contents_impl.h"
+#endif
+
 #if BUILDFLAG(ARKWEB_PERFORMANCE_JITTER)
 const size_t kMaxGestureQueueSize = 10;
 const size_t KFirstRecordingTimes = 3;
@@ -880,6 +885,18 @@ void ArkWebRenderWidgetHostViewOSRExt::SetDrawRect(const gfx::Rect& rect) {
 }
 
 void ArkWebRenderWidgetHostViewOSRExt::UpdateDrawRect(const gfx::Rect& rect) {
+  // Cache the DrawRect for replay when a new Renderer connects.
+  last_draw_rect_ = rect;
+  has_pending_draw_rect_ = true;
+
+  auto contents_view = GetContentsViewOSR();
+  if (contents_view) {
+    auto contents_view_ext = contents_view->AsArkWebCefWebContentsViewOSRExt();
+    if (contents_view_ext) {
+      contents_view_ext->SetPendingDrawRect(rect);
+    }
+  }
+
   if (!software_compositor_) {
     LOG(ERROR) << "software compositor is null when DrawRect";
     return;
@@ -953,6 +970,21 @@ void ArkWebRenderWidgetHostViewOSRExt::SetDrawMode(int mode) {
     compositor->Utils()->SetDrawMode(mode);
   }
 }
+
+CefWebContentsViewOSR* ArkWebRenderWidgetHostViewOSRExt::GetContentsViewOSR() const {
+  if (!render_widget_host_) {
+    return nullptr;
+  }
+  auto* rvh_impl = content::RenderViewHostImpl::From(render_widget_host_);
+  auto* web_contents_impl =
+      rvh_impl ? static_cast<content::WebContentsImpl*>(rvh_impl->GetDelegate())
+               : nullptr;
+  if (!web_contents_impl) {
+    return nullptr;
+  }
+  return static_cast<CefWebContentsViewOSR*>(web_contents_impl->GetView());
+}
+
 #endif
 void ArkWebRenderWidgetHostViewOSRExt::SetFitContentMode(int mode) {
   is_fit_content_ = mode;
@@ -2705,6 +2737,19 @@ viz::FrameSinkId ArkWebRenderWidgetHostViewOSRExt::GetRootFrameSinkId() {
 void ArkWebRenderWidgetHostViewOSRExt::OnRendererWidgetCreated() {
   software_compositor_ = std::make_unique<content::SoftwareCompositorHostOhos>(
       render_widget_host_);
+
+  // Replay the cached DrawRect to the new SoftwareCompositorHostOhos so that
+  // the new Renderer process receives the current visible rect immediately.
+  auto contents_view = GetContentsViewOSR();
+  if (contents_view) {
+    auto contents_view_ext = contents_view->AsArkWebCefWebContentsViewOSRExt();
+    if (contents_view_ext && contents_view_ext->HasPendingDrawRect()) {
+      last_draw_rect_ = contents_view_ext->GetPendingDrawRect();
+      has_pending_draw_rect_ = true;
+      software_compositor_->DrawRect(last_draw_rect_);
+      ForwardDrawRectToChildFrames(last_draw_rect_);
+    }
+  }
 }
 #endif
 
