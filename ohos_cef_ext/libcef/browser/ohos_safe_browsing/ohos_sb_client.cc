@@ -511,7 +511,7 @@ void SbClient::SetEvilUrlPolicyAndHwCode(const GURL& url,
   }
 }
 
-bool SbClient::ShouldShowBlockingPage(const OhosSbBlockingPageInfo& info) {
+bool SbClient::ShouldShowBlockingPage(const OhosSbBlockingPageInfo& info) const {
   if (info.info_policy_level < OHSBPolicyLevel::POLICY_LEVEL_POPUP_AND_DANGER) {
     return false;
   }
@@ -524,6 +524,69 @@ bool SbClient::ShouldShowBlockingPage(const OhosSbBlockingPageInfo& info) {
   }
  
   return true;
+}
+
+bool SbClient::ShouldBlockCurrentUrl(const GURL& url) const {
+  BlockingPageInfoCache* blocking_page_info_cache =
+      BlockingPageInfoCache::FromWebContents(web_contents());
+
+  if (!blocking_page_info_cache) {
+    LOG(WARNING) << "The blocking_page_info_cache is empty";
+    return false;
+  }
+
+  if (!blocking_page_info_cache->HasBlockingPageInfoForUrl(url)) {
+    LOG(WARNING) << "The blocking_page_info_cache does not contain the result of the current URL.";
+    return false;
+  }
+
+  OhosSbBlockingPageInfo blocking_page_info = blocking_page_info_cache->GetBlockingPageInfo(url);
+  return ShouldShowBlockingPage(blocking_page_info);
+}
+ 
+bool SbClient::CheckAndBlockRedirectChain(
+    const std::vector<GURL>& server_redirect_chain) const {
+  // forward traversal check if url is evil url.
+  for (const GURL& url : base::Reversed(server_redirect_chain)) {
+    if (ShouldBlockCurrentUrl(url)) {
+      return true;
+    }
+  }
+ 
+  return false;
+}
+
+void SbClient::NotifySafeBrowsingResult(OhosSbBlockingPageInfo& info, bool is_unprocessed) {
+  LOG(INFO) << "SafeBrowsing VerifiedBlockingPageInfo"
+            << " policy: " << info.info_policy
+            << " block_type: " << info.info_block_type;
+
+  if (info.info_policy == OHSBPolicyType::POLICY_CHILD_MODE_PROHIBIT_ACCESS &&
+      info.info_block_type == OHSBThreatType::THREAT_WARNING) {
+    info.info_block_type = OHSBThreatType::THREAT_RISK;
+  }
+
+  if (info.info_policy_level <= OHSBPolicyLevel::POLICY_LEVEL_NO_PROMPT) {
+    info.info_block_type =
+        is_unprocessed? OHSBThreatType::THREAT_UNPROCESSED : OHSBThreatType::THREAT_NONE;
+    info.info_original_block_type = info.info_block_type;
+  }
+
+  if (info.info_policy_level >= OHSBPolicyLevel::POLICY_LEVEL_DANGER_LABEL) {
+    NotifySafeBrowsingCheckResult(info.info_block_type);
+  }
+  NotifySafeBrowsingCheckFinish(info.info_block_type);
+  NotifySafeBrowsingCheckDetail(
+      info.info_hw_code, info.info_policy, info.info_original_block_type);
+}
+
+std::unique_ptr<SbBlockPage> SbClient::CreateSbBlockPage(const OhosSbBlockingPageInfo& blocking_page_info) {
+  std::unique_ptr<SbControllerClient> controller = std::make_unique<SbControllerClient>(
+      web_contents(), prefs_, blocking_page_info.info_url, base::i18n::GetConfiguredLocale(), incognito_mode_);
+  std::unique_ptr<SbBlockPage> block_page = std::make_unique<SbBlockPage>(
+      web_contents(), blocking_page_info.info_url, blocking_page_info.info_policy,
+      blocking_page_info.info_block_type, std::move(controller));
+  return block_page;
 }
 
 SbClient::BlockingPageInfoCache::BlockingPageInfoCache(content::WebContents* web_contents, bool incognito_mode)

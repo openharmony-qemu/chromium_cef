@@ -42,6 +42,8 @@ class SafeBrowsingTabHelper
     return metrics_collector_.get();
   }
 
+  SbClient* sb_client() { return sb_client_.get(); }
+
 IMPLEMENT_REFCOUNTING(SafeBrowsingTabHelper);
 
   //DidStartNavigation和DidRedirectNavigation的实现只有一行注释差异
