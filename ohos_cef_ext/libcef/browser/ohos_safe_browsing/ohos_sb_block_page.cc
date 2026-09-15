@@ -16,7 +16,6 @@
 #include "ui/base/webui/web_ui_util.h"
 
 namespace ohos_safe_browsing {
-
 SbBlockPage::SbBlockPage(
     content::WebContents* web_contents,
     const GURL& request_url,
@@ -27,11 +26,13 @@ SbBlockPage::SbBlockPage(
                                request_url,
                                std::move(controller)),
       block_type_(block_type),
-      policy_(policy) {}
+      policy_(policy) {
+  html_contents_ = GetDefaultHTMLContents();
+}
 
 SbBlockPage::~SbBlockPage() = default;
 
-std::string SbBlockPage::GetHTMLContents() {
+std::string SbBlockPage::GetDefaultHTMLContents() {
   base::Value::Dict load_time_data;
   PopulateInterstitialStrings(load_time_data);
   webui::SetLoadTimeDataDefaults(controller()->GetApplicationLocale(),
@@ -56,6 +57,10 @@ std::string SbBlockPage::GetHTMLContents() {
       resource_id);
   webui::AppendWebUiCssTextDefaults(&html);
   return webui::GetI18nTemplateHtml(html, load_time_data);
+}
+
+std::string SbBlockPage::GetHTMLContents() {
+  return html_contents_;
 }
 
 void SbBlockPage::CommandReceived(const std::string& command) {

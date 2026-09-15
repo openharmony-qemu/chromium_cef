@@ -38,11 +38,15 @@ class OhosSafeBrowsingNavigationThrottle : public content::NavigationThrottle {
 
   void NeedsRetryEvaluateAndDisplayBlockPage();
 
+  void DisplayBlockingPage(
+      const OhosSbBlockingPageInfo& blocking_page_info, const std::optional<std::string>& html);
+
   base::TimeTicks load_start_time_;
   bool check_evil_url_completed_{false};
   bool needs_show_blocking_page_ {false};
   std::string error_page_content_;
   bool is_defer_{false};
+  bool display_blocking_page_completed_{false};
   base::WeakPtrFactory<OhosSafeBrowsingNavigationThrottle> weak_ptr_factory_{this};
 };
 

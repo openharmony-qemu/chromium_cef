@@ -398,6 +398,37 @@ class ArkWebBrowserExt : public virtual CefBrowser {
   ///
   virtual void OnSafeBrowsingDetectionResult(
     const SafeBrowsingDetectionResult& safeBrowsingDetectionResult) = 0;
+
+  ///
+  /// Enable external SafeBrowsing interstitial mode.
+  /// Called when the app registers an onSafeBrowsingHit callback.
+  ///
+  virtual void EnableSafeBrowsingExternalInterstitial(bool enable) = 0;
+
+  ///
+  /// Check if external SafeBrowsing interstitial mode is enabled.
+  ///
+  virtual bool IsSafeBrowsingExternalInterstitialEnabled() const = 0;
+
+  ///
+  /// Safe browsing response show interstitial.
+  ///
+  virtual void SafeBrowsingResponseShowInterstitial(int64_t response_key, const std::string& html) const = 0;
+
+  ///
+  /// Safe browsing response proceed.
+  ///
+  virtual void SafeBrowsingResponseProceed(int64_t response_key) const = 0;
+
+  ///
+  /// Safe browsing response back to safety.
+  ///
+  virtual void SafeBrowsingResponseBackToSafety(int64_t response_key) const = 0;
+
+  ///
+  /// Safe browsing response delete.
+  ///
+  virtual void SafeBrowsingResponseDelete(int64_t response_key) = 0;
 #endif 
 
   ///

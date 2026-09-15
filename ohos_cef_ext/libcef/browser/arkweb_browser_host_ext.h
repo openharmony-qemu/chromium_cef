@@ -85,6 +85,10 @@
 #include "ohos_nweb/src/capi/browser_service/nweb_extension_downloader_types.h"
 #endif
 
+#if BUILDFLAG(ARKWEB_SAFEBROWSING)
+#include "libcef/browser/ohos_safe_browsing/ohos_safe_browsing_tab_helper.h"
+#endif
+
 #if BUILDFLAG(ARKWEB_MSGPORT)
 class WebMessageReceiverImpl : public blink::WebMessagePort::MessageReceiver {
  public:
@@ -625,6 +629,12 @@ class ArkWebBrowserHostExtImpl : public ArkWebBrowserHostExt,
   void HandleSafeBrowsingDetection(const std::string& url);
   int GetSafeBrowsingDetectionMode() const;
   int GetSafeBrowsingDetectionSwitch() const;
+  void EnableSafeBrowsingExternalInterstitial(bool enable) override;
+  bool IsSafeBrowsingExternalInterstitialEnabled() const override;
+  void SafeBrowsingResponseShowInterstitial(int64_t response_key, const std::string& html) const override;
+  void SafeBrowsingResponseProceed(int64_t response_key) const override;
+  void SafeBrowsingResponseBackToSafety(int64_t response_key) const override;
+  void SafeBrowsingResponseDelete(int64_t response_key) override;
 #endif  // BUILDFLAG(ARKWEB_SAFEBROWSING)
 
 #if BUILDFLAG(IS_OHOS)
@@ -906,6 +916,10 @@ void SetAsyncStackId(uint64_t stackId) override;
 #endif
 
  private:
+#if BUILDFLAG(ARKWEB_SAFEBROWSING)
+  ohos_safe_browsing::SafeBrowsingTabHelper* GetSafeBrowsingTabHelper() const;
+#endif
+
 #if BUILDFLAG(ARKWEB_MSGPORT)
   using MessagePipe = std::pair<blink::WebMessagePort, blink::WebMessagePort>;
   using PortHandle = std::pair<uint64_t, uint64_t>;

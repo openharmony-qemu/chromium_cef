@@ -18,6 +18,7 @@
 #pragma once
 
 #include "arkweb/build/features/features.h"
+#include <string>
 #include "include/cef_base.h"
 #include "include/cef_browser.h"
 #include "include/cef_callback.h"
@@ -189,6 +190,17 @@ class ArkWebLoadHandlerExt : public virtual CefLoadHandler,
   ///
   /*--cef()--*/
   virtual void OnSafeBrowsingCheckDetail(int code, int policy, int threat) {}
+
+  ///
+  /// Called when safe browsing detects a malicious website and
+  /// external interstitial is enabled.
+  ///
+  /*--cef()--*/
+  virtual void OnSafeBrowsingHit(const std::string& url,
+                                 int code,
+                                 int policy,
+                                 int threat,
+                                 int64_t response_key) {}
 #endif
 };
 
