@@ -1388,7 +1388,7 @@ class ArkWebBrowserHostExt : public virtual CefBrowserHost,
   virtual void WebExtensionTabUpdated(
       int tab_id,
       std::unique_ptr<NWebExtensionTabChangeInfo> changeInfo,
-      std::unique_ptr<NWebExtensionTab> tab) {}
+      std::unique_ptr<NWebExtensionTabV2> tab) {}
 
   ///
   /// Receiving the tab removed notification.

@@ -24,18 +24,20 @@
 
 namespace extensions {
 
-void TabsWindowsAPI::TabUpdated(int tab_id,
+void TabsWindowsAPI::TabUpdated(
+    int tab_id,
     content::WebContents* contents,
     std::unique_ptr<NWebExtensionTabChangeInfo> changeInfo,
-    std::unique_ptr<NWebExtensionTab> tab) {
+    std::unique_ptr<NWebExtensionTabV2> tab) {
   if (!tab) {
     LOG(ERROR) << "TabUpdated tab is null";
     return;
   }
- 
+
   // In Chromium 141, ActiveTabPermissionGranter is accessed directly
   // rather than through TabHelper
-  auto* active_tab_granter = ActiveTabPermissionGranter::FromWebContents(contents);
+  auto* active_tab_granter =
+      ActiveTabPermissionGranter::FromWebContents(contents);
   if (active_tab_granter) {
     // Note: SetTabId method may not exist in Chromium 141
     // The functionality may be handled differently now
@@ -43,14 +45,16 @@ void TabsWindowsAPI::TabUpdated(int tab_id,
     active_tab_granter->SetTabId(tab_id);
   }
 
-  int windowId = tab->windowId;
-  if (auto* ewco = extensions::ExtensionWebContentsObserver::GetForWebContents(contents)) {
-      contents->ForEachRenderFrameHost([ewco, tab_id, windowId](content::RenderFrameHost* frame_host) {
-      if (auto local_frame = ewco->GetLocalFrame(frame_host)) {
-          local_frame->UpdateBrowserWindowId(windowId);
-          local_frame->SetTabId(tab_id);
-      }
-    });
+  int windowId = tab->tab_v1.windowId;
+  if (auto* ewco = extensions::ExtensionWebContentsObserver::GetForWebContents(
+          contents)) {
+    contents->ForEachRenderFrameHost(
+        [ewco, tab_id, windowId](content::RenderFrameHost* frame_host) {
+          if (auto local_frame = ewco->GetLocalFrame(frame_host)) {
+            local_frame->UpdateBrowserWindowId(windowId);
+            local_frame->SetTabId(tab_id);
+          }
+        });
   }
 
   tabs_event_router()->DispatchTabUpdatedEvent(
@@ -72,9 +76,11 @@ void TabsWindowsAPI::TabAttached(int tab_id, content::WebContents* contents,
   tabs_event_router()->DispatchTabAttachedEvent(tab_id, contents, newPosition, newWindowId);
 }
 
-void TabsWindowsAPI::TabCreated(int tab_id, content::BrowserContext* browserContext, 
-                                std::unique_ptr<NWebExtensionTab> tab) {
-  tabs_event_router()->DispatchTabCreatedEvent(tab_id, browserContext, std::move(tab));
+void TabsWindowsAPI::TabCreated(int tab_id,
+                                content::BrowserContext* browserContext,
+                                std::unique_ptr<NWebExtensionTabV2> tab) {
+  tabs_event_router()->DispatchTabCreatedEvent(tab_id, browserContext,
+                                               std::move(tab));
 }
 
 void TabsWindowsAPI::TabDetached(content::WebContents* contents, int tab_id,

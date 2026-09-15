@@ -24,10 +24,10 @@ class CefWindowsEventRouter {
   public:
     static CefWindowsEventRouter* GetInstance();
 
-    void DispatchWindowCreatedEvent(content::BrowserContext* browser_context, const WebExtensionWindow& window);
-    void DispatchWindowRemovedEvent(content::BrowserContext* browser_context, const WebExtensionWindow& window);
-    void DispatchWindowBoundsChangedEvent(content::BrowserContext* browser_context, const WebExtensionWindow& window);
-    void DispatchWindowFocusChangedEvent(content::BrowserContext* browser_context, const WebExtensionWindow& window);
+    void DispatchWindowCreatedEvent(content::BrowserContext* browser_context, const WebExtensionWindowV2& window);
+    void DispatchWindowRemovedEvent(content::BrowserContext* browser_context, const WebExtensionWindowV2& window);
+    void DispatchWindowBoundsChangedEvent(content::BrowserContext* browser_context, const WebExtensionWindowV2& window);
+    void DispatchWindowFocusChangedEvent(content::BrowserContext* browser_context, const WebExtensionWindowV2& window);
 };
 } // namespace OHOS::NWeb
 #endif // CEF_LIBCEF_BROWSER_EXTENSIONS_API_WINDOWS_H_

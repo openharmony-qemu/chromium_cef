@@ -1075,7 +1075,7 @@ void AlloyBrowserHostImplExt::WebExtensionUnregisterZoomObserver() {
 void AlloyBrowserHostImplExt::WebExtensionTabUpdated(
     int tab_id,
     std::unique_ptr<NWebExtensionTabChangeInfo> changeInfo,
-    std::unique_ptr<NWebExtensionTab> tab) {
+    std::unique_ptr<NWebExtensionTabV2> tab) {
   content::BrowserContext* browser_context = nullptr;
   content::WebContents* web_contents = nullptr;
   if (!WebExtensionCheck("TabUpdated", browser_context, web_contents)) {
@@ -1190,7 +1190,7 @@ content::BrowserContext* GetGlobalBrowserContext() {
 
 void AlloyBrowserHostImplExt::WebExtensionActionClicked(
     std::string extensionId,
-    const NWebExtensionTab* tab) {
+    const NWebExtensionTabV2* tab) {
   content::BrowserContext* context = GetGlobalBrowserContext();
   if (!context) {
     LOG(ERROR) << "WebExtensionActionClicked context is null";
@@ -1198,7 +1198,7 @@ void AlloyBrowserHostImplExt::WebExtensionActionClicked(
   }
 
 #if BUILDFLAG(ARKWEB_NWEB_EX)
-  if (tab && tab->incognito) {
+  if (tab && tab->tab_v1.incognito) {
     content::BrowserContext* incognito_context = GetIncognitoContext(context);
     if (incognito_context) {
       context = incognito_context;

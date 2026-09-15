@@ -63,12 +63,12 @@ void SetQueryInfoCurrentWindowId(WebContents* webcontents,
 
   int32_t tab_id = webcontents->ExtensionGetTabId();
   if (tab_id > 0) {
-    std::unique_ptr<NWebExtensionTab> tab =
+    std::unique_ptr<NWebExtensionTabV2> tab =
         OHOS::NWeb::NWebExtensionTabCefDelegate::GetTab(tab_id);
-    if (!tab || tab->nwebId < 0) {
+    if (!tab || tab->tab_v1.nwebId < 0) {
       queryInfo.currentWindowId = extension_misc::kCurrentWindowId;
     } else {
-      queryInfo.currentWindowId = tab->windowId;
+      queryInfo.currentWindowId = tab->tab_v1.windowId;
     }
   } else {
     int nweb_id = webcontents->GetNWebId();
@@ -304,9 +304,10 @@ ExtensionFunction::ResponseAction TabsCaptureVisibleTabFunction::Run() {
   return RespondNow(Error(CaptureResultToErrorMessage(capture_result)));
 }
 
-void TabsCreateFunction::OnTabCreated(const base::WeakPtr<TabsCreateFunction>& function,
-                                      const NWebExtensionTab& tab,
-                                      const std::optional<std::string>& error) {
+void TabsCreateFunction::OnTabCreated(
+    const base::WeakPtr<TabsCreateFunction>& function,
+    const NWebExtensionTabV2& tab,
+    const std::optional<std::string>& error) {
   DCHECK(function);
   if (!function) {
     LOG(ERROR) << "OnTabCreated is empty!!!!";
@@ -317,11 +318,14 @@ void TabsCreateFunction::OnTabCreated(const base::WeakPtr<TabsCreateFunction>& f
     function->Respond(function->Error(error.value()));
   } else {
     if (function->has_callback()) {
-      NWebExtensionTab tab_t = tab;
-      GURL gurl(tab_t.url.value_or(""));
-      ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior = ExtensionTabUtil::GetScrubTabBehaviorExt(
-          function->extension(), function->source_context_type(), gurl, tab_t.id.value_or(-1));
-      function->Respond(function->WithArguments(base::Value(GetTabValue(tab_t, scrub_tab_behavior))));
+      auto mutable_tab = tab;
+      GURL gurl(mutable_tab.tab_v1.url.value_or(""));
+      ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior =
+          ExtensionTabUtil::GetScrubTabBehaviorExt(
+              function->extension(), function->source_context_type(), gurl,
+              tab.tab_v1.id.value_or(-1));
+      function->Respond(function->WithArguments(
+          base::Value(GetTabValue(mutable_tab, scrub_tab_behavior))));
     } else {
       function->Respond(function->NoArguments());
     }
@@ -333,7 +337,7 @@ void TabsCreateFunction::OnTabCreated(const base::WeakPtr<TabsCreateFunction>& f
   }
 }
 
-void OnCreateTabForExtension(const NWebExtensionTab& tab,
+void OnCreateTabForExtension(const NWebExtensionTabV2& tab,
                              const std::optional<std::string>& error) {
   if (error) {
     LOG(ERROR) << "OnCreateTabForExtension create error, " << error.value();
@@ -447,7 +451,7 @@ ExtensionFunction::ResponseAction TabsDiscardFunction::Run() {
 
 void TabsDiscardFunction::OnTabDiscarded(
     const base::WeakPtr<TabsDiscardFunction>& function,
-    NWebExtensionTab& tab,
+    NWebExtensionTabV2& tab,
     const std::optional<std::string>& error) {
   DCHECK(function);
   if (!function) {
@@ -459,11 +463,12 @@ void TabsDiscardFunction::OnTabDiscarded(
     function->Respond(function->Error(error.value()));
   } else {
     if (function->has_callback()) {
-      GURL gurl(tab.url.value_or(""));
+      GURL gurl(tab.tab_v1.url.value_or(""));
       ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior =
           ExtensionTabUtil::GetScrubTabBehaviorExt(
-              function->extension(), function->source_context_type(), gurl, tab.id.value_or(-1));
-      function->Respond(function->WithArguments(base::Value(GetTabValue(tab, scrub_tab_behavior))));
+              function->extension(), function->source_context_type(), gurl, tab.tab_v1.id.value_or(-1));
+      function->Respond(function->WithArguments(
+          base::Value(GetTabValue(tab, scrub_tab_behavior))));
     } else {
       function->Respond(function->NoArguments());
     }
@@ -503,7 +508,7 @@ ExtensionFunction::ResponseAction TabsDuplicateFunction::Run() {
 
 void TabsDuplicateFunction::OnTabDuplicated(
     const base::WeakPtr<TabsDuplicateFunction>& function,
-    NWebExtensionTab& tab,
+    NWebExtensionTabV2& tab,
     const std::optional<std::string>& error) {
   DCHECK(function);
   if (!function) {
@@ -515,11 +520,13 @@ void TabsDuplicateFunction::OnTabDuplicated(
     function->Respond(function->Error(error.value()));
   } else {
     if (function->has_callback()) {
-      GURL gurl(tab.url.value_or(""));
+      GURL gurl(tab.tab_v1.url.value_or(""));
       ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior =
           ExtensionTabUtil::GetScrubTabBehaviorExt(
-              function->extension(), function->source_context_type(), gurl, tab.id.value_or(-1));
-      function->Respond(function->WithArguments(base::Value(GetTabValue(tab, scrub_tab_behavior))));
+              function->extension(), function->source_context_type(), gurl,
+              tab.tab_v1.id.value_or(-1));
+      function->Respond(function->WithArguments(
+          base::Value(GetTabValue(tab, scrub_tab_behavior))));
     } else {
       function->Respond(function->NoArguments());
     }
@@ -537,7 +544,7 @@ ExtensionFunction::ResponseAction TabsGetFunction::Run() {
       tabs::Get::Params::Create(args());
   EXTENSION_FUNCTION_VALIDATE(params);
   int tab_id = params->tab_id;
-  std::unique_ptr<NWebExtensionTab> web_extension_tab =
+  std::unique_ptr<NWebExtensionTabV2> web_extension_tab =
       OHOS::NWeb::NWebExtensionTabCefDelegate::GetTab(
           tab_id, OHOS::NWeb::GetExtensionContextType(browser_context()),
           include_incognito_information());
@@ -547,9 +554,11 @@ ExtensionFunction::ResponseAction TabsGetFunction::Run() {
     return RespondNow(Error(error));
   }
 
-  GURL gurl(web_extension_tab->url.value_or(""));
-  ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior = ExtensionTabUtil::GetScrubTabBehaviorExt(
-      extension(), source_context_type(), gurl, web_extension_tab->id.value_or(-1));
+  GURL gurl(web_extension_tab->tab_v1.url.value_or(""));
+  ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior =
+      ExtensionTabUtil::GetScrubTabBehaviorExt(
+          extension(), source_context_type(), gurl,
+          web_extension_tab->tab_v1.id.value_or(-1));
 
   base::Value::List get_results;
   get_results.reserve(1);
@@ -563,13 +572,16 @@ ExtensionFunction::ResponseAction TabsGetCurrentFunction::Run() {
   // empty tab (hence returning true).
   WebContents* caller_contents = GetSenderWebContents();
   if (caller_contents && caller_contents->ExtensionGetTabId() > 0) {
-    std::unique_ptr<NWebExtensionTab> tab =
-        OHOS::NWeb::NWebExtensionTabCefDelegate::GetTab(caller_contents->ExtensionGetTabId());
+    std::unique_ptr<NWebExtensionTabV2> tab =
+        OHOS::NWeb::NWebExtensionTabCefDelegate::GetTab(
+            caller_contents->ExtensionGetTabId());
     ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior =
-        ExtensionTabUtil::GetScrubTabBehavior(extension(), source_context_type(), caller_contents);
- 
+        ExtensionTabUtil::GetScrubTabBehavior(
+            extension(), source_context_type(), caller_contents);
+
     if (tab) {
-      return RespondNow(WithArguments(base::Value(GetTabValue(*tab, scrub_tab_behavior))));
+      return RespondNow(
+          WithArguments(base::Value(GetTabValue(*tab, scrub_tab_behavior))));
     }
     return RespondNow(Error("can not get the tab"));
   }
@@ -782,7 +794,7 @@ ExtensionFunction::ResponseAction TabsHighlightFunction::Run() {
 
 void TabsHighlightFunction::OnTabHighlighted(
     const base::WeakPtr<TabsHighlightFunction>& function,
-    WebExtensionWindow& window,
+    WebExtensionWindowV2& window,
     const std::optional<std::string>& error) {
   DCHECK(function);
   if (!function) {
@@ -794,14 +806,14 @@ void TabsHighlightFunction::OnTabHighlighted(
     function->Respond(function->Error(error.value()));
   } else {
     std::vector<ExtensionTabUtil::ScrubTabBehavior> scrub_tab_behaviors;
-    for (NWebExtensionTab tab : window.tabs) {
-      GURL gurl(tab.url.value_or(""));
+    for (NWebExtensionTabV2 tab : window.tabs) {
+      GURL gurl(tab.tab_v1.url.value_or(""));
       ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior = ExtensionTabUtil::GetScrubTabBehaviorExt(
-          function->extension(), function->source_context_type(), gurl, tab.id.value_or(-1));
+          function->extension(), function->source_context_type(), gurl, tab.tab_v1.id.value_or(-1));
       scrub_tab_behaviors.emplace_back(scrub_tab_behavior);
     }
     function->Respond(function->has_callback()
-        ? function->WithArguments(GetWindowValue(window, scrub_tab_behaviors))
+        ? function->WithArguments(GetWindowValueV2(window, scrub_tab_behaviors))
         : function->NoArguments());
   }
 
@@ -853,8 +865,9 @@ ExtensionFunction::ResponseAction TabsMoveFunction::Run() {
   }
 }
 
-void TabsMoveFunction::OnTabMoved(const base::WeakPtr<TabsMoveFunction>& function,
-    const std::vector<NWebExtensionTab>& tabs,
+void TabsMoveFunction::OnTabMoved(
+    const base::WeakPtr<TabsMoveFunction>& function,
+    const std::vector<NWebExtensionTabV2>& tabs,
     const std::optional<std::string>& error) {
   DCHECK(function);
   if (!function) {
@@ -866,19 +879,22 @@ void TabsMoveFunction::OnTabMoved(const base::WeakPtr<TabsMoveFunction>& functio
   } else if (!function->has_callback()) {
     function->Respond(function->NoArguments());
   } else if (tabs.size() == 1) {
-    std::vector<NWebExtensionTab> tabs_t = tabs;
-    GURL gurl(tabs_t[0].url.value_or(""));
+    std::vector<NWebExtensionTabV2> tabs_t = tabs;
+    GURL gurl(tabs_t[0].tab_v1.url.value_or(""));
     ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior =
         ExtensionTabUtil::GetScrubTabBehaviorExt(
-            function->extension(), function->source_context_type(), gurl, tabs_t[0].id.value_or(-1));
-    function->Respond(function->WithArguments(base::Value(GetTabValue(tabs_t[0], scrub_tab_behavior))));
+            function->extension(), function->source_context_type(), gurl,
+            tabs_t[0].tab_v1.id.value_or(-1));
+    function->Respond(function->WithArguments(
+        base::Value(GetTabValue(tabs_t[0], scrub_tab_behavior))));
   } else {
     std::vector<ExtensionTabUtil::ScrubTabBehavior> scrub_tab_behaviors;
-    for (NWebExtensionTab tab : tabs) {
-      GURL gurl(tab.url.value_or(""));
+    for (NWebExtensionTabV2 tab : tabs) {
+      GURL gurl(tab.tab_v1.url.value_or(""));
       ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior =
           ExtensionTabUtil::GetScrubTabBehaviorExt(
-              function->extension(), function->source_context_type(), gurl, tab.id.value_or(-1));
+              function->extension(), function->source_context_type(), gurl,
+              tab.tab_v1.id.value_or(-1));
       scrub_tab_behaviors.emplace_back(scrub_tab_behavior);
     }
     base::Value::List tab_list = GetTabValueList(tabs, scrub_tab_behaviors);
@@ -910,20 +926,23 @@ ExtensionFunction::ResponseAction TabsQueryFunction::Run() {
     }
   }
 
-  queryInfo.contextType = OHOS::NWeb::GetExtensionContextType(browser_context());
+  queryInfo.contextType =
+      OHOS::NWeb::GetExtensionContextType(browser_context());
   queryInfo.includeIncognitoInfo = include_incognito_information();
 
-  std::vector<NWebExtensionTab> tabs =
+  std::vector<NWebExtensionTabV2> tabs =
       OHOS::NWeb::NWebExtensionTabCefDelegate::QueryTab(queryInfo);
 
   std::vector<ExtensionTabUtil::ScrubTabBehavior> scrub_tab_behaviors;
-  for (NWebExtensionTab tab : tabs) {
-    GURL gurl(tab.url.value_or(""));
+  for (NWebExtensionTabV2 tab : tabs) {
+    GURL gurl(tab.tab_v1.url.value_or(""));
     ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior =
-        ExtensionTabUtil::GetScrubTabBehaviorExt(extension(), source_context_type(), gurl, tab.id.value_or(-1));
+        ExtensionTabUtil::GetScrubTabBehaviorExt(extension(),
+                                                 source_context_type(), gurl,
+                                                 tab.tab_v1.id.value_or(-1));
     scrub_tab_behaviors.emplace_back(scrub_tab_behavior);
   }
- 
+
   base::Value::List tab_list = GetTabValueList(tabs, scrub_tab_behaviors);
   return RespondNow(WithArguments(std::move(tab_list)));
 }
@@ -947,7 +966,7 @@ ExtensionFunction::ResponseAction TabsGetSelectedFunction::Run() {
     query_info.query.currentWindow = true;
   }
 
-  std::vector<NWebExtensionTab> tabs =
+  std::vector<NWebExtensionTabV2> tabs =
       OHOS::NWeb::NWebExtensionTabCefDelegate::QueryTab(query_info);
   if (tabs.size() != 1) {
     LOG(ERROR) << "invalid number of getSelected result tabs: " << tabs.size();
@@ -955,10 +974,12 @@ ExtensionFunction::ResponseAction TabsGetSelectedFunction::Run() {
         Error("getSelected tab failed: invalid number of result tabs"));
   }
 
-  GURL gurl(tabs[0].url.value_or(""));
+  GURL gurl(tabs[0].tab_v1.url.value_or(""));
   ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior =
-      ExtensionTabUtil::GetScrubTabBehaviorExt(extension(), source_context_type(), gurl, tabs[0].id.value_or(-1));
- 
+      ExtensionTabUtil::GetScrubTabBehaviorExt(extension(),
+                                               source_context_type(), gurl,
+                                               tabs[0].tab_v1.id.value_or(-1));
+
   return RespondNow(WithArguments(GetTabValue(tabs[0], scrub_tab_behavior)));
 }
 
@@ -1197,7 +1218,7 @@ void TabsUngroupFunction::OnTabUngrouped(const base::WeakPtr<TabsUngroupFunction
 
 void TabsUpdateFunction::OnTabUpdated(
     const base::WeakPtr<TabsUpdateFunction>& function,
-    NWebExtensionTab& tab,
+    NWebExtensionTabV2& tab,
     const std::optional<std::string>& error) {
   DCHECK(function);
   if (!function) {
@@ -1209,10 +1230,13 @@ void TabsUpdateFunction::OnTabUpdated(
     function->Respond(function->Error(error.value()));
   } else {
     if (function->has_callback()) {
-      GURL gurl(tab.url.value_or(""));
-      ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior = ExtensionTabUtil::GetScrubTabBehaviorExt(
-          function->extension(), function->source_context_type(), gurl, tab.id.value_or(-1));
-      function->Respond(function->WithArguments(base::Value(GetTabValue(tab, scrub_tab_behavior))));
+      GURL gurl(tab.tab_v1.url.value_or(""));
+      ExtensionTabUtil::ScrubTabBehavior scrub_tab_behavior =
+          ExtensionTabUtil::GetScrubTabBehaviorExt(
+              function->extension(), function->source_context_type(), gurl,
+              tab.tab_v1.id.value_or(-1));
+      function->Respond(function->WithArguments(
+          base::Value(GetTabValue(tab, scrub_tab_behavior))));
     } else {
       function->Respond(function->NoArguments());
     }
