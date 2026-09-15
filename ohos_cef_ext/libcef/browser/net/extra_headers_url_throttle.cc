@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -31,7 +31,7 @@ void ExtraHeadersUrlThrottle::WillStartRequest(
     network::ResourceRequest* request,
     bool* defer) {
   // request->headers has all headers include added header.
-  AddExtraHeadersIfNeeded(request->url, &request->headers);
+  AddExtraHeadersIfNeeded(&request->headers);
   if (!added_headers_.empty()) {
     original_origin_ = url::Origin::Create(request->url);
   }
@@ -62,7 +62,6 @@ void ExtraHeadersUrlThrottle::WillRedirectRequest(
 }
 
 void ExtraHeadersUrlThrottle::AddExtraHeadersIfNeeded(
-    const GURL& url,
     net::HttpRequestHeaders* headers) {
   if (extra_headers_.empty()) {
     return;
@@ -71,10 +70,10 @@ void ExtraHeadersUrlThrottle::AddExtraHeadersIfNeeded(
   net::HttpRequestHeaders extra_headers;
   extra_headers.AddHeadersFromString(extra_headers_);
   for (const auto& header : extra_headers.GetHeaderVector()) {
-    added_headers_.push_back(header.key);
     if (headers->HasHeader(header.key)) {
       continue;
     }
+    added_headers_.push_back(header.key);
     headers->SetHeader(header.key, header.value);
   }
 }
