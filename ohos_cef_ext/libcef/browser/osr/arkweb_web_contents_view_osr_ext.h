@@ -45,6 +45,16 @@ class ArkWebCefWebContentsViewOSRExt : public CefWebContentsViewOSR {
   gfx::Rect GetVisibleRectToWeb() override;
 #endif
 
+#if BUILDFLAG(ARKWEB_SYNC_RENDER)
+  void SetPendingDrawRect(const gfx::Rect& rect) {
+    last_draw_rect_ = rect;
+    has_pending_draw_rect_ = true;
+  }
+  bool HasPendingDrawRect() const { return has_pending_draw_rect_; }
+  const gfx::Rect& GetPendingDrawRect() const { return last_draw_rect_; }
+  void ClearPendingDrawRect() { has_pending_draw_rect_ = false; }
+#endif
+
 #if BUILDFLAG(ARKWEB_AI)
   void CreateOverlay(const gfx::ImageSkia& image,
                      const gfx::Rect& image_rect,
@@ -94,6 +104,13 @@ class ArkWebCefWebContentsViewOSRExt : public CefWebContentsViewOSR {
       bool right_aligned,
       bool allow_multiple_selection) override;
 #endif
+
+#if BUILDFLAG(ARKWEB_SYNC_RENDER)
+  // DrawRect cache persisted at WebContentsView level, survives View recreation.
+  gfx::Rect last_draw_rect_;
+  bool has_pending_draw_rect_ = false;
+#endif
+
 };
 
 #endif  // ARKWEB_WEB_CONTENTS_VIEW_OSR_EXT_H_

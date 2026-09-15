@@ -439,7 +439,13 @@ void UpdateFocusAndScreenStatus(bool is_focused, bool is_single_screen) override
   void UpdateDrawRect(const gfx::Rect& rect);
   void ForwardDrawRectToChildFrames(const gfx::Rect& rect);
   std::map<int, std::unique_ptr<content::SoftwareCompositorHostOhos>>
-        child_frame_compositor_map_; 
+        child_frame_compositor_map_;
+  // Last DrawRect received from the app side, used to replay to a new
+  // SoftwareCompositorHostOhos when the Renderer process switches.
+  gfx::Rect last_draw_rect_;
+  bool has_pending_draw_rect_ = false;
+  CefWebContentsViewOSR* GetContentsViewOSR() const;
+  
 #endif
 #if BUILDFLAG(ARKWEB_INPUT_EVENTS)
   void GestureEventAck(const blink::WebGestureEvent& event,
