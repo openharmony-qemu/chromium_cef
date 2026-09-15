@@ -22,6 +22,9 @@
 #include "libcef/browser/ohos_safe_browsing/ohos_sb_malicious_allowlist.h"
 #include "libcef/browser/ohos_safe_browsing/ohos_sb_prefs.h"
 #include "libcef/browser/ohos_safe_browsing/ohos_sb_snapshot_info.h"
+#if BUILDFLAG(IS_ARKWEB_EXT)
+#include "arkweb/ohos_nweb_ex/overrides/cef/libcef/browser/ohos_safe_browsing/safe_browsing_utils.h"
+#endif
 
 #if BUILDFLAG(ARKWEB_SAFEBROWSING)
 #include "arkweb/chromium_ext/content/browser/web_contents/web_contents_impl_ext.h"
@@ -31,10 +34,6 @@
 namespace ohos_safe_browsing {
 
 namespace {
-constexpr int kMaxCachedProfiles = 100;
-base::LRUCache<GURL, OhosSbBlockingPageInfo>
-    blocking_page_info_cache(kMaxCachedProfiles);
-
 OHSBPolicyLevel GetPolicyLevel(int policy_type) {
   OHSBPolicyType type = static_cast<OHSBPolicyType>(policy_type);
   switch (type) {
@@ -97,13 +96,17 @@ void SbClient::BuildAndCacheRedirectChain(const content::LoadCommittedDetails& l
             << load_details.entry->GetRedirectChain().size() << " entry url: "
             << url::LogUtils::ConvertUrlWithMask(load_details.entry->GetURL().spec());
 
+  BlockingPageInfoCache* blocking_page_info_cache =
+      BlockingPageInfoCache::FromWebContents(web_contents());
+  if (!blocking_page_info_cache) {
+    return;
+  }
   for (const auto& url : safe_browsing_data->GetRedirectChain()) {
-    const auto& blocking_cached = blocking_page_info_cache.Peek(url);
-    if (blocking_cached == blocking_page_info_cache.end()) {
+    if (!blocking_page_info_cache->HasBlockingPageInfoForUrl(url)) {
       continue;
     }
-
-    OhosSbBlockingPageInfo blocking_page_info = blocking_cached->second;
+ 
+    OhosSbBlockingPageInfo blocking_page_info = blocking_page_info_cache->GetBlockingPageInfo(url);
     safe_browsing_data->AddSbBlockingPageInfo(blocking_page_info);
   }
 }
@@ -151,20 +154,25 @@ void SbClient::NavigationEntryCommitted(
               << " is_new_navigation: " << is_new_navigation
               << " is_blocking_page: " << is_blocking_page;
     if (!is_new_navigation && is_blocking_page) {
+      ReportBlockingPage(load_details.entry, previously_shown_blocking_page_info,
+                         safe_browsing_data->GetRedirectChain().front(),
+                         safe_browsing_data->GetRedirectChain().back(),
+                         safe_browsing_data->GetRedirectChain().size(),
+                         safe_browsing_data->GetIsNewIntercept(), true);
       HandleBlockingPage(previously_shown_blocking_page_info, safe_browsing_data, false);
       return;
     }
   }
 
-  BlockingPageInfo* blocking_page_info =
-      BlockingPageInfo::FromWebContents(web_contents());
+  BlockingPageInfoCache* blocking_page_info_cache =
+      BlockingPageInfoCache::FromWebContents(web_contents());
 
-  if (!blocking_page_info || blocking_page_info->IsUrlEmpty()) {
-    LOG(WARNING) << "The blocking_page_info is empty";
+  if (!blocking_page_info_cache || blocking_page_info_cache->IsEmpty()) {
+    LOG(WARNING) << "The blocking_page_info_cache is empty";
     return;
   }
 
-  if (blocking_page_info_cache.Peek(load_details.current_commit_entry_url) == blocking_page_info_cache.end()) {
+  if (!blocking_page_info_cache->HasBlockingPageInfoForUrl(load_details.current_commit_entry_url)) {
     LOG(WARNING) << "The blocking_page_info_cache does not contain the result of the current URL.";
     return;
   }
@@ -176,7 +184,7 @@ void SbClient::NavigationEntryCommitted(
     LOG(INFO) << "SafeBrowsing NavigationEntryCommitted ShowBlockingPage";
     ShowBlockingPage();
   }
-  BlockingPageInfo::RemoveBlockingPageInfo(web_contents());
+  BlockingPageInfoCache::RemoveBlockingPageInfo(web_contents());
 }
 
 void SbClient::HandleChildModePolicy(OHSBThreatType block_type) {
@@ -228,9 +236,10 @@ void SbClient::ShowBlockingPage() {
   int onceprocessed_code = -1;
   int onceprocessed_policy = -1;
   for (auto& url : redirect_chain) {
-    const auto& blocking_cached = blocking_page_info_cache.Peek(url);
-    if (blocking_cached != blocking_page_info_cache.end()) {
-      OhosSbBlockingPageInfo blocking_page_info = blocking_cached->second;
+    BlockingPageInfoCache* blocking_page_info_cache =
+        BlockingPageInfoCache::FromWebContents(web_contents());
+    if (blocking_page_info_cache && blocking_page_info_cache->HasBlockingPageInfoForUrl(url)) {
+      OhosSbBlockingPageInfo blocking_page_info = blocking_page_info_cache->GetBlockingPageInfo(url);
       bool is_display_block_page = false;
       int code = blocking_page_info.info_hw_code;
       int policy = blocking_page_info.info_policy;
@@ -343,6 +352,11 @@ void SbClient::EvaluateAndDisplayBlockPage() {
   }
 
   OhosSbBlockingPageInfo blocking_page_info;
+  int entry_index = 0;
+  int redirect_chain_size = 0;
+  GURL first_url;
+  GURL last_url;
+  bool last_entry_is_blocked_page = false;
  
   for (int current_index = web_contents()->GetController().GetLastCommittedEntryIndex();
        current_index >= 0;
@@ -351,6 +365,11 @@ void SbClient::EvaluateAndDisplayBlockPage() {
     if (!current_entry) {
       break;
     }
+
+    if (current_index == web_contents()->GetController().GetLastCommittedEntryIndex()) {
+      last_url = current_entry->GetRedirectChain().back();
+    }
+    redirect_chain_size += 1;
     
     NavigationEntrySafeBrowsingData* current_safe_browsing_data =
         NavigationEntrySafeBrowsingData::GetOrCreate(current_entry);
@@ -360,11 +379,19 @@ void SbClient::EvaluateAndDisplayBlockPage() {
               << entry_highest_level_info.info_hw_code
               << ", policy: " << entry_highest_level_info.info_policy
               << ", block_type: " << entry_highest_level_info.info_block_type;
+
+    if (current_index == web_contents()->GetController().GetLastCommittedEntryIndex() &&
+        ShouldShowBlockingPage(entry_highest_level_info)) {
+      last_entry_is_blocked_page = true;
+    }
+
     if (entry_highest_level_info.info_policy_level > blocking_page_info.info_policy_level) {
+      entry_index = current_index;
       blocking_page_info = entry_highest_level_info;
     }
 
     if (!current_safe_browsing_data->is_js_redirect()) {
+      first_url = current_entry->GetRedirectChain().front();
       break;
     }
   }
@@ -375,6 +402,17 @@ void SbClient::EvaluateAndDisplayBlockPage() {
       last_safe_browsing_data->GetBlockingPageInfo(last_committed_entry->GetURL());
   bool is_unprocessed = (last_blocking_page_info.info_block_type == OHSBThreatType::THREAT_UNPROCESSED);
 
+  if (ShouldShowBlockingPage(blocking_page_info)) {
+    bool is_new_intercept =
+        ((entry_index == web_contents()->GetController().GetLastCommittedEntryIndex()) && last_entry_is_blocked_page);
+    last_safe_browsing_data->SetPreviouslyShownBlockingPageInfo(blocking_page_info);
+    last_safe_browsing_data->SetIsNewIntercept(is_new_intercept);
+    content::NavigationEntry* entry_to_report =
+        web_contents()->GetController().GetEntryAtIndex(entry_index);
+    ReportBlockingPage(entry_to_report, blocking_page_info,
+                       first_url, last_url, redirect_chain_size,
+                       is_new_intercept, false);
+  }
   HandleBlockingPage(blocking_page_info, last_safe_browsing_data, is_unprocessed);
 }
  
@@ -430,8 +468,11 @@ void SbClient::SetEvilUrlPolicyAndHwCode(const GURL& url,
   if (!web_contents() || web_contents()->IsBeingDestroyed()) {
     return;
   }
-  BlockingPageInfo::SetBlockingPageInfo(web_contents(), url, policy, block_type,
-                                        hw_code, redirect_url);
+  OhosSbBlockingPageInfo blocking_page_info(url, block_type, hw_code, policy, GetPolicyLevel(policy), redirect_url);
+  BlockingPageInfoCache* blocking_page_info_cache =
+      BlockingPageInfoCache::GetOrCreateForWebContents(web_contents(), incognito_mode_);
+  blocking_page_info_cache->AddBlockingPageInfo(blocking_page_info);
+
   content::NavigationEntry* pending_entry =
       web_contents()->GetController().GetPendingEntry();
 
@@ -466,45 +507,54 @@ void SbClient::SetEvilUrlPolicyAndHwCode(const GURL& url,
   	  LOG(INFO) << "SafeBrowsing SetEvilUrlPolicyAndHwCode ShowBlockingPage";
       ShowBlockingPage();
     }
-    BlockingPageInfo::RemoveBlockingPageInfo(web_contents());
+    BlockingPageInfoCache::RemoveBlockingPageInfo(web_contents());
   }
 }
 
-SbClient::BlockingPageInfo::BlockingPageInfo(content::WebContents* web_contents)
-    : content::WebContentsUserData<SbClient::BlockingPageInfo>(*web_contents) {}
-
-// static
-void SbClient::BlockingPageInfo::SetBlockingPageInfo(
-    content::WebContents* web_contents,
-    const GURL& url,
-    int policy,
-    OHSBThreatType block_type,
-    int hw_code,
-    const GURL& redirect_url) {
-  BlockingPageInfo::CreateForWebContents(web_contents);
-  BlockingPageInfo* blocking_page_info =
-      BlockingPageInfo::FromWebContents(web_contents);
-  blocking_page_info->url_ = url;
-  blocking_page_info->policy_ = policy;
-  blocking_page_info->block_type_ = block_type;
-  blocking_page_info->hw_code_ = hw_code;
-  blocking_page_info->redirect_url_ = redirect_url;
-  OhosSbBlockingPageInfo info(url, block_type, hw_code, policy, GetPolicyLevel(policy), redirect_url);
-  blocking_page_info_cache.Put(url, info);
+bool SbClient::ShouldShowBlockingPage(const OhosSbBlockingPageInfo& info) {
+  if (info.info_policy_level < OHSBPolicyLevel::POLICY_LEVEL_POPUP_AND_DANGER) {
+    return false;
+  }
+ 
+  if (info.info_policy != OHSBPolicyType::POLICY_CHILD_MODE_PROHIBIT_ACCESS &&
+          MaliciousAllowlist::GetInstance().IsInAllowlist(
+              info.info_url.has_host() ? info.info_url.GetHost() : info.info_url.spec(), incognito_mode_)) {
+    LOG(WARNING) << "SafeBrowsing in malicious allowlist.";
+    return false;
+  }
+ 
+  return true;
 }
 
-void SbClient::BlockingPageInfo::RemoveBlockingPageInfo(
+SbClient::BlockingPageInfoCache::BlockingPageInfoCache(content::WebContents* web_contents, bool incognito_mode)
+    : content::WebContentsUserData<SbClient::BlockingPageInfoCache>(*web_contents),
+      incognito_mode_(incognito_mode) {}
+
+// static
+void SbClient::BlockingPageInfoCache::RemoveBlockingPageInfo(
     content::WebContents* web_contents)
 {
   if (!web_contents) {
     return;
   }
 
-  web_contents->RemoveUserData(BlockingPageInfo::UserDataKey());
+  web_contents->RemoveUserData(BlockingPageInfoCache::UserDataKey());
+}
 
-  // The URL policy is changed, but the cache policy remains unchanged.
-  // So ShowBlockingPage is complete, and the cache is cleared.
-  blocking_page_info_cache.Clear();
+OhosSbBlockingPageInfo SbClient::BlockingPageInfoCache::GetBlockingPageInfo(const GURL& url) const {
+  auto it = ohos_sb_blocking_page_info_cache_.find(url);
+  if (it != ohos_sb_blocking_page_info_cache_.end()) {
+    return it->second;
+  }
+  return OhosSbBlockingPageInfo();
+}
+ 
+void SbClient::BlockingPageInfoCache::AddBlockingPageInfo(const OhosSbBlockingPageInfo& blocking_page_info) {
+  ohos_sb_blocking_page_info_cache_[blocking_page_info.info_url] = blocking_page_info;
+}
+ 
+bool SbClient::BlockingPageInfoCache::HasBlockingPageInfoForUrl(const GURL& url) const {
+  return ohos_sb_blocking_page_info_cache_.contains(url);
 }
 
 void SbClient::DisplayBlockingPage(const GURL& url,
@@ -542,6 +592,33 @@ bool SbClient::IsBlockPageShowing() {
           SecurityInterstitialTabHelper::FromWebContents(web_contents());
   return security_interstitial_tab_helper &&
          security_interstitial_tab_helper->IsDisplayingInterstitial();
+}
+
+void SbClient::ReportBlockingPage(
+    content::NavigationEntry* entry,
+    const OhosSbBlockingPageInfo& blocking_page_info,
+    const GURL& first_url,
+    const GURL& last_url,
+    int redirect_chain_size,
+    bool is_new_intercept,
+    bool is_reload_or_backforward) {
+#if BUILDFLAG(IS_ARKWEB_EXT)
+  if (!entry) {
+    LOG(WARNING) << "SafeBrowsing " << __func__
+                 << " entry is nullptr, report js redirect intercept.";
+    return;
+  }
+ 
+  NavigationEntrySafeBrowsingData* safe_browsing_data =
+      NavigationEntrySafeBrowsingData::GetOrCreate(entry);
+  std::vector<GURL> redirect_chain = safe_browsing_data->GetRedirectChain();
+  int chain_size = redirect_chain_size;
+  if (!chain_size) {
+    chain_size = redirect_chain.size();
+  }
+  ReportJSRedirectIntercept(
+      blocking_page_info, first_url, last_url, chain_size, is_new_intercept, is_reload_or_backforward);
+#endif
 }
 
 void SbClient::NotifySafeBrowsingCheckResult(OHSBThreatType threat_type) {
@@ -629,6 +706,6 @@ void SbClient::NotifySafeBrowsingCheckDetail(int code,
       code, policy, threat);
 }
 
-WEB_CONTENTS_USER_DATA_KEY_IMPL(SbClient::BlockingPageInfo);
+WEB_CONTENTS_USER_DATA_KEY_IMPL(SbClient::BlockingPageInfoCache);
 
 }  // namespace ohos_safe_browsing
