@@ -30,6 +30,10 @@
 #include "ohos_cef_ext/libcef/browser/autofill/oh_autofill_provider.h"
 #include "third_party/abseil-cpp/absl/types/optional.h"
 
+namespace content {
+class WebContents;
+}
+
 namespace autofill {
 
 class AutofillProvider;
@@ -149,6 +153,12 @@ class OhAutofillManager : public AutofillManager,
   void OnFormProcessed(const FormData& form,
                        const FormStructure& form_structure) override;
 
+#if BUILDFLAG(ARKWEB_PASSWORD_AUTOFILL)
+  void OnAutofillManagerStateChanged(AutofillManager& manager,
+                                     LifecycleState previous,
+                                     LifecycleState current) override;
+#endif
+
  protected:
 #ifdef UNIT_TEST
   // For the unit tests where WebContents isn't available.
@@ -164,6 +174,7 @@ class OhAutofillManager : public AutofillManager,
   void StartNewLoggingSession();
 
   void HidePopup();
+  void HidePopup(content::WebContents* web_contents);
 
 #if BUILDFLAG(ARKWEB_PASSWORD_AUTOFILL)
   void ForwardDataToPasswordManager(const std::string& page_url,
@@ -175,7 +186,8 @@ class OhAutofillManager : public AutofillManager,
                                    FieldRendererId field_id);
   void PopupShow();
 
-  void Hide(SuggestionHidingReason reason);
+  void Hide(base::WeakPtr<content::WebContents> popup_web_contents,
+            SuggestionHidingReason reason);
 #endif
 
 #if BUILDFLAG(ARKWEB_DATALIST)
@@ -189,6 +201,7 @@ class OhAutofillManager : public AutofillManager,
   bool is_show_ = false;
   bool is_password_popup_show_ = false;
   std::unique_ptr<FormData> form_;
+  base::WeakPtr<content::WebContents> popup_web_contents_;
   std::optional<AutofillPopupHideHelper> popup_hide_helper_;
   base::ScopedObservation<AutofillManager, AutofillManager::Observer>
       autofill_manager_observation{this};
