@@ -110,7 +110,9 @@ void OhosSBURLLoaderThrottle::OnCheckResult(bool should_block) {
                  << " checked url in block cache and cancel request: "
                  << url::LogUtils::ConvertUrlWithMask(current_url_.spec());
     Stop();
-    delegate_->CancelWithError(net::ERR_BLOCKED_BY_CLIENT);
+    if (delegate_) {
+      delegate_->CancelWithError(net::ERR_BLOCKED_BY_CLIENT);
+    }
   }
 }
 }  // namespace ohos_safe_browsing
