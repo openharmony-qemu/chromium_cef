@@ -17,6 +17,10 @@
 #include "cef/ohos_cef_ext/libcef/browser/net_service/cookie_manager_impl_ext.h"
 #include "content/public/browser/browser_context.h"
 #endif
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+#include "content/browser/web_contents/web_contents_impl.h"
+#include "content/public/common/url_constants.h"
+#endif
 
 namespace renderer_prefs {
 
@@ -246,6 +250,36 @@ void SetJsDefaultContent(content::WebContents* web_contents,
     if (cookie_manager) {
       cookie_manager->UpdateHostContentSettingsMap();
     }
+  }
+}
+#endif
+
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+void SetDevToolsThemePrefs(content::WebContents* web_contents,
+                           const CefBrowserSettings& cef,
+                           blink::web_pref::WebPreferences& web) {
+  if (!web_contents) {
+    return;
+  }
+  // DevTools frontend (devtools:// scheme) manages its own theme via
+  // theme-with-dark-background CSS class. Skip force-dark so that CSS
+  // colors are not inverted, allowing DevTools theme switching to work.
+  // Set preferred_color_scheme to follow the system's actual color mode
+  // (not forced to kLight) so that @media (prefers-color-scheme: dark)
+  // in entrypoint_template.html matches on dark systems, preventing
+  // white flash on initial load — same as Chrome desktop behavior.
+  if (web_contents->GetLastCommittedURL().SchemeIs(
+          content::kChromeDevToolsScheme)) {
+    web.force_dark_mode_enabled = false;
+#if BUILDFLAG(ARKWEB_DARKMODE)
+    if (cef.dark_prefer_color_scheme_enabled == STATE_ENABLED) {
+      web.preferred_color_scheme = blink::mojom::PreferredColorScheme::kDark;
+    } else {
+      web.preferred_color_scheme = blink::mojom::PreferredColorScheme::kLight;
+    }
+#else
+    web.preferred_color_scheme = blink::mojom::PreferredColorScheme::kLight;
+#endif
   }
 }
 #endif
