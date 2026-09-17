@@ -62,6 +62,10 @@ void CefDevToolsWindowRunner::CloseDevTools() {
     devtools_frontend_->Close();
     devtools_frontend_ = nullptr;
   }
+  if (static_devtools_frontend_) {
+    static_devtools_frontend_->Close();
+    static_devtools_frontend_ = nullptr;
+  }
 #endif // BUILDFLAG(ARKWEB_DEVTOOLS)
 }
 

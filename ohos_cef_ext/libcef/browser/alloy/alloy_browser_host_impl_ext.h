@@ -14,6 +14,10 @@
 #if BUILDFLAG(ARKWEB_DEVTOOLS)
 struct RequestOpenDevToolsParams;
 #endif // ARKWEB_DEVTOOLS
+// 作用：引入WebContents声明以支持AddNewContents重写；合理性：仅多窗口模式需要此声明，避免无谓依赖；必要性：AddNewContents重写的签名和实现需要content::WebContents完整类型
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+#include "content/public/browser/web_contents.h"
+#endif
 #if BUILDFLAG(ARKWEB_FULLSCREEN_VIDEO_OVERLAY)
 enum class VideoPlaybackNotificationType;
 #endif // ARKWEB_FULLSCREEN_VIDEO_OVERLAY
@@ -380,6 +384,20 @@ public:
 #if BUILDFLAG(ARKWEB_DEVTOOLS)
   void OnRequestOpenDevTools(RequestOpenDevToolsParams* params) override;
 #endif // ARKWEB_DEVTOOLS
+
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+  // 作用：重写弹窗创建入口以插入自动打开DevTools逻辑
+  // 合理性：与Chrome的DevToolsWindow::AddNewContents模式对齐，在CEF层扩展而非侵入基类
+  // 必要性：基类不支持弹窗自动打开DevTools，OH多窗口场景需要此扩展才能实现"自动附加到新页面"设置
+  content::WebContents* AddNewContents(
+      content::WebContents* source,
+      std::unique_ptr<content::WebContents> new_contents,
+      const GURL& target_url,
+      WindowOpenDisposition disposition,
+      const blink::mojom::WindowFeatures& window_features,
+      bool user_gesture,
+      bool* was_blocked) override;
+#endif
 
 #if BUILDFLAG(ARKWEB_SAFEBROWSING)
   void OnSafeBrowsingCheckDetail(int code, int policy, int threat) override;

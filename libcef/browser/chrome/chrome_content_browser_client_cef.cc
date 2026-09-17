@@ -592,6 +592,10 @@ void ChromeContentBrowserClientCef::OverrideWebPreferences(
 #if BUILDFLAG(ARKWEB_EXT_EXCEPTION_LIST)
     renderer_prefs::SetJsDefaultContent(web_contents, *prefs);
 #endif
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+    renderer_prefs::SetDevToolsThemePrefs(web_contents, browser->settings(),
+        *prefs);
+#endif
     auto frame = browser->GetMainFrame();
 
 #if BUILDFLAG(ARKWEB_COMPOSITE_RENDER)

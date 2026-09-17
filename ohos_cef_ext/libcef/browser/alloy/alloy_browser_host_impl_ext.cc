@@ -40,6 +40,11 @@
 #include "cef/ohos_cef_ext/libcef/browser/osr/arkweb_render_widget_host_view_osr_ext.h"
 #endif
 
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+// 作用：引入CefDevToolsFrontend声明以支持弹出窗口自动打开DevTools
+#include "cef/ohos_cef_ext/libcef/browser/devtools/arkweb/devtools_frontend.h"
+#endif
+
 #include "arkweb/build/features/features.h"
 #include "chrome/browser/file_select_helper.h"
 #include "chrome/browser/picture_in_picture/picture_in_picture_window_manager.h"
@@ -2350,4 +2355,37 @@ void AlloyBrowserHostImplExt::OnRequestOpenDevTools(RequestOpenDevToolsParams* p
   }
 }
 #endif // ARKWEB_DEVTOOLS
+
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+// 【ArkWeb适配-重写AddNewContents为弹出窗口自动打开DevTools】
+// 作用：拦截弹出窗口创建流程，在弹窗WebContents创建完成后检查是否需要自动打开DevTools
+// 必要性：标准Chrome通过WebContentsDelegate::AddNewContents在DevToolsWindow中实现自动打开，
+//   但CEF的AlloyBrowserHostImpl基类没有此逻辑，OH多窗口场景下弹窗不会自动触发DevTools
+// 合理性：先调用基类完成弹窗WebContents的创建与初始化，再调用静态方法判断opener链是否
+//   启用了"auto-open DevTools for popups"，避免基类创建失败时空指针
+content::WebContents* AlloyBrowserHostImplExt::AddNewContents(
+    content::WebContents* source,
+    std::unique_ptr<content::WebContents> new_contents,
+    const GURL& target_url,
+    WindowOpenDisposition disposition,
+    const blink::mojom::WindowFeatures& window_features,
+    bool user_gesture,
+    bool* was_blocked) {
+  // 作用：委托基类完成弹窗WebContents的创建
+  // 合理性：保留基类的弹窗初始化逻辑（路由、delegate绑定等）
+  // 必要性：自定义逻辑需在WebContents完全初始化后执行，否则MaybeAutoOpenDevToolsForPopup无法获取有效的opener链
+  // Delegate to the base class first so the popup WebContents is created
+  // and fully initialized in the CEF layer.
+  content::WebContents* result = AlloyBrowserHostImpl::AddNewContents(
+      source, std::move(new_contents), target_url, disposition,
+      window_features, user_gesture, was_blocked);
+
+  // 作用：弹窗创建成功后检查并触发自动打开DevTools
+  if (result) {
+    CefDevToolsFrontend::MaybeAutoOpenDevToolsForPopup(result);
+  }
+
+  return result;
+}
+#endif
 
