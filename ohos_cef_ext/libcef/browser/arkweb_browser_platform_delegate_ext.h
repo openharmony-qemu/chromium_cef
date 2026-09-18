@@ -79,7 +79,7 @@ class ArkWebCefBrowserPlatformDelegateExt : public CefBrowserPlatformDelegate {
   virtual bool GetPendingSizeStatus() { return false; }
   virtual void SetFitContentMode(int mode) {}
   virtual void SetShouldFrameSubmissionBeforeDraw(bool should) {}
-  virtual std::string GetCurrentLanguage() {}
+  virtual std::string GetCurrentLanguage() { return ""; }
   virtual void GetWebLanguageAsync(
       CefRefPtr<CefWebLanguageDetectedCallback> callback) {}
 #endif  // BUILDFLAG(ARKWEB_COMPOSITE_RENDER)

@@ -229,7 +229,7 @@ class ArkWebRenderHandlerExt : public virtual CefRenderHandler,
   ///
   /// Get data detector enable.
   ///
-  virtual bool GetDataDetectorEnable() {}
+  virtual bool GetDataDetectorEnable() { return false; }
 
   ///
   /// Called when text input state has changed for the specified |browser|.

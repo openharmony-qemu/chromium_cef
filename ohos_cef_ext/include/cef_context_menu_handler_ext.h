@@ -79,7 +79,7 @@ class CefContextMenuHandlerExt : virtual public CefContextMenuHandler {
   ///
   /// GetImageIdByTaskId
   ///
-  virtual int32_t GetImageId(int32_t taskid) {}
+  virtual int32_t GetImageId(int32_t taskid) { return -1; }
 
   ///
   /// Called when GetImageFromCache function to get image from
