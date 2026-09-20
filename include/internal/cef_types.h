@@ -762,6 +762,7 @@ typedef struct _cef_browser_settings_t {
   cef_state_t native_embed_mode_enabled;
   cef_state_t intrinsic_size_enabled;
   cef_state_t css_display_change_enabled;
+  cef_state_t transform_rotate_and_skew_enabled;
   cef_string_t embed_tag;
   cef_string_t embed_tag_type;
 #endif  // BUILDFLAG(ARKWEB_SAME_LAYER)

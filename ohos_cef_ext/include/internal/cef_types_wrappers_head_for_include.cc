@@ -54,6 +54,7 @@ static inline void setForInclude(const struct_type* src,
   target->native_embed_mode_enabled = src->native_embed_mode_enabled;
   target->intrinsic_size_enabled = src->intrinsic_size_enabled;
   target->css_display_change_enabled = src->css_display_change_enabled;
+  target->transform_rotate_and_skew_enabled = src->transform_rotate_and_skew_enabled;
   cef_string_set(src->embed_tag.str, src->embed_tag.length, &target->embed_tag,
                  copy);
   cef_string_set(src->embed_tag.str, src->embed_tag.length,

@@ -97,6 +97,7 @@ void SetCefPrefsSetStateExt(const CefBrowserSettings& cef,
   SET_STATE(cef.native_embed_mode_enabled, web.native_embed_mode_enabled);
   SET_STATE(cef.intrinsic_size_enabled, web.intrinsic_size_enabled);
   SET_STATE(cef.css_display_change_enabled, web.css_display_change_enabled);
+  SET_STATE(cef.transform_rotate_and_skew_enabled, web.transform_rotate_and_skew_enabled);
   web.embed_tag = CefString(&cef.embed_tag);
   web.embed_tag_type = CefString(&cef.embed_tag_type);
 #endif

@@ -644,6 +644,8 @@ void ArkWebBrowserHostExtImpl::UpdateBrowserSettings(
       browser_settings.intrinsic_size_enabled;
   settings_.css_display_change_enabled =
       browser_settings.css_display_change_enabled;
+  settings_.transform_rotate_and_skew_enabled =
+      browser_settings.transform_rotate_and_skew_enabled;
   SETTINGS_STRING_SET(browser_settings.embed_tag, settings_.embed_tag);
   SETTINGS_STRING_SET(browser_settings.embed_tag_type,
                       settings_.embed_tag_type);
