@@ -99,6 +99,10 @@
 #include "libcef/browser/devtools/arkweb/request_open_devtools_handler.h"
 // 作用：引入DevToolsAgentHost用于从target_id解析WebContents
 #include "content/public/browser/devtools_agent_host.h"
+
+// enable accessibility for inspected web contents
+#include "content/public/browser/browser_accessibility_state.h"
+#include "content/public/browser/scoped_accessibility_mode.h"
 #endif // BUILDFLAG(ARKWEB_DEVTOOLS)
 
 namespace {
@@ -672,6 +676,14 @@ CefDevToolsFrontend::CefDevToolsFrontend(
   file_manager_.SetDevToolsMessageHandler(devtools_message_handler_.get());
   devtools_message_handler_->SetDevToolsFrontend(this);
   isTabTarget_ = ShouldUseTabTarget();
+
+  auto* accessbility_state = content::BrowserAccessibilityState::GetInstance();
+  DCHECK(accessbility_state);
+
+  if (inspected_contents) {
+    scoped_accessibility_mode_ = accessbility_state->CreateScopedModeForBrowserContext(
+        inspected_contents->GetBrowserContext(), ui::kAXModeComplete);
+  }
 }
 #endif // BUILDFLAG(ARKWEB_DEVTOOLS)
 
