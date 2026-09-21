@@ -171,9 +171,11 @@ content::WebContents* CefBrowserContentsDelegate::OpenURLFromTabEx(
 bool CefBrowserContentsDelegate::SetContentsBoundsEx(
     content::WebContents* source,
     const gfx::Rect& bounds) {
+#if !BUILDFLAG(ARKWEB_MULTI_WINDOW)
   if (!CEF_API_IS_ADDED(13700)) {
     return false;
   }
+#endif
   if (auto c = client()) {
     if (auto handler = c->GetDisplayHandler()) {
       return handler->OnContentsBoundsChange(
