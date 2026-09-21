@@ -124,7 +124,7 @@ private:
     POINTERLOCK_LOCKED_SILENTLY
   };
 
-  PointerLockState pointer_lock_state_;
+  PointerLockState pointer_lock_state_ = POINTERLOCK_UNLOCKED;
 
   // Timestamp when the user last successfully escaped from a lock request.
   base::TimeTicks last_user_escape_time_;
