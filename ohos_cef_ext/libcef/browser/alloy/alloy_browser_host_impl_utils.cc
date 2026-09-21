@@ -292,6 +292,12 @@ void AlloyBrowserHostImplUtils::enableZoomLevelController(content::WebContents* 
 }
 #endif
 
+#if BUILDFLAG(ARKWEB_ZOOM)
+void AlloyBrowserHostImplUtils::enableZoomFactorController(content::WebContents* web_contents) {
+  alloyBrowserHostImpl->EnableZoomFactorController(web_contents);
+}
+#endif
+
 
 #if BUILDFLAG(ARKWEB_WEBRTC) && BUILDFLAG(ARKWEB_PERMISSION)
 int AlloyBrowserHostImplUtils::conditionalHandleMediaStreamPermissionRequest(

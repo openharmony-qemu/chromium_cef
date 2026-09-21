@@ -46,6 +46,9 @@ public:
 #if BUILDFLAG(ARKWEB_EXT_GET_ZOOM_LEVEL)
   void enableZoomLevelController(content::WebContents* web_contents);
 #endif
+#if BUILDFLAG(ARKWEB_ZOOM)
+  void enableZoomFactorController(content::WebContents* web_contents);
+#endif
 
 #if BUILDFLAG(ARKWEB_WEBRTC) && BUILDFLAG(ARKWEB_PERMISSION)
   int conditionalHandleMediaStreamPermissionRequest(

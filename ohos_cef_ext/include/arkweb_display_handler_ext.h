@@ -82,6 +82,11 @@ class ArkWebDisplayHandlerExt : public virtual CefDisplayHandler,
   virtual void OnContentsBrowserZoomChange(double zoom_factor,
                                            bool can_show_bubble) {}
 
+  // Called by the new Browser Zoom Factor API. This is intentionally separate
+  // from the historical OnContentsBrowserZoomChange callback above.
+  virtual void OnZoomFactorChanged(double old_zoom_factor,
+                                   double new_zoom_factor) {}
+
 #if BUILDFLAG(ARKWEB_NAVIGATION)
   ///
   /// onTouchIconUrlWithSizesReceived.

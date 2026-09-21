@@ -1116,6 +1116,13 @@ class ArkWebBrowserHostExt : public virtual CefBrowserHost,
   ///
   virtual void SetBrowserZoomLevel(double zoomFactor) = 0;
 
+  // Browser Zoom Factor API. Do not route this through the legacy browser
+  // zoom-level extension: their callback and persistence semantics differ.
+#if BUILDFLAG(ARKWEB_ZOOM)
+  virtual void SetZoomFactor(double zoomFactor) = 0;
+  virtual double GetZoomFactor() = 0;
+#endif
+
   ///
   /// Get last selected text by parameters carried when showing context menu.
   ///

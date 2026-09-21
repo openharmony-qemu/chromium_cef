@@ -1496,6 +1496,9 @@ AlloyBrowserHostImpl::AlloyBrowserHostImpl(
 #if BUILDFLAG(ARKWEB_EXT_GET_ZOOM_LEVEL)
   implUtils->enableZoomLevelController(web_contents);
 #endif
+#if BUILDFLAG(ARKWEB_ZOOM)
+  implUtils->enableZoomFactorController(web_contents);
+#endif
 }
 
 bool AlloyBrowserHostImpl::CreateHostWindow() {
