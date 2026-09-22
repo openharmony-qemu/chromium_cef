@@ -929,6 +929,7 @@ ExtensionFunction::ResponseAction TabsQueryFunction::Run() {
   queryInfo.contextType =
       OHOS::NWeb::GetExtensionContextType(browser_context());
   queryInfo.includeIncognitoInfo = include_incognito_information();
+  queryInfo.agentProcessing = params->query_info.agent_processing;
 
   std::vector<NWebExtensionTabV2> tabs =
       OHOS::NWeb::NWebExtensionTabCefDelegate::QueryTab(queryInfo);
@@ -1334,6 +1335,10 @@ ExtensionFunction::ResponseAction TabsUpdateFunction::Run() {
   }
   update_properties.contextType = OHOS::NWeb::GetExtensionContextType(browser_context());
   update_properties.includeIncognitoInfo = include_incognito_information();
+  if (params->update_properties.agent_processing.has_value()) {
+    update_properties.agentProcessing =
+        *params->update_properties.agent_processing;
+  }
 
   call_update_tab_ = true;
   bool success = OHOS::NWeb::NWebExtensionTabCefDelegate::UpdateTab(
