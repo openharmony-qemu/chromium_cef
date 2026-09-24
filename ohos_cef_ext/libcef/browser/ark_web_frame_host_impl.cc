@@ -15,6 +15,7 @@
 
 #include "cef/ohos_cef_ext/libcef/browser/ark_web_frame_host_impl.h"
 
+#include "cef/libcef/browser/browser_host_base.h"
 #include "cef/libcef/browser/frame_host_impl.h"
 
 #if BUILDFLAG(ARKWEB_NETWORK_LOAD)
@@ -98,6 +99,14 @@ void CefFrameHostImpl::SendHitEvent(float x,
   hit_event->y = y;
   hit_event->width = width;
   hit_event->height = height;
+
+  auto browser = browser_info_->browser();
+  if (browser) {
+    hit_event->click_ext_enabled = browser->settings().click_ext_enabled;
+    LOG(DEBUG) << "[ClickExt] CefFrameHostImpl SetClickExtEnabled: " << hit_event->click_ext_enabled;
+  } else {
+    hit_event->click_ext_enabled = false;
+  }
   SendToRenderFrame(__FUNCTION__,
                     base::BindOnce(
                         [](cef::mojom::HitEventParamsPtr hit_event,
