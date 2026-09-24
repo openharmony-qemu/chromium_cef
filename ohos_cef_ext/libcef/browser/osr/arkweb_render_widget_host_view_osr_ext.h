@@ -225,9 +225,14 @@ class ArkWebRenderWidgetHostViewOSRExt
   void SendTouchGestureEvent(blink::WebTouchEvent& touch_event);
   void SendGestureEvent(const ui::GestureEventData& gesture);
 #if BUILDFLAG(ARKWEB_AI)
+  void FillXPathAndText(CefRefPtr<CefDictionaryValue>& reportDict,
+                        const std::string& xpath,
+                        const std::string& text_content);
   void ReportAIGestureEvent(const blink::WebGestureEvent& event);
   std::string GetReportAIGestureEventJson(const blink::WebGestureEvent& event,
-                                          int node_id);
+                                          int node_id,
+                                          const std::string& xpath,
+                                          const std::string& text_content);
   gfx::PointF AIGestureEventPoint(const blink::WebGestureEvent& event);
 #endif
   // TextInputManager::Observer implementation.

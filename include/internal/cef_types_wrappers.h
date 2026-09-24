@@ -625,6 +625,7 @@ struct CefBrowserSettingsTraits {
 
 #if BUILDFLAG(ARKWEB_MENU)
     target->touch_handle_exist = src->touch_handle_exist;
+    target->click_ext_enabled = src->click_ext_enabled;
     target->viewport_scale = src->viewport_scale;
 #endif  // BUILDFLAG(ARKWEB_MENU)
 

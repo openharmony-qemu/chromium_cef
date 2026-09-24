@@ -57,6 +57,7 @@ struct HitEventParams {
   float y;
   int32 width;
   int32 height;
+  bool click_ext_enabled;
 };
  
 [EnableIf=is_ohos]
@@ -278,7 +279,7 @@ interface BrowserFrame {
                            bool is_outermost_main_frame) => (bool result);
 
   [EnableIf=is_ohos]
-  UpdateHitTestData(int32 type, string extra_data, int32 node_id);
+  UpdateHitTestData(int32 type, string extra_data, int32 node_id, string xpath, string text_content);
 
   [EnableIf=arkweb_error_page, Sync]
   OverrideErrorPage(string url,
