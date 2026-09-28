@@ -316,6 +316,18 @@ void CefJavaScriptDialogManager::DialogClosed(
     const std::u16string& user_input) {
   if (handler_) {
     handler_->OnDialogClosed(browser_.get());
+#if BUILDFLAG(ARKWEB_NWEB_EX)
+    DLOG(INFO) << "DialogClosed success=" << success
+               << ", has_handler=" << (handler_ != nullptr)
+               << ", has_callback=" << !callback.is_null();
+    // ArkWeb: notify handler with full dialog result (success + user_input)
+    // for CDP handleJavaScriptDialog -> ArkUI dialog close chain.
+    if (callback.is_null()) {
+      DLOG(INFO) << " DialogClosed calling from CDP handleJavaScriptDialog";
+      handler_->OnHandleJavaScriptDialog(browser_.get(), success,
+                                         CefString(user_input));
+    }
+#endif  // BUILDFLAG(ARKWEB_NWEB_EX)
     // Call OnResetDialogState.
     CancelDialogs(/*web_contents=*/nullptr, /*reset_state=*/true);
   }
