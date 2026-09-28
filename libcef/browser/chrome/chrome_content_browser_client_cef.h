@@ -158,6 +158,12 @@ class ChromeContentBrowserClientCef : public ChromeContentBrowserClient {
       mojo::BinderMapWithContext<content::RenderFrameHost*>* map) override;
   std::unique_ptr<content::WebContentsViewDelegate> GetWebContentsViewDelegate(
       content::WebContents* web_contents) override;
+
+#if BUILDFLAG(ARKWEB_NO_STATE_PREFETCH)
+  bool ShouldPreconnectNavigation(
+      content::RenderFrameHost* render_frame_host) override;
+#endif // BUILDFLAG(ARKWEB_NO_STATE_PREFETCH)
+
 #if BUILDFLAG(ARKWEB_SITE_ISOLATION)
   bool ShouldDisableSiteIsolation(
       content::SiteIsolationMode site_isolation_mode) override;
