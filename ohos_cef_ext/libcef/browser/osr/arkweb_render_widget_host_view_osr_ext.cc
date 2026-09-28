@@ -53,6 +53,7 @@
 #include "content/browser/renderer_host/render_widget_host_delegate.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/browser/renderer_host/render_frame_host_impl.h"
+#include "content/browser/web_contents/web_contents_impl.h"
 #include "base/ohos/sys_info_utils_ext.h"
 #include "cef/libcef/browser/osr/render_widget_host_view_osr.h"
 #include "cef/ohos_cef_ext/include/arkweb_render_handler_ext.h"
@@ -147,6 +148,10 @@ const size_t kMaxDataDetectorTextLength = 1000;
 #endif
 
 #include "arkweb/chromium_ext/ui/compositor/compositor_utils.h"
+
+#if BUILDFLAG(ARKWEB_DELEGATE_COMPOSITING)
+#include "arkweb/chromium_ext/base/ohos/sys_info_utils_ext.h"
+#endif
 
 #if BUILDFLAG(IS_ARKWEB)
 const int SCALE_FACTOR_CONVERT_RATIO = 100;
@@ -279,6 +284,12 @@ ArkWebRenderWidgetHostViewOSRExt::ArkWebRenderWidgetHostViewOSRExt(
 
 #if BUILDFLAG(ARKWEB_EXT_PULL_TO_REFRESH) || BUILDFLAG(ARKWEB_PULL_TO_REFRESH)
   CreateOverscrollControllerIfPossible();
+#endif
+
+#if BUILDFLAG(ARKWEB_DELEGATE_COMPOSITING)
+  if (base::ohos::IsDelegatedCompositingEnabledOhos()) {
+    UpdateCompositorStatus();
+  }
 #endif
 }
 
@@ -3356,5 +3367,36 @@ void ArkWebRenderWidgetHostViewOSRExt::SetAsyncStackId(uint64_t stackId) {
             browser_impl_->GetAcceleratedWidget(is_popup_))) {
     compositor->Utils()->SetAsyncStackId(stackId);
   }
+}
+#endif
+
+#if BUILDFLAG(ARKWEB_DELEGATE_COMPOSITING)
+void ArkWebRenderWidgetHostViewOSRExt::UpdateCompositorStatus() {
+  if (!browser_impl_) {
+    LOG(ERROR) << "UpdateCompositorStatus browser_impl_ is nullptr";
+    return;
+  }
+
+  auto* web_contents_impl = static_cast<content::WebContentsImpl*>(browser_impl_->GetWebContents());
+  if (!web_contents_impl) {
+    LOG(ERROR) << "UpdateCompositorStatus web_contents_impl is nullptr";
+    return;
+  }
+
+  auto widget = browser_impl_->GetAcceleratedWidget(is_popup_);
+  if (!widget) {
+    LOG(ERROR) << "UpdateCompositorStatus widget is nullptr";
+    return;
+  }
+
+  auto compositor = ArkWebRenderWidgetHostViewOSRUtils::GetCompositor(widget);
+  if (!compositor || !compositor->Utils()) {
+    LOG(ERROR) << "UpdateCompositorStatus compositor is nullptr";
+    return;
+  }
+
+  bool cached_focused = web_contents_impl->IsWebContentsFocused();
+  bool cached_single_screen = web_contents_impl->IsSingleScreen();
+  compositor->Utils()->SetCachedFocusAndScreenStatus(cached_focused, cached_single_screen);
 }
 #endif
