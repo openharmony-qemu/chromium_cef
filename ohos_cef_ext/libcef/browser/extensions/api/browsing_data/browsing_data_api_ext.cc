@@ -33,6 +33,7 @@
 #include "chrome/browser/extensions/api/browsing_data/browsing_data_api.h"
 #include "ohos_nweb/src/capi/web_extension_browsing_data_items.h"
 #include "ohos_nweb/src/cef_delegate/nweb_extension_browsing_data_cef_delegate.h"
+#include "ohos_nweb/src/cef_delegate/nweb_extension_utils.h"
 
 namespace {
 
@@ -100,6 +101,112 @@ void GetRemovalOptions(const base::Value::Dict& options, NWebExtensionBrowsingDa
   removeOptions.startTime = GetOptionNumber(options, extension_browsing_data_api_constants::kSinceKey);
   removeOptions.originTypes = GetOriginTypes(options);
   return removeOptions;
+}
+
+uint64_t MaskForKey(const char* key) {
+  if (strcmp(key, extension_browsing_data_api_constants::kCacheKey) == 0) {
+    return content::BrowsingDataRemover::DATA_TYPE_CACHE;
+  }
+  if (strcmp(key, extension_browsing_data_api_constants::kCookiesKey) == 0) {
+    return content::BrowsingDataRemover::DATA_TYPE_COOKIES;
+  }
+  if (strcmp(key, extension_browsing_data_api_constants::kDownloadsKey) == 0) {
+    return content::BrowsingDataRemover::DATA_TYPE_DOWNLOADS;
+  }
+  if (strcmp(key, extension_browsing_data_api_constants::kFileSystemsKey) == 0) {
+    return content::BrowsingDataRemover::DATA_TYPE_FILE_SYSTEMS;
+  }
+  if (strcmp(key, extension_browsing_data_api_constants::kFormDataKey) == 0) {
+    return chrome_browsing_data_remover::DATA_TYPE_FORM_DATA;
+  }
+  if (strcmp(key, extension_browsing_data_api_constants::kHistoryKey) == 0) {
+    return chrome_browsing_data_remover::DATA_TYPE_HISTORY;
+  }
+  if (strcmp(key, extension_browsing_data_api_constants::kIndexedDBKey) == 0) {
+    return content::BrowsingDataRemover::DATA_TYPE_INDEXED_DB;
+  }
+  if (strcmp(key, extension_browsing_data_api_constants::kLocalStorageKey) == 0) {
+    return content::BrowsingDataRemover::DATA_TYPE_LOCAL_STORAGE;
+  }
+  if (strcmp(key, extension_browsing_data_api_constants::kPasswordsKeyDeprecated) == 0) {
+    return chrome_browsing_data_remover::DATA_TYPE_PASSWORDS;
+  }
+  if (strcmp(key, extension_browsing_data_api_constants::kServiceWorkersKey) == 0) {
+    return content::BrowsingDataRemover::DATA_TYPE_SERVICE_WORKERS;
+  }
+  if (strcmp(key, extension_browsing_data_api_constants::kCacheStorageKey) == 0) {
+    return content::BrowsingDataRemover::DATA_TYPE_CACHE_STORAGE;
+  }
+  return 0ULL;
+}
+
+// Returns false if any of the selected data types are not allowed to be
+// deleted.
+bool IsRemovalPermitted(uint64_t removal_mask, PrefService* prefs) {
+  // Enterprise policy or user preference might prohibit deleting browser or
+  // download history.
+  if ((removal_mask & chrome_browsing_data_remover::DATA_TYPE_HISTORY) ||
+      (removal_mask & content::BrowsingDataRemover::DATA_TYPE_DOWNLOADS)) {
+    return prefs->GetBoolean(prefs::kAllowDeletingBrowserHistory);
+  }
+  return true;
+}
+
+void SetDetails(base::Value::Dict* selected_dict,
+                base::Value::Dict* permitted_dict,
+                const char* data_type,
+                bool is_selected,
+                raw_ptr<PrefService> prefs) {
+  bool is_permitted = IsRemovalPermitted(MaskForKey(data_type), prefs);
+  selected_dict->Set(data_type, is_selected && is_permitted);
+  permitted_dict->Set(data_type, is_permitted);
+}
+
+base::Value::Dict GetSettingsValue(const NWebExtensionBrowsingDataSettings& settings,
+                                   raw_ptr<PrefService> prefs) {
+  base::Value::Dict origin_types;
+  origin_types.Set(extension_browsing_data_api_constants::kUnprotectedWebKey,
+                   settings.siteData ? settings.siteData.value() : false);
+  origin_types.Set(extension_browsing_data_api_constants::kProtectedWebKey,
+                   settings.hostedAppsData ? settings.hostedAppsData.value() : false);
+  origin_types.Set(extension_browsing_data_api_constants::kExtensionsKey, false);
+
+  double since = settings.sinceTime.value_or(0);
+
+  base::Value::Dict options;
+  options.Set(extension_browsing_data_api_constants::kOriginTypesKey, std::move(origin_types));
+  options.Set(extension_browsing_data_api_constants::kSinceKey, since);
+
+  base::Value::Dict selected;
+  base::Value::Dict permitted;
+
+  bool delete_site_data =
+      (settings.siteData && settings.siteData.value()) ||
+      (settings.hostedAppsData && settings.hostedAppsData.value());
+
+  SetDetails(&selected, &permitted, extension_browsing_data_api_constants::kCookiesKey, delete_site_data, prefs);
+  SetDetails(&selected, &permitted, extension_browsing_data_api_constants::kFileSystemsKey, delete_site_data, prefs);
+  SetDetails(&selected, &permitted, extension_browsing_data_api_constants::kIndexedDBKey, delete_site_data, prefs);
+  SetDetails(&selected, &permitted, extension_browsing_data_api_constants::kLocalStorageKey, delete_site_data, prefs);
+  SetDetails(&selected, &permitted, extension_browsing_data_api_constants::kServiceWorkersKey, delete_site_data, prefs);
+  SetDetails(&selected, &permitted, extension_browsing_data_api_constants::kCacheStorageKey, delete_site_data, prefs);
+  SetDetails(&selected, &permitted, extension_browsing_data_api_constants::kPluginDataKeyDeprecated, false, prefs);
+  SetDetails(&selected, &permitted, extension_browsing_data_api_constants::kHistoryKey,
+             settings.history ? settings.history.value() : false, prefs);
+  SetDetails(&selected, &permitted, extension_browsing_data_api_constants::kDownloadsKey,
+             settings.downloads ? settings.downloads.value() : false, prefs);
+  SetDetails(&selected, &permitted, extension_browsing_data_api_constants::kCacheKey,
+             settings.cache ? settings.cache.value() : false, prefs);
+  SetDetails(&selected, &permitted, extension_browsing_data_api_constants::kFormDataKey,
+             settings.formData ? settings.formData.value() : false, prefs);
+  SetDetails(&selected, &permitted, extension_browsing_data_api_constants::kPasswordsKeyDeprecated, false, prefs);
+
+  base::Value::Dict result;
+  result.Set(extension_browsing_data_api_constants::kOptionsKey, std::move(options));
+  result.Set(extension_browsing_data_api_constants::kDataToRemoveKey, std::move(selected));
+  result.Set(extension_browsing_data_api_constants::kDataRemovalPermittedKey, std::move(permitted));
+
+  return result;
 }
 
 } // namespace
@@ -235,6 +342,55 @@ void BrowsingDataRemoverFunction::OnRemovedHistory(const base::WeakPtr<BrowsingD
 
   if (!function->call_remove_history_) {
     LOG(DEBUG) << "BrowsingDataRemoverFunction OnRemovedHistory release";
+    function->Release();
+  }
+}
+
+ExtensionFunction::ResponseAction BrowsingDataSettingsFunction::Run() {
+  prefs_ = Profile::FromBrowserContext(browser_context())->GetPrefs();
+  NWebExtensionBrowsingDataQueryOptions queryOptions;
+  queryOptions.contextType = OHOS::NWeb::GetExtensionContextType(browser_context());
+  queryOptions.includeIncognitoInfo = include_incognito_information();
+
+  call_get_settings_ = true;
+  bool success = OHOS::NWeb::NWebExtensionBrowsingDataCefDelegate::GetSettings(
+      base::BindRepeating(&BrowsingDataSettingsFunction::OnGetSettings, weak_ptr_factory_settings_.GetWeakPtr()),
+      queryOptions);
+  call_get_settings_ = false;
+
+  if (did_respond()) {
+    LOG(INFO) << "BrowsingDataSettingsFunction did_respond";
+    return AlreadyResponded();
+  }
+  if (success) {
+    AddRef();
+    LOG(INFO) << "BrowsingDataSettingsFunction AddRef";
+    return RespondLater();
+  } else {
+    return RespondNow(Error("not support browsingData.settings"));
+  }
+}
+
+void BrowsingDataSettingsFunction::OnGetSettings(
+    const base::WeakPtr<BrowsingDataSettingsFunction>& function,
+    const NWebExtensionBrowsingDataSettings& settings,
+    const std::optional<std::string>& error) { 
+  DCHECK(function);
+  if (!function) {
+    LOG(ERROR) << "OnGetSettings is empty!!!!";
+    return;
+  }
+
+  if (error && !error.value().empty()) {
+    function->Respond(function->Error(error.value()));
+  } else {
+    function->Respond(function->has_callback()
+        ? function->WithArguments(base::Value(GetSettingsValue(settings, function->prefs_)))
+        : function->NoArguments());
+  }
+
+  if (!function->call_get_settings_) {
+    LOG(INFO) << "BrowsingDataSettingsFunction Release";
     function->Release();
   }
 }
