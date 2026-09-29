@@ -467,6 +467,20 @@ ExtensionFunction::ResponseAction ContentSettingsContentSettingGetFunction::Run(
       return RespondNow(WithArguments(std::move(result)));
     }
 
+    // AUTOMATIC_DOWNLOADS and ANTI_ABUSE are read locally from
+    // HostContentSettingsMap, similar to the COOKIES path above.
+    if (content_type == ContentSettingsType::AUTOMATIC_DOWNLOADS ||
+        content_type == ContentSettingsType::ANTI_ABUSE) {
+      ContentSetting setting =
+          map->GetContentSetting(primary_url, secondary_url, content_type);
+      base::Value::Dict result;
+      std::string setting_string =
+          content_settings::ContentSettingToString(setting);
+      DCHECK(!setting_string.empty());
+      result.Set(ContentSettingsStore::kContentSettingKey, setting_string);
+      return RespondNow(WithArguments(std::move(result)));
+    }
+
     NWebExtensionContentSettingsGetParam getParam = {0};
 
     if (!SetTypeToParam(&getParam, content_type) || !SetExtensionIdToParam(&getParam, extension_id) ||
@@ -663,7 +677,9 @@ ExtensionFunction::ResponseAction ContentSettingsContentSettingSetFunction::Run(
         return RespondNow(BadMessage());
     }
 
-    if (content_type == ContentSettingsType::COOKIES) {
+    if (content_type == ContentSettingsType::COOKIES ||
+        content_type == ContentSettingsType::AUTOMATIC_DOWNLOADS ||
+        content_type == ContentSettingsType::ANTI_ABUSE) {
       scoped_refptr<ContentSettingsStore> store =
           ContentSettingsService::Get(browser_context())
               ->content_settings_store();
@@ -769,7 +785,9 @@ ExtensionFunction::ResponseAction ContentSettingsContentSettingClearFunction::Ru
         return RespondNow(BadMessage());
       }
 
-    if (content_type == ContentSettingsType::COOKIES) {
+    if (content_type == ContentSettingsType::COOKIES ||
+        content_type == ContentSettingsType::AUTOMATIC_DOWNLOADS ||
+        content_type == ContentSettingsType::ANTI_ABUSE) {
       scoped_refptr<ContentSettingsStore> store =
           ContentSettingsService::Get(browser_context())
               ->content_settings_store();
