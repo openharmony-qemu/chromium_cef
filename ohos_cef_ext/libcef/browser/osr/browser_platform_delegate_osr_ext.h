@@ -86,6 +86,8 @@ public:
   void SetDrawRect(int x, int y, int width, int height) override;
   void SetShouldFrameSubmissionBeforeDraw(bool should) override;
   std::string GetCurrentLanguage() override;
+  void GetWebLanguageAsync(
+      CefRefPtr<CefWebLanguageDetectedCallback> callback) override;
   int drawMode_ = 0;
   gfx::Rect drawRect_{0, 0, 0, 0};
   int fit_content_mode_ = 0;
