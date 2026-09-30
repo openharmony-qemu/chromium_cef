@@ -643,8 +643,7 @@ bool CefCookieManagerImplExt::IsAcceptCookieAllowed() {
   return net_service::NetHelpers::IsAllowAcceptCookies();
 }
 
-void CefCookieManagerImplExt::PutAcceptCookieEnabled(bool accept) {
-  net_service::NetHelpers::accept_cookies = accept;
+void CefCookieManagerImplExt::PutAcceptCookieEnabledInternal(bool accept) {
 #if BUILDFLAG(ARKWEB_EXT_EXCEPTION_LIST)
   if (base::CommandLine::ForCurrentProcess()->HasSwitch(
           switches::kEnableNwebEx)) {
@@ -667,20 +666,27 @@ void CefCookieManagerImplExt::PutAcceptCookieEnabled(bool accept) {
 #endif  // BUILDFLAG(ARKWEB_EXT_EXCEPTION_LIST)
 }
 
+void CefCookieManagerImplExt::PutAcceptCookieEnabled(bool accept) {
+  net_service::NetHelpers::accept_cookies = accept;
+  if (!OHOS::NWeb::NWebImpl::ShouldLazyInitWebEngine()) {
+    StoreOrTriggerInitCallback(base::BindOnce(
+        &CefCookieManagerImplExt::PutAcceptCookieEnabledInternal,
+        this, accept));
+  }
+}
+
 bool CefCookieManagerImplExt::IsThirdPartyCookieAllowed() {
   return net_service::NetHelpers::IsThirdPartyCookieAllowed();
 }
 
 void CefCookieManagerImplExt::PutAcceptThirdPartyCookieEnabled(bool accept) {
-  if (!OHOS::NWeb::NWebImpl::ShouldLazyInitWebEngine() && !ValidContext()) {
+  net_service::NetHelpers::third_party_cookies = accept;
+  if (!OHOS::NWeb::NWebImpl::ShouldLazyInitWebEngine()) {
     StoreOrTriggerInitCallback(base::BindOnce(
         base::IgnoreResult(
             &CefCookieManagerImplExt::PutAcceptThirdPartyCookieEnabledInternal),
         this, accept));
-    return;
   }
-
-  PutAcceptThirdPartyCookieEnabledInternal(accept);
 }
 
 bool CefCookieManagerImplExt::IsFileURLSchemeCookiesAllowed() {
@@ -696,19 +702,13 @@ void CefCookieManagerImplExt::PutAcceptFileURLSchemeCookiesEnabled(bool allow) {
 
 bool CefCookieManagerImplExt::PutAcceptThirdPartyCookieEnabledInternal(
     bool accept) {
-  if (!OHOS::NWeb::NWebImpl::ShouldLazyInitWebEngine()) {
   DCHECK(ValidContext());
   auto browser_context = GetBrowserContext(browser_context_getter_);
   if (!browser_context) {
     return false;
   }
   LOG(INFO) << __func__ << " accept: " << accept;
-  net_service::NetHelpers::third_party_cookies = accept;
   GetCookieManager(browser_context)->BlockThirdPartyCookies(!accept);
-  } else {
-    LOG(INFO) << __func__ << " accept: " << accept;
-    net_service::NetHelpers::third_party_cookies = accept;
-  }
   return true;
 }
 
