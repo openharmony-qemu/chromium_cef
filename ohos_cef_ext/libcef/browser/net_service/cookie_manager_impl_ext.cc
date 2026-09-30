@@ -536,7 +536,7 @@ void CefCookieManagerImplExt::SetNetWorkCookieManagerRemoteComplete(
     }
   }
   RunPendingCookieTasks();
-  remote_network_cookie_manager_inited_ = true;
+  remote_network_cookie_manager_inited_.store(true, std::memory_order_release);
 }
 
 void CefCookieManagerImplExt::SetNetWorkCookieManagerRemoteAsync(
@@ -1209,7 +1209,8 @@ void CefCookieManagerImplExt::LoadCookiesOnAsyncThread(
 }
 
 bool CefCookieManagerImplExt::SupportAsyncThreadCookieLoad() {
-  return remote_network_cookie_manager_inited_ &&
+  return remote_network_cookie_manager_inited_.load(
+             std::memory_order_acquire) &&
          base::FeatureList::IsEnabled(kArkwebLoadCookiesOnAsyncThread);
 }
 
