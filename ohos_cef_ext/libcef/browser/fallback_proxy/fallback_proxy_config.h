@@ -91,6 +91,8 @@ class FallbackProxyConfig {
   const std::string& GetAccelerateProxyServer() const;
   // 获取加速域名列表
   const std::vector<std::string>& GetAccelerateHostList() const;
+  // 获取代理白名单域名列表
+  const std::vector<std::string>& GetProxyWhitelistDomains() const;
 
   // For test，用于使能fallback proxy
   void InitializeEnableParamsForTesting(const std::string& proxy_url,
@@ -148,6 +150,9 @@ class FallbackProxyConfig {
 
   // 加速域名列表
   std::vector<std::string> accelerate_host_list_;
+
+  // 代理白名单域名列表
+  std::vector<std::string> proxy_whitelist_domains_;
 
   base::RepeatingClosure proxy_server_updated_callback_;
 

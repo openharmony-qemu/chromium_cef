@@ -63,6 +63,8 @@ void FallbackProxyConfig::SetFallbackProxyConfigData(
   std::string accelerate_proxy_server = config_data.accelerate_proxy_server;
   std::vector<std::string> accelerate_host_list =
  	    config_data.accelerate_host_list;
+  std::vector<std::string> proxy_whitelist_domains =
+      config_data.proxy_whitelist_domains;
 
   UpdateFallbackProxyServerConfig(config_enabled_, proxy_server);
   if (restart_proxy_internal != restart_proxy_internal_) {
@@ -91,7 +93,37 @@ void FallbackProxyConfig::SetFallbackProxyConfigData(
       direct_proxy_host_list != direct_proxy_host_list_ ||
       proxy_tunnel_timeout != proxy_tunnel_timeout_ ||
       proxy_connect_timeout != proxy_connect_timeout_ ||
-      malicious_url_check_wait_time != malicious_url_check_wait_time_) {
+      malicious_url_check_wait_time != malicious_url_check_wait_time_ ||
+      proxy_whitelist_domains != proxy_whitelist_domains_) {
+    LOG(INFO) << "Fallback proxy config data is changed"
+              << ", using_proxy_error_codes_size_before "
+              << using_proxy_error_codes_.size()
+              << ", using_proxy_error_codes_size_after "
+              << using_proxy_error_codes.size()
+              << ", safe_browsing_hw_codes_size_before "
+              << safe_browsing_hw_codes_.size()
+              << ", safe_browsing_hw_codes_size_after "
+              << safe_browsing_hw_codes.size()
+              << ", safe_browsing_malicious_types_size_before "
+              << safe_browsing_malicious_types_.size()
+              << ", safe_browsing_malicious_types_size_after "
+              << safe_browsing_malicious_types.size()
+              << ", direct_proxy_host_list_size_before "
+              << direct_proxy_host_list_.size()
+              << ", direct_proxy_host_list_size_after "
+              << direct_proxy_host_list.size()
+              << ", proxy_tunnel_timeout_before " << proxy_tunnel_timeout_
+              << ", proxy_tunnel_timeout_after " << proxy_tunnel_timeout
+              << ", proxy_connect_timeout_before " << proxy_connect_timeout_
+              << ", proxy_connect_timeout_after " << proxy_connect_timeout
+              << ", malicious_url_check_wait_time_before "
+              << malicious_url_check_wait_time_
+              << ", malicious_url_check_wait_time_after "
+              << malicious_url_check_wait_time
+              << ", proxy_whitelist_domains_size_before "
+              << proxy_whitelist_domains_.size()
+              << ", proxy_whitelist_domains_size_after "
+              << proxy_whitelist_domains.size();
     using_proxy_error_codes_ = using_proxy_error_codes;
     safe_browsing_hw_codes_ = safe_browsing_hw_codes;
     safe_browsing_malicious_types_ = safe_browsing_malicious_types;
@@ -99,6 +131,7 @@ void FallbackProxyConfig::SetFallbackProxyConfigData(
     proxy_tunnel_timeout_ = proxy_tunnel_timeout;
     proxy_connect_timeout_ = proxy_connect_timeout;
     malicious_url_check_wait_time_ = malicious_url_check_wait_time;
+    proxy_whitelist_domains_ = proxy_whitelist_domains;
 
     bypass_rules_.Clear();
     for (const std::string& host : direct_proxy_host_list_) {
@@ -108,7 +141,6 @@ void FallbackProxyConfig::SetFallbackProxyConfigData(
       }
     }
 
-    LOG(INFO) << "Fallback proxy config data is changed";
     WriteCurrentConfigToLog();
     if (proxy_info_updated_callback_) {
       proxy_info_updated_callback_.Run();
@@ -186,6 +218,10 @@ const std::string& FallbackProxyConfig::GetAccelerateProxyServer() const {
 
 const std::vector<std::string>& FallbackProxyConfig::GetAccelerateHostList() const {
   return accelerate_host_list_;
+}
+
+const std::vector<std::string>& FallbackProxyConfig::GetProxyWhitelistDomains() const {
+  return proxy_whitelist_domains_;
 }
 
 void FallbackProxyConfig::InitializeEnableParamsForTesting(
