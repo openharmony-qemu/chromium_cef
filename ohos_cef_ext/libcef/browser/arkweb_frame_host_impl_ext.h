@@ -149,7 +149,12 @@ void SetIsFling(bool is_fling);
   void GetHitData(int& type, CefString& extra_data);
   void GetLastHitData(int& type, CefString& extra_data);
   void GetLastHitNodeId(int& node_id);
-  void UpdateHitTestData(int32_t type, const std::string& extra_data, int32_t node_id) override;
+  void GetLastHitXPathAndText(std::string& xpath, std::string& text_content);
+  void UpdateHitTestData(int32_t type,
+                         const std::string& extra_data,
+                         int32_t node_id,
+                         const std::string& xpath,
+                         const std::string& text_content) override;
   void SetOverscrollMode(int mode);
   bool IsElementExist(std::string xPath);
   int32_t ExecuteInputCommand(const std::string& xpath,
@@ -306,7 +311,9 @@ void ExecuteAIPageInputCommandByIdOnIO(std::shared_ptr<std::promise<int32_t>> re
     int type;
     CefString extra_data;
     int node_id;
-    CefHitData() : type(0), extra_data(""), node_id(-1) {}
+    std::string xpath;
+    std::string text_content;
+    CefHitData() : type(0), extra_data(""), node_id(-1), xpath(""), text_content("") {}
   };
   CefHitData hit_data_;
 #endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)

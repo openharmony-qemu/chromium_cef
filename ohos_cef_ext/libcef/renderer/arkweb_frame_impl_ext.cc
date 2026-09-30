@@ -82,6 +82,8 @@
 #include "third_party/blink/public/web/web_element_collection.h"
 #include "third_party/blink/public/web/web_frame_widget.h"
 #include "third_party/blink/public/web/web_hit_test_result.h"
+#include "third_party/blink/public/web/web_node.h"
+#include "third_party/blink/public/web/web_element.h"
 #endif
 #if BUILDFLAG(ARKWEB_CLIPBOARD)
 #include "base/process/process_metrics.h"
@@ -92,6 +94,7 @@
 #include "cef/ohos_cef_ext/libcef/renderer/ai_page_dom_capture_controller.h"
 #include "cef/ohos_cef_ext/libcef/renderer/ai_page_element_validator_controller.h"
 #include "cef/ohos_cef_ext/libcef/renderer/arkweb_frame_impl_ext.h"
+#include "cef/ohos_cef_ext/libcef/renderer/click_extractor.h"
 #include "third_party/blink/renderer/platform/runtime_enabled_features.h"
 
 #if BUILDFLAG(ARKWEB_NETWORK_CONNINFO)
@@ -911,17 +914,27 @@ void ArkwebFrameExtImpl::SendHitEvent(cef::mojom::HitEventParamsPtr params) {
   cef_hit_data_.type = data->type;
   cef_hit_data_.extra_data = data->extra_data_for_type;
   auto webNode = result.GetNode();
+  std::string xpath = "";
+  std::string text_content = "";
   if (webNode) {
     cef_hit_data_.node_id = webNode.GetDomNodeId();
+
+    if (params->click_ext_enabled) {
+      arkweb::click_ext::ClickExtResult extract_result =
+          arkweb::click_ext::ClickExtExtractor::Extract(webNode);
+      xpath = extract_result.xpath;
+      text_content = extract_result.text_content;
+    }
   }
   is_update_ = true;
   SendToBrowserFrame(__FUNCTION__,
                      base::BindOnce(
                          [](const int32_t type, const std::string extra_data, const int32_t node_id,
+                            const std::string xpath, const std::string text_content,
                             const BrowserFrameType& render_frame) {
-                           render_frame->UpdateHitTestData(type, extra_data, node_id);
+                           render_frame->UpdateHitTestData(type, extra_data, node_id, xpath, text_content);
                          },
-                         cef_hit_data_.type, cef_hit_data_.extra_data, cef_hit_data_.node_id));
+                         cef_hit_data_.type, cef_hit_data_.extra_data, cef_hit_data_.node_id, xpath, text_content));
 #endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
 }
 #endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
@@ -972,7 +985,7 @@ void ArkwebFrameExtImpl::OnFocusedNodeChanged(
                      base::BindOnce(
                          [](const int32_t type, const std::string extra_data, const int32_t node_id,
                             const BrowserFrameType& render_frame) {
-                           render_frame->UpdateHitTestData(type, extra_data, node_id);
+                           render_frame->UpdateHitTestData(type, extra_data, node_id, "", "");
                          },
                          cef_hit_data_.type, cef_hit_data_.extra_data, cef_hit_data_.node_id));
 #endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)

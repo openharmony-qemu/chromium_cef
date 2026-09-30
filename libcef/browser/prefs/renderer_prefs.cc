@@ -131,6 +131,7 @@ void SetCefPrefs(const CefBrowserSettings& cef,
 
 #if BUILDFLAG(ARKWEB_MENU)
   web.touch_handle_exist = cef.touch_handle_exist;
+  web.click_ext_enabled = cef.click_ext_enabled;
   web.viewport_scale = cef.viewport_scale;
 #endif  // BUILDFLAG(ARKWEB_MENU)
 

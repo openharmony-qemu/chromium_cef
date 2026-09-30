@@ -457,13 +457,24 @@ void ArkWebRenderWidgetHostViewOSRExt::ReportAIGestureEvent(
   static_cast<ArkwebFrameHostExtImpl*>(frame.get())
       ->GetLastHitNodeId(node_id);
 
-  std::string json_result = GetReportAIGestureEventJson(event, node_id);
+  std::string xpath;
+  std::string text_content;
+  static_cast<ArkwebFrameHostExtImpl*>(frame.get())
+      ->GetLastHitXPathAndText(xpath, text_content);
+ 
+  std::string json_result = GetReportAIGestureEventJson(event, node_id, xpath, text_content);
   browser_impl_->client()->AsArkWebClient()->OnAgentEventReport(json_result);
   LOG(DEBUG) << "ReportAIGestureEvent report json.";
 }
 
+void ArkWebRenderWidgetHostViewOSRExt::FillXPathAndText(
+    CefRefPtr<CefDictionaryValue>& reportDict, const std::string& xpath, const std::string& text_content) {
+  reportDict->SetString("xpath", xpath);
+  reportDict->SetString("text", text_content);
+}
+
 std::string ArkWebRenderWidgetHostViewOSRExt::GetReportAIGestureEventJson(
-    const blink::WebGestureEvent& event, int node_id) {
+    const blink::WebGestureEvent& event, int node_id, const std::string& xpath, const std::string& text_content) {
   CefRefPtr<CefDictionaryValue> reportDict = CefDictionaryValue::Create();
   CefRefPtr<CefListValue> pointList = CefListValue::Create();
   CefRefPtr<CefListValue> offsetList = CefListValue::Create();
@@ -479,6 +490,8 @@ std::string ArkWebRenderWidgetHostViewOSRExt::GetReportAIGestureEventJson(
       pointList->SetDouble(0, eventPoint.x());
       pointList->SetDouble(1, eventPoint.y());
       reportDict->SetList("point", pointList);
+
+      FillXPathAndText(reportDict, xpath, text_content);
       break;
     case blink::WebInputEvent::Type::kGesturePinchEnd:
       reportDict->SetString("EventType", "PinchEnd");
