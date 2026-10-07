@@ -6,8 +6,10 @@
 #ifndef CEF_LIBCEF_BROWSER_PAGE_LOAD_METRICS_OH_PAGE_LOAD_METRICS_OBSERVER_H_
 #define CEF_LIBCEF_BROWSER_PAGE_LOAD_METRICS_OH_PAGE_LOAD_METRICS_OBSERVER_H_
 
-#include "base/memory/raw_ptr.h"
 #include <atomic>
+
+#include "base/memory/raw_ptr.h"
+#include "base/memory/weak_ptr.h"
 #include "components/page_load_metrics/browser/page_load_metrics_observer.h"
 #include "net/nqe/effective_connection_type.h"
 #if BUILDFLAG(ARKWEB_NETWORK_DFX)
@@ -25,6 +27,7 @@ class OhPageLoadMetricsObserver
     : public page_load_metrics::PageLoadMetricsObserver {
  public:
   OhPageLoadMetricsObserver();
+  ~OhPageLoadMetricsObserver() override;
 
   OhPageLoadMetricsObserver(const OhPageLoadMetricsObserver&) = delete;
   OhPageLoadMetricsObserver& operator=(const OhPageLoadMetricsObserver&) =
@@ -69,6 +72,11 @@ class OhPageLoadMetricsObserver
       const page_load_metrics::mojom::PageLoadTiming& timing) override;
   void OnFirstMeaningfulPaintInMainFrameDocument(
       const page_load_metrics::mojom::PageLoadTiming& timing) override;
+#if BUILDFLAG(IS_ARKWEB_EXT) && BUILDFLAG(ARKWEB_BIGDATA_METRICS)
+  void MediaStartedPlaying(
+      const content::WebContentsObserver::MediaPlayerInfo& media_player_info,
+      content::RenderFrameHost* render_frame_host) override;
+#endif
 
 #if BUILDFLAG(ARKWEB_NETWORK_DFX)
   void OnFirstInputInPage(
@@ -116,6 +124,22 @@ class OhPageLoadMetricsObserver
 #endif
 
  private:
+#if BUILDFLAG(IS_ARKWEB_EXT) && BUILDFLAG(ARKWEB_BIGDATA_METRICS)
+  static std::string BuildBigdataEventMessage(
+      int64_t fcp_ms,
+      int64_t dns_duration_ms,
+      int64_t connect_duration_ms,
+      bool has_video,
+      const std::string& og_type,
+      int http_response_code,
+      const std::string& page_url);
+
+  void CacheBigdataMetrics();
+  void ReportPageLoadMetrics();
+  void FetchOpenGraphType();
+  void OnOpenGraphMetadataReceived(blink::mojom::OpenGraphMetadataPtr metadata);
+#endif
+
 #if BUILDFLAG(ARKWEB_NWEB_EX) && BUILDFLAG(ARKWEB_NETWORK_DFX)
   content::WebContentsImpl* GetWebContentsImpl();
   void RecordPageLoadReportMetrics();
@@ -177,6 +201,16 @@ class OhPageLoadMetricsObserver
  private:
   PageLoadReportMetrics page_load_report_metrics_;
 #endif  // ARKWEB_NWEB_EX && ARKWEB_NETWORK_DFX
+
+#if BUILDFLAG(IS_ARKWEB_EXT) && BUILDFLAG(ARKWEB_BIGDATA_METRICS)
+  std::string og_type_;
+  bool bigdata_reported_ = false;
+  bool had_video_ = false;
+  int nweb_id_ = -1;
+  int http_response_code_ = -1;
+#endif
+
+  base::WeakPtrFactory<OhPageLoadMetricsObserver> weak_ptr_factory_{this};
 };
 
 #endif  // CEF_LIBCEF_BROWSER_PAGE_LOAD_METRICS_OH_PAGE_LOAD_METRICS_OBSERVER_H_
