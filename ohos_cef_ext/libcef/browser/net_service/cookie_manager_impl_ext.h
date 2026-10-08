@@ -51,8 +51,6 @@ class CefCookieManagerImplExt : public CefCookieManagerImpl,
     return this;
   }
 
-  bool PutAcceptThirdPartyCookieEnabledInternal(bool accept);
-
   void SetNetWorkCookieManagerRemoteComplete(
       mojo::PendingRemote<network::mojom::CookieManager> cookie_manager_remote,
       base::OnceClosure complete,
@@ -221,6 +219,9 @@ void UpdateHostContentSettingsMap();
       const net::CookieAccessResultList&);
   void DeleteCookiesCallbackImpl(CefRefPtr<CefDeleteCookiesCallback> callback,
                                  uint32_t num_deleted);
+  void PutAcceptCookieEnabledInternal(bool accept);
+  bool PutAcceptThirdPartyCookieEnabledInternal(bool accept);
+
   scoped_refptr<base::SingleThreadTaskRunner> cookie_store_task_runner_;
   mojo::Remote<network::mojom::CookieManager> network_cookie_manager_;
   bool support_incognito_;
@@ -232,7 +233,7 @@ void UpdateHostContentSettingsMap();
   base::circular_deque<base::OnceClosure> tasks_ GUARDED_BY(task_queue_lock_);
   base::Thread cookie_store_task_thread_;
   base::Thread cookie_store_backend_thread_;
-  mutable bool remote_network_cookie_manager_inited_{false};
+  mutable std::atomic<bool> remote_network_cookie_manager_inited_{false};
 #if BUILDFLAG(ARKWEB_PERFORMANCE_SCHEDULING)
   bool cmd_value_ = false;
   int set_qos_times_ = 0;
