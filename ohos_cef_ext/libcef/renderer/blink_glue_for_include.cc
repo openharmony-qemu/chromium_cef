@@ -25,7 +25,6 @@ void PenTouchInputFocus(blink::WebNode webNode) {
   if (!element) {
     return;
   }
-
-  element->SetInputElementFocusedByPenTouch();
+  element->Focus();
 }
 #endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
