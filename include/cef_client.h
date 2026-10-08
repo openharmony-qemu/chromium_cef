@@ -277,7 +277,7 @@ class CefClient : public virtual CefBaseRefCounted {
   ///
   /// Return whether fullscreen video overlay is enabled.
   ///
-  virtual bool IsFullscreenVideoOverlayEnabled() const {}
+  virtual bool IsFullscreenVideoOverlayEnabled() const { return false; }
   ///
   /// Called when video playback status changed.
   ///

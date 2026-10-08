@@ -1707,7 +1707,7 @@ class ArkWebBrowserHostExt : public virtual CefBrowserHost,
   ///
   /// get last committed entry's page transition
   ///
-  virtual int32_t GetLastCommittedEntryPageTransition() {}
+  virtual int32_t GetLastCommittedEntryPageTransition() { return -1; }
 #endif
 
 #if BUILDFLAG(ARKWEB_AUTOFILL)
