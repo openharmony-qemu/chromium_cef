@@ -589,8 +589,8 @@ void ExtensionDownloadsEventRouterEx::OnDownloadCreated(
                   !router->HasEventListener(downloads::OnChanged::kEventName) &&
                   !router->HasEventListener(
                       downloads::OnDeterminingFilename::kEventName))) {
-    LOG(INFO) << "ExtensionDownloadsEventRouterEx::OnDownloadCreated router"
-              << router << " or have no listener.";
+    LOG(INFO) << "ExtensionDownloadsEventRouterEx::OnDownloadCreated router="
+              << !!router << " or have no listener.";
     return;
   }
 
