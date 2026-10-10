@@ -51,8 +51,6 @@ class CefCookieManagerImplExt : public CefCookieManagerImpl,
     return this;
   }
 
-  bool PutAcceptThirdPartyCookieEnabledInternal(bool accept);
-
   void SetNetWorkCookieManagerRemoteComplete(
       mojo::PendingRemote<network::mojom::CookieManager> cookie_manager_remote,
       base::OnceClosure complete,
@@ -221,6 +219,9 @@ void UpdateHostContentSettingsMap();
       const net::CookieAccessResultList&);
   void DeleteCookiesCallbackImpl(CefRefPtr<CefDeleteCookiesCallback> callback,
                                  uint32_t num_deleted);
+  void PutAcceptCookieEnabledInternal(bool accept);
+  bool PutAcceptThirdPartyCookieEnabledInternal(bool accept);
+
   scoped_refptr<base::SingleThreadTaskRunner> cookie_store_task_runner_;
   mojo::Remote<network::mojom::CookieManager> network_cookie_manager_;
   bool support_incognito_;
