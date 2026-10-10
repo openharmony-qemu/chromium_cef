@@ -1194,6 +1194,12 @@ bool CefRenderWidgetHostViewOSR::TransformPointToCoordSpaceForView(
     const gfx::PointF& point,
     input::RenderWidgetHostViewInput* target_view,
     gfx::PointF* transformed_point) {
+#if BUILDFLAG(ARKWEB_DRAG_DROP)
+  if (!target_view) {
+    LOG(WARNING) << "TransformPointToCoordSpaceForView, target_view is null";
+    return false;
+  }
+#endif
   if (target_view == this) {
     *transformed_point = point;
     return true;
