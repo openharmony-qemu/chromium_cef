@@ -257,6 +257,14 @@ class ArkWebRenderHandlerExt : public virtual CefRenderHandler,
   virtual void SetFillContent(const CefString& content) {}
 
   ///
+  /// SetPendingFillContent — store content to be staged at the next IMF
+  /// attach (when input_node_id_ is known). Solves the timing issue where
+  /// SetFillContent uses a stale node_id_ (not yet updated by
+  /// OnVirtualKeyboardRequested).
+  ///
+  virtual void SetPendingFillContent(const CefString& content) {}
+
+  ///
   /// Called when you need to start vibrator.
   ///
   virtual void StartVibraFeedback(const std::string& vibratorType) {}
