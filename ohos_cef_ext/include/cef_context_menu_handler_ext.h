@@ -7,6 +7,10 @@
 #include "include/cef_image.h"
 #include "include/cef_menu_model.h"
 
+namespace content {
+struct ContextMenuParams;
+}
+
 class CefContextMenuHandlerExt : virtual public CefContextMenuHandler {
  private:
   using CefContextMenuHandler::OnQuickMenuDismissed;
@@ -161,6 +165,13 @@ class CefContextMenuParamsExt : virtual public CefContextMenuParams {
 
   CefRefPtr<CefContextMenuParamsExt> AsCefCefContextMenuParamsExt() override {
     return this;
+  }
+  ///
+  /// Returns a pointer to the underlying content::ContextMenuParams.
+  ///
+  virtual const content::ContextMenuParams* GetContentContextMenuParams()
+      const {
+    return nullptr;
   }
 };
 
