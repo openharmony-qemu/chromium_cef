@@ -178,6 +178,7 @@ void SetIsFling(bool is_fling);
   int32_t ExecuteInputInsertCommand(const std::string& content,
                                     int32_t index);
   int32_t ExecuteAutoFillCommand(const std::string& xpath,
+                                 int32_t node_id,
                                  const std::string& content,
                                  int32_t index,
                                  int32_t mode,
@@ -283,7 +284,8 @@ void ExecuteAIPageInputCommandByIdOnIO(std::shared_ptr<std::promise<int32_t>> re
       const std::string& content, int32_t index,
       mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote); // only in io thread
   void ExecuteAutoFillCommandOnIO(base::OnceCallback<void(int32_t)> callback,
-      const std::string& xpath, const std::string& content, int32_t index, int32_t mode,
+      const std::string& xpath, int32_t node_id, const std::string& content,
+      int32_t index, int32_t mode,
       mojo::PendingRemote<cef::mojom::RenderFrame> pending_remote); // only in io thread
   void ExecuteClickCommandOnIO(std::shared_ptr<std::promise<int32_t>> result_promise,
       const std::string& xpath,

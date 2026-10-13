@@ -1246,6 +1246,7 @@ class ArkWebBrowserHostExt : public virtual CefBrowserHost,
                                             int32_t index) { return 11; }
 
   virtual int32_t ExecuteAutoFillCommand(const std::string& xpath,
+                                         int32_t node_id,
                                          const std::string& content,
                                          int32_t index, int32_t mode,
                                          int32_t remaining_timeout_ms) { return 11; }

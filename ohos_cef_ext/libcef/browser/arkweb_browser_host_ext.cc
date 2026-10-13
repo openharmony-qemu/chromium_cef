@@ -2015,6 +2015,7 @@ int32_t ArkWebBrowserHostExtImpl::ExecuteInputInsertCommand(
 
 int32_t ArkWebBrowserHostExtImpl::ExecuteAutoFillCommand(
     const std::string& xpath,
+    int32_t node_id,
     const std::string& content,
     int32_t index,
     int32_t mode,
@@ -2024,18 +2025,18 @@ int32_t ArkWebBrowserHostExtImpl::ExecuteAutoFillCommand(
     CefRefPtr<ArkWebBrowserHostExtImpl> self(this);
     return PostAIPageIntCommandToUiAndWait(base::BindOnce(
         [](CefRefPtr<ArkWebBrowserHostExtImpl> self, std::string xpath,
-           std::string content, int32_t index, int32_t mode,
+           int32_t node_id, std::string content, int32_t index, int32_t mode,
            int32_t remaining_timeout_ms) {
           return self->ExecuteAutoFillCommand(
-              xpath, content, index, mode, remaining_timeout_ms);
+              xpath, node_id, content, index, mode, remaining_timeout_ms);
         },
-        self, xpath, content, index, mode, remaining_timeout_ms));
+        self, xpath, node_id, content, index, mode, remaining_timeout_ms));
   }
 
   auto frame = GetMainFrame();
   if (frame && frame->IsValid()) {
     return static_cast<ArkwebFrameHostExtImpl*>(frame.get())
-        ->ExecuteAutoFillCommand(xpath, content, index, mode, remaining_timeout);
+        ->ExecuteAutoFillCommand(xpath, node_id, content, index, mode, remaining_timeout);
   }
   LOG(ERROR) << "ExecuteAutoFillCommand: main frame is null or invalid";
   return static_cast<int32_t>(OHOS::NWeb::WebCommandErrorCode::PAGE_NOT_READY);
