@@ -471,6 +471,8 @@ class ArkWebBrowserHostExtImpl : public ArkWebBrowserHostExt,
   void ScrollTo(float x, float y) override;
   void ScrollBy(float delta_x, float delta_y) override;
   void SlideScroll(float vx, float vy) override;
+  void SetFlingSpeedLimit(float speed_limit) override;
+  void ApplyStoredFlingSpeedLimitToCurrentMainFrame();
   void ZoomBy(float delta, float width, float height) override;
   void GetHitData(int& type, CefString& extra_data) override;
   void GetLastHitData(int& type, CefString& extra_data) override;
@@ -970,6 +972,9 @@ void SetAsyncStackId(uint64_t stackId) override;
   base::Lock overscroll_mode_lock_;
   bool has_stored_overscroll_mode_ GUARDED_BY(overscroll_mode_lock_) = false;
   int stored_overscroll_mode_ GUARDED_BY(overscroll_mode_lock_) = 0;
+  base::Lock fling_speed_limit_lock_;
+  bool has_stored_fling_speed_limit_ GUARDED_BY(fling_speed_limit_lock_) = false;
+  float stored_fling_speed_limit_ GUARDED_BY(fling_speed_limit_lock_) = 0.0f;
 #endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
 #if BUILDFLAG(ARKWEB_BACKGROUND_COLOR)
   void UpdateBackgroundColor(int color);

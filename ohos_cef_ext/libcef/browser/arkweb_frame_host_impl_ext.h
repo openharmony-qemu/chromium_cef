@@ -145,6 +145,7 @@ void SetIsFling(bool is_fling);
   void ScrollTo(float x, float y);
   void ScrollBy(float delta_x, float delta_y);
   void SlideScroll(float vx, float vy);
+  void SetFlingSpeedLimit(float speed_limit) override;
   void ZoomBy(float delta, float width, float height);
   void GetHitData(int& type, CefString& extra_data);
   void GetLastHitData(int& type, CefString& extra_data);

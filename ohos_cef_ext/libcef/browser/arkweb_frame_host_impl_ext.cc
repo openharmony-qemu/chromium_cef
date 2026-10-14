@@ -780,6 +780,15 @@ void ArkwebFrameHostExtImpl::SlideScroll(float vx, float vy) {
                                       vx, vy));
 }
 
+void ArkwebFrameHostExtImpl::SetFlingSpeedLimit(float speed_limit) {
+  SendToRenderFrame(__FUNCTION__, base::BindOnce(
+                                      [](float speed_limit,
+                                         const RenderFrameType& render_frame) {
+                                        render_frame->SetFlingSpeedLimit(speed_limit);
+                                      },
+                                      speed_limit));
+}
+
 void ArkwebFrameHostExtImpl::ZoomBy(float delta, float width, float height) {
   SendToRenderFrame(__FUNCTION__, base::BindOnce(
                                       [](float delta, float width, float height,

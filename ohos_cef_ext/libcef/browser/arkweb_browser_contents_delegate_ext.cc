@@ -127,6 +127,8 @@ void ArkWebBrowserContentsDelegateExt::RenderFrameHostChanged(
   }
   static_cast<ArkWebBrowserHostExtImpl*>(cef_browser_host.get())
       ->ApplyStoredOverscrollModeToCurrentMainFrame();
+  static_cast<ArkWebBrowserHostExtImpl*>(cef_browser_host.get())
+      ->ApplyStoredFlingSpeedLimitToCurrentMainFrame();
 }
 #endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
 

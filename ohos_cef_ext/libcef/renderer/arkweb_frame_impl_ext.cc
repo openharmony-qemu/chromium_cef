@@ -693,6 +693,26 @@ void ArkwebFrameExtImpl::SlideScroll(float vx, float vy) {
       base::Milliseconds(DEFAULT_SCROLL_ANIMATION_DURATION_MILLISEC));
 }
 
+void ArkwebFrameExtImpl::SetFlingSpeedLimit(float speed_limit) {
+  auto render_frame = content::RenderFrame::FromWebFrame(frame_);
+  if (!render_frame) {
+    LOG(ERROR) << "SetFlingSpeedLimit get render_frame failed";
+    return;
+  }
+  blink::WebView* webview = render_frame->GetWebView();
+  if (!webview) {
+    LOG(ERROR) << "SetFlingSpeedLimit get webview failed";
+    return;
+  }
+  // 优先级控制（TS > viewport）与 number→Vector2dF 映射在 WebViewImpl::SetFlingSpeedLimit 内实现
+  auto* web_view_impl = blink::DynamicTo<blink::WebViewImpl>(webview);
+  if (!web_view_impl) {
+    LOG(ERROR) << "SetFlingSpeedLimit DynamicTo WebViewImpl failed";
+    return;
+  }
+  web_view_impl->SetFlingSpeedLimit(speed_limit);
+}
+
 void ArkwebFrameExtImpl::ZoomBy(float delta, float width, float height) {
   auto render_frame = content::RenderFrame::FromWebFrame(frame_);
   DCHECK(render_frame->IsMainFrame());
