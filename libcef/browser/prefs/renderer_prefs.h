@@ -15,7 +15,7 @@
 
 #include "cef/include/internal/cef_types_wrappers.h"
 
-#if BUILDFLAG(ARKWEB_EXT_EXCEPTION_LIST)
+#if BUILDFLAG(ARKWEB_EXT_EXCEPTION_LIST) || BUILDFLAG(ARKWEB_DEVTOOLS)
 #include "content/public/browser/web_contents.h"
 #endif
 
@@ -37,6 +37,12 @@ void SetCefPrefs(const CefBrowserSettings& cef,
 #if BUILDFLAG(ARKWEB_EXT_EXCEPTION_LIST)
 void SetJsDefaultContent(content::WebContents* web_contents,
                          blink::web_pref::WebPreferences& web);
+#endif
+
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+void SetDevToolsThemePrefs(content::WebContents* web_contents,
+                           const CefBrowserSettings& cef,
+                           blink::web_pref::WebPreferences& web);
 #endif
 
 }  // namespace renderer_prefs
