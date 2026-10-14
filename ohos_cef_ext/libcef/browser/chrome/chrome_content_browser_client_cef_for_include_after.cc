@@ -79,6 +79,10 @@ BASE_FEATURE(kEnablePostQuantumKeyAgreement,
 #include "ohos_nweb_ex/overrides/cef/libcef/browser/alloy/alloy_ark_web_global_config.h"
 #endif
 
+#if BUILDFLAG(ARKWEB_SAFEBROWSING)
+#include "ohos_cef_ext/libcef/browser/ohos_safe_browsing/ohos_safe_browsing_navigation_throttle.h"
+#endif
+
 #if BUILDFLAG(ARKWEB_SITE_ISOLATION)
 bool g_siteIsolationMode = false;
 #endif
@@ -302,6 +306,10 @@ void ArkWebInnerExposeInterfacesToRenderer(
 
 void ArkWebInnerCreateThrottlesForNavigation(
     content::NavigationThrottleRegistry& registry) {
+#if BUILDFLAG(ARKWEB_SAFEBROWSING)
+  ohos_safe_browsing::OhosSafeBrowsingNavigationThrottle::MaybeCreateAndAdd(registry);
+#endif
+
 #if BUILDFLAG(ARKWEB_URL_TRUST_LIST)
   registry.AddThrottle(
       ohos_safe_browsing::UrlTrustListNavigationThrottle::Create(registry));

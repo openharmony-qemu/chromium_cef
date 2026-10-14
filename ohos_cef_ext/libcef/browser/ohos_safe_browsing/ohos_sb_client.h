@@ -30,34 +30,30 @@ class SbClient : public content::WebContentsObserver {
   SbClient(const SbClient&) = delete;
   SbClient& operator=(const SbClient&) = delete;
 
-  class BlockingPageInfo
-      : public content::WebContentsUserData<BlockingPageInfo> {
+  class BlockingPageInfoCache
+      : public content::WebContentsUserData<BlockingPageInfoCache> {
    public:
-    ~BlockingPageInfo() override = default;
+    ~BlockingPageInfoCache() override = default;
 
-    BlockingPageInfo(const BlockingPageInfo&) = delete;
-    BlockingPageInfo& operator=(const BlockingPageInfo&) = delete;
-
-    static void SetBlockingPageInfo(content::WebContents* web_contents,
-                                    const GURL& url,
-                                    int policy,
-                                    OHSBThreatType block_type,
-                                    int hw_code,
-                                    const GURL& redirect_url);
+    BlockingPageInfoCache(const BlockingPageInfoCache&) = delete;
+    BlockingPageInfoCache& operator=(const BlockingPageInfoCache&) = delete;
 
     static void RemoveBlockingPageInfo(content::WebContents* web_contents);
- 
-    bool IsUrlEmpty() const { return url_.is_empty(); }
+
+    bool IsEmpty() const { return ohos_sb_blocking_page_info_cache_.empty(); }
+
+    OhosSbBlockingPageInfo GetBlockingPageInfo(const GURL& url) const;
+
+    void AddBlockingPageInfo(const OhosSbBlockingPageInfo& blocking_page_info);
+
+    bool HasBlockingPageInfoForUrl(const GURL& url) const;
 
    private:
-    explicit BlockingPageInfo(content::WebContents* web_contents);
-    friend class content::WebContentsUserData<BlockingPageInfo>;
+    explicit BlockingPageInfoCache(content::WebContents* web_contents, bool incognito_mode);
+    friend class content::WebContentsUserData<BlockingPageInfoCache>;
 
-    GURL url_ = GURL("");
-    int policy_{0};
-    OHSBThreatType block_type_ = OHSBThreatType::THREAT_DEFAULT;
-    int hw_code_{0};
-    GURL redirect_url_ = GURL("");
+    bool incognito_mode_{false};
+    base::flat_map<GURL, OhosSbBlockingPageInfo> ohos_sb_blocking_page_info_cache_{};
 
     WEB_CONTENTS_USER_DATA_KEY_DECL();
   };
@@ -85,6 +81,21 @@ class SbClient : public content::WebContentsObserver {
                                  int hw_code,
                                  const GURL& redirect_url);
 
+  bool ShouldShowBlockingPage(const OhosSbBlockingPageInfo& info) const;
+
+  bool ShouldBlockCurrentUrl(const GURL& url) const;
+
+  bool CheckAndBlockRedirectChain(const std::vector<GURL>& server_redirect_chain) const;
+
+  void NotifySafeBrowsingResult(OhosSbBlockingPageInfo& info, bool is_unprocessed);
+
+  std::unique_ptr<SbBlockPage> CreateSbBlockPage(
+      const OhosSbBlockingPageInfo& blocking_page_info, const std::optional<std::string>& html);
+
+  void OverrideAndDisplayBlockingPage(
+      const OhosSbBlockingPageInfo& blocking_page_info,
+      base::OnceCallback<void(const std::optional<std::string>&)> show_interstitial_callback);
+
   static bool InMaliciousAllowlist(const PrefService* prefs,
                                    const std::string& url,
                                    bool incognito_mode);
@@ -98,10 +109,16 @@ class SbClient : public content::WebContentsObserver {
   void NavigationEntryCommitted(
       const content::LoadCommittedDetails& load_details) override;
 
-  void DisplayBlockingPage(const GURL& url,
-                           int policy,
-                           OHSBThreatType block_type,
-                           const std::string& app_locale);
+  void DisplayBlockingPage(const OhosSbBlockingPageInfo& blocking_page_info, const std::optional<std::string>& html);
+
+  void ReportBlockingPage(
+      content::NavigationEntry* entry,
+      const OhosSbBlockingPageInfo& blocking_page_info,
+      const GURL& first_url,
+      const GURL& last_url,
+      int redirect_chain_size,
+      bool is_new_intercept,
+      bool is_reload_or_backforward);
 
   void NotifySafeBrowsingCheckResult(OHSBThreatType threat_type);
   
@@ -111,8 +128,17 @@ class SbClient : public content::WebContentsObserver {
 
   void NotifySafeBrowsingCheckFinish(OHSBThreatType threat_type);
 
+  void NotifySafeBrowsingHit(const GURL& url,
+                             int code,
+                             OHSBThreatType block_type,
+                             int policy,
+                             int64_t response_key);
+ 
+
   raw_ptr<PrefService> prefs_;
   bool incognito_mode_{false};
+
+  base::WeakPtrFactory<SbClient> weak_ptr_factory_{this};
 };
 
 }  // namespace ohos_safe_browsing

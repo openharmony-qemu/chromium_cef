@@ -14,6 +14,8 @@
 #include "components/user_prefs/user_prefs.h"
 #include "content/browser/renderer_host/navigation_request.h"
 #include "content/public/browser/browser_context.h"
+#include "content/public/browser/browser_task_traits.h"
+#include "content/public/browser/browser_thread.h"
 #include "content/public/browser/navigation_handle.h"
 #include "crypto/sha2.h"
 #include "libcef/browser/alloy/alloy_browser_host_impl.h"
@@ -116,6 +118,7 @@ void SafeBrowsingTabHelper::DidStartNavigation(
     content::NavigationHandle* navigation_handle) {
     metrics_collector_->Reset();
     metrics_collector_->RecordSbStartTime();
+
     DoQuerySafeBrowsing(navigation_handle, NavigationSourceType::kStart);
 }
 
@@ -182,6 +185,86 @@ void SafeBrowsingTabHelper::DidFinishNavigation(
 
   metrics_collector_->SetHost(std::string(navigation_handle->GetURL().host()));
   metrics_collector_->ReportMetrics();
+}
+
+void SafeBrowsingTabHelper::SafeBrowsingResponseShowInterstitial(
+    int64_t response_key, const std::string& html) const {
+  if (!content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
+    content::GetUIThreadTaskRunner({})->PostTask(
+        FROM_HERE,
+        base::BindOnce(&SafeBrowsingTabHelper::SafeBrowsingResponseShowInterstitial,
+                       weak_ptr_factory_.GetWeakPtr(), response_key, html));
+    return;
+  }
+  
+  auto it = response_map_.find(response_key);
+  if (it == response_map_.end()) {
+    LOG(ERROR) << "safe browsing response not exist response_key: " << response_key;
+    return;
+  }
+
+  it->second->ShowInterstitial(html);
+}
+
+void SafeBrowsingTabHelper::SafeBrowsingResponseProceed(int64_t response_key) const {
+  if (!content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
+    content::GetUIThreadTaskRunner({})->PostTask(
+        FROM_HERE,
+        base::BindOnce(&SafeBrowsingTabHelper::SafeBrowsingResponseProceed,
+                       weak_ptr_factory_.GetWeakPtr(), response_key));
+    return;
+  }
+
+  auto it = response_map_.find(response_key);
+  if (it == response_map_.end()) {
+    LOG(ERROR) << "safe browsing response not exist response_key: " << response_key;
+    return;
+  }
+
+  it->second->Proceed();
+}
+
+void SafeBrowsingTabHelper::SafeBrowsingResponseBackToSafety(int64_t response_key) const {
+  if (!content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
+    content::GetUIThreadTaskRunner({})->PostTask(
+        FROM_HERE,
+        base::BindOnce(&SafeBrowsingTabHelper::SafeBrowsingResponseBackToSafety,
+                       weak_ptr_factory_.GetWeakPtr(), response_key));
+    return;
+  }
+
+  auto it = response_map_.find(response_key);
+  if (it == response_map_.end()) {
+    LOG(ERROR) << "safe browsing response not exist response_key: " << response_key;
+    return;
+  }
+
+  it->second->BackToSafety();
+}
+
+void SafeBrowsingTabHelper::SafeBrowsingResponseDelete(int64_t response_key) {
+  if (!content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
+    content::GetUIThreadTaskRunner({})->PostTask(
+        FROM_HERE,
+        base::BindOnce(&SafeBrowsingTabHelper::SafeBrowsingResponseDelete,
+                       weak_ptr_factory_.GetWeakPtr(), response_key));
+    return;
+  }
+
+  auto it = response_map_.find(response_key);
+  if (it != response_map_.end()) {
+    response_map_.erase(it);
+  }
+}
+
+void SafeBrowsingTabHelper::RegisterCefSafeBrowsingResponse(
+    int64_t response_key,
+    std::unique_ptr<CefSafeBrowsingResponse> response) {
+  response_map_[response_key] = std::move(response);
+}
+
+void SafeBrowsingTabHelper::WebContentsDestroyed() {
+  response_map_.clear();
 }
 
 WEB_CONTENTS_USER_DATA_KEY_IMPL(SafeBrowsingTabHelper);
