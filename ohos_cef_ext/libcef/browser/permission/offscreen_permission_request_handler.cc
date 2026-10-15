@@ -21,6 +21,7 @@
 #include "arkweb/build/features/features.h"
 #include "base/command_line.h"
 #include "base/logging.h"
+#include "base/no_destructor.h"
 #include "base/synchronization/lock.h"
 #include "cef/libcef/common/cef_switches.h"
 #include "cef/ohos_cef_ext/libcef/browser/permission/alloy_access_request.h"
@@ -29,9 +30,11 @@
 
 namespace {
 static std::atomic<int> g_request_new_key = 0;
-static std::unordered_map<int, std::shared_ptr<AlloyMediaAccessRequest>>
+base::NoDestructor<
+    std::unordered_map<int, std::shared_ptr<AlloyMediaAccessRequest>>>
     g_media_access_requests_map;
-static std::unordered_map<int, std::shared_ptr<AlloyScreenCaptureAccessRequest>>
+base::NoDestructor<
+    std::unordered_map<int, std::shared_ptr<AlloyScreenCaptureAccessRequest>>>
     g_screen_capture_requests_map;
 static base::Lock g_requests_lock;
 }  // namespace
@@ -44,18 +47,18 @@ OffscreenPermissionRequestHandler::GetInstance() {
 
 OffscreenPermissionRequestHandler::~OffscreenPermissionRequestHandler() {
   base::AutoLock lock_scope(g_requests_lock);
-  for (const auto& [key, request] : g_media_access_requests_map) {
+  for (const auto& [key, request] : *g_media_access_requests_map) {
     if (request) {
       request->ReportRequestResult(false);
     }
   }
-  g_media_access_requests_map.clear();
-  for (const auto& [key, request] : g_screen_capture_requests_map) {
+  g_media_access_requests_map->clear();
+  for (const auto& [key, request] : *g_screen_capture_requests_map) {
     if (request) {
       request->ReportRequestResult(false);
     }
   }
-  g_screen_capture_requests_map.clear();
+  g_screen_capture_requests_map->clear();
 }
 
 void OffscreenPermissionRequestHandler::HandleMediaStreamPermissionRequest(
@@ -135,14 +138,14 @@ void OffscreenPermissionRequestHandler::ReportRequestResult(int resources,
 int OffscreenPermissionRequestHandler::AddMediaAccessRequest(
     std::shared_ptr<AlloyMediaAccessRequest> request) {
   base::AutoLock lock_scope(g_requests_lock);
-  g_media_access_requests_map[++g_request_new_key] = std::move(request);
+  (*g_media_access_requests_map)[++g_request_new_key] = std::move(request);
   return g_request_new_key;
 }
 
 int OffscreenPermissionRequestHandler::AddScreenCaptureRequest(
     std::shared_ptr<AlloyScreenCaptureAccessRequest> request) {
   base::AutoLock lock_scope(g_requests_lock);
-  g_screen_capture_requests_map[++g_request_new_key] = std::move(request);
+  (*g_screen_capture_requests_map)[++g_request_new_key] = std::move(request);
   return g_request_new_key;
 }
 
@@ -150,8 +153,8 @@ std::shared_ptr<AlloyMediaAccessRequest>
 OffscreenPermissionRequestHandler::FindMediaAccessRequestByKey(
     int request_key) {
   base::AutoLock lock_scope(g_requests_lock);
-  if (auto it = g_media_access_requests_map.find(request_key);
-      it != g_media_access_requests_map.end()) {
+  if (auto it = g_media_access_requests_map->find(request_key);
+      it != g_media_access_requests_map->end()) {
     return it->second;
   }
   return nullptr;
@@ -161,8 +164,8 @@ std::shared_ptr<AlloyScreenCaptureAccessRequest>
 OffscreenPermissionRequestHandler::FindScreenCaptureRequestByKey(
     int request_key) {
   base::AutoLock lock_scope(g_requests_lock);
-  if (auto it = g_screen_capture_requests_map.find(request_key);
-      it != g_screen_capture_requests_map.end()) {
+  if (auto it = g_screen_capture_requests_map->find(request_key);
+      it != g_screen_capture_requests_map->end()) {
     return it->second;
   }
   return nullptr;
@@ -171,13 +174,13 @@ OffscreenPermissionRequestHandler::FindScreenCaptureRequestByKey(
 void OffscreenPermissionRequestHandler::RemoveMediaAccessRequestByKey(
     int request_key) {
   base::AutoLock lock_scope(g_requests_lock);
-  g_media_access_requests_map.erase(request_key);
+  g_media_access_requests_map->erase(request_key);
 }
 
 void OffscreenPermissionRequestHandler::RemoveScreenCaptureRequestByKey(
     int request_key) {
   base::AutoLock lock_scope(g_requests_lock);
-  g_screen_capture_requests_map.erase(request_key);
+  g_screen_capture_requests_map->erase(request_key);
 }
 
 int OffscreenPermissionRequestHandler::GetResourcesFromRequest(

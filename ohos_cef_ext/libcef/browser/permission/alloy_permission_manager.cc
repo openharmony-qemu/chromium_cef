@@ -473,15 +473,17 @@ PermissionStatus AlloyPermissionManager::GetPermissionStatus(
 #endif // #if BUILDFLAG(ARKWEB_ARKWEB_EXTENSIONS)
 #if BUILDFLAG(ARKWEB_WEBRTC)
   } else if (permission_type == PermissionType::AUDIO_CAPTURE) {
-      if (AlloyMediaAccessRequest::microphone_permission_.count(requesting_origin)) {
-        return (PermissionStatus)AlloyMediaAccessRequest::microphone_permission_[requesting_origin];
+      if (AlloyMediaAccessRequest::microphone_permission_->count(requesting_origin)) {
+        return static_cast<PermissionStatus>(
+    (*AlloyMediaAccessRequest::microphone_permission_)[requesting_origin]);
       } else {
         LOG(WARNING) << __FUNCTION__ << ", requesting_origin is not in microphone permission map";
         return PermissionStatus::ASK;
       }
   } else if (permission_type == PermissionType::VIDEO_CAPTURE) {
-      if (AlloyMediaAccessRequest::camera_permission_.count(requesting_origin)) {
-        return (PermissionStatus)AlloyMediaAccessRequest::camera_permission_[requesting_origin];
+      if (AlloyMediaAccessRequest::camera_permission_->count(requesting_origin)) {
+        return static_cast<PermissionStatus>(
+    (*AlloyMediaAccessRequest::camera_permission_)[requesting_origin]);
       } else {
         LOG(WARNING) << __FUNCTION__ << ", requesting_origin is not in camera permission map";
         return PermissionStatus::ASK;
