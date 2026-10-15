@@ -1805,9 +1805,12 @@ class ArkWebBrowserHostExt : public virtual CefBrowserHost,
   virtual void SetAsyncStackId(uint64_t stackId) = 0;
 #endif
 
-#if BUILDFLAG(ARKWEB_BLANK_SCREEN_DETECTION)
+#if BUILDFLAG(ARKWEB_BLANK_SCREEN_MONITOR)
   /*--cef()--*/
   virtual void NotifyBlankScreenViewResize(uint32_t width, uint32_t height) = 0;
+
+  /*--cef()--*/
+  virtual void PutWebBlankScreenMonitorEnabled(bool enable) {}
 #endif
 
 };
