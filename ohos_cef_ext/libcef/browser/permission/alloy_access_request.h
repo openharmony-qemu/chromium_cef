@@ -91,8 +91,8 @@ namespace content {
 
 class AlloyMediaAccessRequest : public CefAccessRequest {
  public:
-  static std::map<GURL, int32_t> camera_permission_;
-  static std::map<GURL, int32_t> microphone_permission_;
+  static base::NoDestructor<std::map<GURL, int32_t>> camera_permission_;
+  static base::NoDestructor<std::map<GURL, int32_t>> microphone_permission_;
 
   AlloyMediaAccessRequest(CefBrowserHostBase* const browser,
                           const content::MediaStreamRequest& request,
