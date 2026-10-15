@@ -263,6 +263,16 @@ class ArkWebClientExt : public CefClient, public virtual CefBaseRefCounted {
   virtual void DidUpdateWebManifestURL(content::RenderFrameHost* target_frame,
                                        const GURL& manifest_url) {}
 #endif
+
+  ///
+  /// Return the content offset of top controls.
+  ///
+  virtual float GetTopContentOffset() { return 0; }
+
+  ///
+  /// Return the content offset of bottom controls.
+  ///
+  virtual float GetBottomContentOffset() { return 0; }
 };
 
 #endif  // OHOS_CEF_EXT_INCLUDE_ARKWEB_CLIENT_EXT_H_

@@ -471,6 +471,8 @@ void CefRenderWidgetHostViewOSR::ShowWithVisibility(
 #if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
   top_controls_offset_ = 0;
   top_content_offset_ = 0;
+  bottom_controls_offset_ = 0;
+  bottom_content_offset_ = 0;
 #endif
 #if !BUILDFLAG(IS_ARKWEB)
   // If the viz::LocalSurfaceId is invalid, we may have been evicted,
