@@ -111,7 +111,7 @@ void OhosSBURLLoaderThrottle::OnCheckResult(bool should_block) {
                  << url::LogUtils::ConvertUrlWithMask(current_url_.spec());
     Stop();
     if (delegate_) {
-      delegate_->CancelWithError(net::ERR_BLOCKED_BY_CLIENT);
+      delegate_->CancelWithExtendedError(net::ERR_BLOCKED_BY_CLIENT, SbClient::kErrMaliciousUrlMatched);
     }
   }
 }
