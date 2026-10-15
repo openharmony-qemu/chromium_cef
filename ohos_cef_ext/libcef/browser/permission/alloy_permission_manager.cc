@@ -27,6 +27,10 @@
 #include "services/network/public/cpp/is_potentially_trustworthy.h"
 #endif // #if BUILDFLAG(ARKWEB_ARKWEB_EXTENSIONS)
 
+#if BUILDFLAG(ARKWEB_SAFEBROWSING)
+#include "components/security_interstitials/content/security_interstitial_tab_helper.h"
+#endif // #if BUILDFLAG(ARKWEB_SAFEBROWSING)
+
 using blink::PermissionType;
 using blink::mojom::PermissionStatus;
 using content::PermissionResult;
@@ -59,6 +63,25 @@ void PermissionRequestResponseCallbackWrapper(
   DCHECK_EQ(vector.size(), 1ul);
   std::move(callback).Run(vector.at(0));
 }
+
+#if BUILDFLAG(ARKWEB_SAFEBROWSING)
+bool IsBlockPage(content::RenderFrameHost* render_frame_host) {
+  if (!render_frame_host) {
+    return false;
+  }
+  content::WebContents* web_contents = content::WebContents::FromRenderFrameHost(render_frame_host);
+  if (!web_contents || !web_contents->GetBrowserContext()) {
+    return false;
+  }
+
+  security_interstitials::SecurityInterstitialTabHelper*
+      security_interstitial_tab_helper = security_interstitials::
+          SecurityInterstitialTabHelper::FromWebContents(web_contents);
+
+  return security_interstitial_tab_helper &&
+         security_interstitial_tab_helper->HasPendingOrActiveInterstitial();
+}
+#endif // #if BUILDFLAG(ARKWEB_SAFEBROWSING)
 
 }  // namespace
 
@@ -169,6 +192,13 @@ void AlloyPermissionManager::RequestPermissions(
     std::move(callback).Run(std::vector<content::PermissionResult>());
     return;
   }
+
+#if BUILDFLAG(ARKWEB_SAFEBROWSING)
+  if (IsBlockPage(render_frame_host)) {
+    LOG(WARNING) << "RequestPermissions, the current page is a block page";
+    return;
+  }
+#endif // #if BUILDFLAG(ARKWEB_SAFEBROWSING)
 
   auto pending_request = std::make_unique<UnhandledRequest>(
       permissions, render_frame_host, requesting_origin, std::move(callback));
