@@ -350,6 +350,16 @@ class ArkWebRenderHandlerExt : public virtual CefRenderHandler,
                                      int32_t detectedContentfulNodesCount) {}
 #endif
 
+#if BUILDFLAG(ARKWEB_BLANK_SCREEN_MONITOR)
+  ///
+  /// Called when a monitored blank screen is detected with root cause attribution.
+  ///
+  /*--cef()--*/
+  virtual void OnMonitoredBlankScreen(const std::string &url,
+                                      int32_t reason,
+                                      const std::string &extra_msg) {}
+#endif
+
 #if BUILDFLAG(ARKWEB_FIRST_SCREEN_PAINT)
   ///
   /// Called when the first screen is painted.
