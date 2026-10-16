@@ -110,6 +110,7 @@ class CefDevToolsMessageHandler final {
   Result ClearPreferences(const base::Value::List& params);
   Result SetInspectedPageBounds(const base::Value::List& params);
   Result SetDockMode(const base::Value::List& params);
+  Result GetHostConfig(const base::Value::List& params);
   void UpdateDockMode();
 
   CefRefPtr<CefDevToolsMessageHandlerDelegate> delegate_;
