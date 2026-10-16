@@ -24,6 +24,8 @@
 #include "cef/libcef/browser/osr/motion_event_osr.h"
 #include "cef/libcef/browser/osr/render_widget_host_view_osr.h"
 #include "cef/ohos_cef_ext/include/arkweb_client_ext.h"
+#include "cef/ohos_cef_ext/include/arkweb_language_detection_details.h"
+#include "cef/ohos_cef_ext/include/arkweb_browser_ext.h"
 #include "components/viz/common/frame_sinks/begin_frame_source.h"
 #include "components/viz/common/surfaces/parent_local_surface_id_allocator.h"
 #include "content/browser/renderer_host/input/mouse_wheel_phase_handler.h"
@@ -52,7 +54,19 @@ namespace {
 constexpr std::string_view TYPE_NAME = "ArkWebOSRExt";
 }  // namespace
 
-class ArkWebRenderWidgetHostViewOSRExt : public CefRenderWidgetHostViewOSR {
+#if BUILDFLAG(ARKWEB_COMPOSITE_RENDER)
+#include "components/translate/core/browser/translate_driver.h"
+#include "components/translate/core/common/language_detection_details.h"
+#endif
+
+class ArkWebRenderWidgetHostViewOSRExt
+#if BUILDFLAG(ARKWEB_COMPOSITE_RENDER)
+    : public CefRenderWidgetHostViewOSR,
+      public translate::TranslateDriver::LanguageDetectionObserver
+#else
+    : public CefRenderWidgetHostViewOSR
+#endif
+{
  public:
   ArkWebRenderWidgetHostViewOSRExt* AsArkWebRenderWidgetHostViewOSRExt()
       override {
@@ -65,6 +79,7 @@ class ArkWebRenderWidgetHostViewOSRExt : public CefRenderWidgetHostViewOSR {
       bool use_external_begin_frame,
       content::RenderWidgetHost* widget,
       CefRenderWidgetHostViewOSR* parent_host_view);
+  ~ArkWebRenderWidgetHostViewOSRExt() override;
 #if BUILDFLAG(ARKWEB_SAME_LAYER)
   using GestureEventCallbackTask = base::OnceCallback<void(bool)>;
 #endif
@@ -84,11 +99,28 @@ class ArkWebRenderWidgetHostViewOSRExt : public CefRenderWidgetHostViewOSR {
   void SetShouldFrameSubmissionBeforeDraw(bool should);
   void SendCurrentLanguage(const std::string& ans) override;
   std::string GetCurrentLanguage();
+  void GetWebLanguageAsync(CefRefPtr<CefWebLanguageDetectedCallback> callback);
+  // LanguageDetectionObserver implementation.
+  void OnLanguageDetermined(
+      const translate::LanguageDetectionDetails& details) override;
+  void OnTranslateDriverDestroyed(translate::TranslateDriver* driver) override;
+  // Save/restore language cache for BFCache.
+  void SaveLanguageDetailsForBFCache() override;
+  void RestoreLanguageDetailsForBFCache() override;
+  // Clear cached language details on navigation, mirroring the conditions in
+  // LanguageState::DidNavigate. Same-document navigations and reloads do not
+  // clear the cache because the page content has not changed.
+  void ClearLanguageCache(bool is_same_document, bool reload) override;
+
   int32_t is_fit_content_ = 0;
   double focus_rect_width_ = 0;
   double focus_rect_height_ = 0;
   bool is_select_text_ = false;
   std::string language_;
+  ArkWebLanguageDetectionDetails language_details_;
+  std::vector<CefRefPtr<CefWebLanguageDetectedCallback>> pending_language_callbacks_;
+  ArkWebLanguageDetectionDetails bf_cache_language_details_;
+  raw_ptr<translate::TranslateDriver> translate_driver_ = nullptr;
 #endif  // BUILDFLAG(ARKWEB_COMPOSITE_RENDER)
 #if BUILDFLAG(IS_ARKWEB)
   void SetDoubleTapSupportEnabled(bool enabled);
@@ -401,6 +433,11 @@ void UpdateFocusAndScreenStatus(bool is_focused, bool is_single_screen) override
 #endif
  private:
   bool is_popup = false;
+
+#if BUILDFLAG(ARKWEB_COMPOSITE_RENDER)
+  void RegisterLanguageDetectionObserver();
+  bool TriggerReCapturePageText();
+#endif
 
 #if BUILDFLAG(ARKWEB_VSYNC_SCHEDULE)
   int32_t condition_ = 0;
