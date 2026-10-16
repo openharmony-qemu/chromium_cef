@@ -2968,7 +2968,8 @@ void ArkWebBrowserHostExtImpl::PostPortMessageInternal(
   }
 
   // find the WebMessagePort in map
-  for (auto iter = portMap_.begin(); iter != portMap_.end(); ++iter) {
+  auto iter = portMap_.begin();
+  for (; iter != portMap_.end(); ++iter) {
     if (portHandle.ToString().compare(std::to_string(iter->first.first)) == 0) {
       if (iter->second.first.CanPostMessage()) {
         iter->second.first.PostMessage(std::move(message));
@@ -2985,6 +2986,9 @@ void ArkWebBrowserHostExtImpl::PostPortMessageInternal(
       }
       break;
     }
+  }
+  if (iter == portMap_.end()) {
+    LOG(ERROR) << "port was not created or has been closed";
   }
 }
 
