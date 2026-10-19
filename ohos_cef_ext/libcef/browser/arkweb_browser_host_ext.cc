@@ -19,6 +19,8 @@
 #endif
 
 #include <chrono>
+#include <algorithm>
+#include <cmath>
 #include <future>
 #include <memory>
 #include <set>
@@ -176,7 +178,7 @@ using OhPasswordManagerClient = ChromePasswordManagerClient;
 #include "ohos_cef_ext/libcef/browser/permission/alloy_geolocation_access.h"
 #endif  // BUILDFLAG(ARKWEB_PERMISSION)
 
-#if BUILDFLAG(ARKWEB_EXT_GET_ZOOM_LEVEL)
+#if BUILDFLAG(ARKWEB_EXT_GET_ZOOM_LEVEL) || BUILDFLAG(ARKWEB_ZOOM)
 #include "chrome/browser/profiles/profile.h"
 #include "components/zoom/zoom_controller.h"
 #include "third_party/blink/public/common/page/page_zoom.h"
@@ -4795,9 +4797,169 @@ void ArkWebBrowserHostExtImpl::SetBrowserZoomLevel(double zoom_factor) {
 #endif
 }
 
-#if BUILDFLAG(ARKWEB_EXT_GET_ZOOM_LEVEL)
+// Browser Zoom Factor is independent from the historical browser zoom-level
+// extension, but shares Chromium's ZoomController as its execution backend.
+#if BUILDFLAG(ARKWEB_ZOOM)
+namespace {
+
+// The formal Browser Zoom Factor API exposes the effective layout zoom range.
+// Keep this conversion local to the new API path: Ctrl +/- retains its
+// historical zoom-level range and is not constrained by this helper.
+double ClampZoomFactorForApi(double zoom_factor) {
+  return std::clamp(zoom_factor, blink::kMinimumBrowserZoomFactor,
+                    blink::kMaximumBrowserZoomFactor);
+}
+
+}  // namespace
+
+void ArkWebBrowserHostExtImpl::SetZoomFactor(double zoom_factor) {
+  if (CEF_CURRENTLY_ON_UIT()) {
+    desired_zoom_factor_ = ClampZoomFactorForApi(zoom_factor);
+    zoom_factor_pending_ = true;
+    zoom_factor_retry_count_ = 0;
+    ++zoom_factor_request_generation_;
+    ApplyPendingZoomFactor();
+  } else {
+    CEF_POST_TASK(CEF_UIT,
+                  base::BindOnce(&ArkWebBrowserHostExtImpl::SetZoomFactor,
+                                 weak_ptr_factory_.GetWeakPtr(), zoom_factor));
+  }
+}
+
+double ArkWebBrowserHostExtImpl::GetZoomFactor() {
+  if (!CEF_CURRENTLY_ON_UIT()) {
+    DCHECK(false) << "called on invalid thread";
+    return 1.0;
+  }
+  if (GetWebContents()) {
+    zoom::ZoomController* zoom_controller =
+        zoom::ZoomController::FromWebContents(GetWebContents());
+    if (zoom_controller) {
+      return ClampZoomFactorForApi(
+          blink::ZoomLevelToZoomFactor(zoom_controller->GetZoomLevel()));
+    }
+  }
+  return 1.0;
+}
+
+void ArkWebBrowserHostExtImpl::EnableZoomFactorController(
+    content::WebContents* web_contents) {
+  zoom::ZoomController* zoom_controller =
+      zoom::ZoomController::CreateForWebContents(web_contents);
+  if (!zoom_controller) {
+    return;
+  }
+  zoom_controller->AddObserver(this);
+  last_observed_zoom_factor_ = ClampZoomFactorForApi(
+      blink::ZoomLevelToZoomFactor(zoom_controller->GetZoomLevel()));
+  ApplyPendingZoomFactor();
+}
+
+void ArkWebBrowserHostExtImpl::ApplyPendingZoomFactor() {
+  if (!CEF_CURRENTLY_ON_UIT() || !zoom_factor_pending_) {
+    return;
+  }
+  if (!GetWebContents()) {
+    return;
+  }
+  // The browser may exist before its first real navigation. Do not persist a
+  // requested factor against the initial empty page instead of the target host.
+  // Keep it pending: ZoomController::DidFinishNavigation() notifies observers
+  // for committed navigations, including same-document ones, even if the zoom
+  // level is unchanged. A later real page navigation will retry the request.
+  const GURL url = GetWebContents()->GetLastCommittedURL();
+  if (url.is_empty() || url.IsAboutBlank()) {
+    return;
+  }
+  zoom::ZoomController* zoom_controller =
+      zoom::ZoomController::FromWebContents(GetWebContents());
+  if (!zoom_controller) {
+    return;
+  }
+  const double target_zoom_level =
+      blink::ZoomFactorToZoomLevel(desired_zoom_factor_);
+  if (blink::ZoomValuesEqual(zoom_controller->GetZoomLevel(),
+                             target_zoom_level)) {
+    zoom_factor_pending_ = false;
+    return;
+  }
+  // Clear the pending state before SetZoomLevel: a host-scoped change notifies
+  // this and every other Web using the same host synchronously.
+  zoom_factor_pending_ = false;
+  if (!zoom_controller->SetZoomLevel(target_zoom_level)) {
+    zoom_factor_pending_ = true;
+  } else if (!blink::ZoomValuesEqual(zoom_controller->GetZoomLevel(),
+                                     target_zoom_level)) {
+    // The historical host path can rate-limit closely spaced Ctrl/API writes.
+    // Retry the application request without changing that input behavior.
+    if (zoom_factor_retry_count_++ < kZoomFactorRetryLimit) {
+      zoom_factor_pending_ = true;
+      CEF_POST_DELAYED_TASK(
+          CEF_UIT,
+          base::BindOnce(&ArkWebBrowserHostExtImpl::RetryPendingZoomFactor,
+                         weak_ptr_factory_.GetWeakPtr(),
+                         zoom_factor_request_generation_),
+          kZoomFactorRetryDelayMs);
+    }
+  }
+}
+
+void ArkWebBrowserHostExtImpl::RetryPendingZoomFactor(
+    uint64_t request_generation) {
+  if (request_generation != zoom_factor_request_generation_) {
+    return;
+  }
+  ApplyPendingZoomFactor();
+}
+
+void ArkWebBrowserHostExtImpl::HandleZoomFactorChanged(
+    const zoom::ZoomController::ZoomChangedEventData& data) {
+  if (data.web_contents != GetWebContents()) {
+    return;
+  }
+  if (zoom_factor_pending_) {
+    // ZoomController is notifying observers; defer the host write until its
+    // current notification is complete to avoid nested SetZoomLevel calls.
+    CEF_POST_TASK(CEF_UIT,
+                  base::BindOnce(&ArkWebBrowserHostExtImpl::ApplyPendingZoomFactor,
+                                 weak_ptr_factory_.GetWeakPtr()));
+    return;
+  }
+  zoom::ZoomController* zoom_controller =
+      zoom::ZoomController::FromWebContents(GetWebContents());
+  if (!zoom_controller) {
+    return;
+  }
+  const double new_zoom_factor = ClampZoomFactorForApi(
+      blink::ZoomLevelToZoomFactor(zoom_controller->GetZoomLevel()));
+  const double old_zoom_factor = last_observed_zoom_factor_;
+  last_observed_zoom_factor_ = new_zoom_factor;
+  // HostZoomMap reports old == new for other Webs sharing the host. Track the
+  // effective factor per Web so their onZoomChange callbacks still fire.
+  if (std::fabs(new_zoom_factor - old_zoom_factor) >
+      kBrowserZoomFactorEpsilon) {
+    NotifyZoomFactorChanged(old_zoom_factor, new_zoom_factor);
+  }
+}
+
+void ArkWebBrowserHostExtImpl::NotifyZoomFactorChanged(double old_zoom_factor,
+                                                       double new_zoom_factor) {
+  if (client_) {
+    CefRefPtr<ArkWebDisplayHandlerExt> handler = client_->GetDisplayHandler();
+    if (handler) {
+      handler->OnZoomFactorChanged(old_zoom_factor, new_zoom_factor);
+    }
+  }
+}
+#endif
+
+#if BUILDFLAG(ARKWEB_EXT_GET_ZOOM_LEVEL) || BUILDFLAG(ARKWEB_ZOOM)
 void ArkWebBrowserHostExtImpl::OnZoomChanged(
     const zoom::ZoomController::ZoomChangedEventData& data) {
+#if BUILDFLAG(ARKWEB_ZOOM)
+  HandleZoomFactorChanged(data);
+#endif
+#if BUILDFLAG(ARKWEB_EXT_GET_ZOOM_LEVEL)
   LOG(INFO) << "ArkWeb OnZoomChanged new level = " << data.new_zoom_level
             << ", showBubble = " << data.can_show_bubble;
   if (data.web_contents != GetWebContents()) {
@@ -4819,6 +4981,7 @@ void ArkWebBrowserHostExtImpl::OnZoomChanged(
       browser_context->AsProfile()->GetPrefs()->CommitPendingWrite();
     }
   }
+#endif
 }
 #endif
 

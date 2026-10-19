@@ -22,6 +22,7 @@
 #include "arkweb/ohos_nweb_ex/build/features/features.h"
 #endif
 #include "base/memory/raw_ptr.h"
+#include "base/memory/weak_ptr.h"
 #include "base/observer_list.h"
 #include "base/synchronization/lock.h"
 #include "cef/include/cef_browser.h"
@@ -67,7 +68,7 @@
 #include "components/js_injection/browser/js_communication_host.h"
 #endif
 
-#if BUILDFLAG(ARKWEB_EXT_GET_ZOOM_LEVEL)
+#if BUILDFLAG(ARKWEB_EXT_GET_ZOOM_LEVEL) || BUILDFLAG(ARKWEB_ZOOM)
 #include "components/zoom/zoom_controller.h"
 #include "components/zoom/zoom_observer.h"
 #endif
@@ -112,7 +113,7 @@ class WebMessageReceiverImpl : public blink::WebMessagePort::MessageReceiver {
 // otherwise indicated.
 class ArkWebBrowserHostExtImpl : public ArkWebBrowserHostExt,
                                  virtual public CefBrowserHostBase
-#if BUILDFLAG(ARKWEB_EXT_GET_ZOOM_LEVEL)
+#if BUILDFLAG(ARKWEB_EXT_GET_ZOOM_LEVEL) || BUILDFLAG(ARKWEB_ZOOM)
     ,
                                  public zoom::ZoomObserver
 #endif
@@ -296,11 +297,18 @@ class ArkWebBrowserHostExtImpl : public ArkWebBrowserHostExt,
   bool GetPendingSizeStatus() override;
 
   void SetBrowserZoomLevel(double zoom_factor) override;
-#if BUILDFLAG(ARKWEB_EXT_GET_ZOOM_LEVEL)
+#if BUILDFLAG(ARKWEB_ZOOM)
+  void SetZoomFactor(double zoom_factor) override;
+  double GetZoomFactor() override;
+#endif
+#if BUILDFLAG(ARKWEB_EXT_GET_ZOOM_LEVEL) || BUILDFLAG(ARKWEB_ZOOM)
   void OnZoomChanged(
       const zoom::ZoomController::ZoomChangedEventData& data) override;
   void OnZoomControllerDestroyed(
       zoom::ZoomController* zoom_controller) override {}
+#endif
+#if BUILDFLAG(ARKWEB_ZOOM)
+  void EnableZoomFactorController(content::WebContents* web_contents);
 #endif
 
   void UpdateBrowserControlsState(int constraints,
@@ -965,6 +973,26 @@ void SetAsyncStackId(uint64_t stackId) override;
 #if BUILDFLAG(ARKWEB_BACKGROUND_COLOR)
   void UpdateBackgroundColor(int color);
 #endif  // ARKWEB_BACKGROUND_COLOR
+#if BUILDFLAG(ARKWEB_ZOOM)
+  // State owned exclusively by the Browser Zoom Factor API.
+  static constexpr double kBrowserZoomFactorEpsilon = 1e-6;
+  // ArkWeb's HostZoomMapImplUtils rejects same-host writes less than 30 ms
+  // apart when ARKWEB_INPUT_EVENTS is enabled. Retry after a 5 ms margin,
+  // with at most two delayed attempts to avoid retrying indefinitely.
+  static constexpr int kZoomFactorRetryLimit = 2;
+  static constexpr int kZoomFactorRetryDelayMs = 35;
+  double desired_zoom_factor_ = 1.0;
+  double last_observed_zoom_factor_ = 1.0;
+  bool zoom_factor_pending_ = false;
+  int zoom_factor_retry_count_ = 0;
+  uint64_t zoom_factor_request_generation_ = 0;
+  void ApplyPendingZoomFactor();
+  void RetryPendingZoomFactor(uint64_t request_generation);
+  void HandleZoomFactorChanged(
+      const zoom::ZoomController::ZoomChangedEventData& data);
+  void NotifyZoomFactorChanged(double old_zoom_factor,
+                               double new_zoom_factor);
+#endif
 #if BUILDFLAG(ARKWEB_USERAGENT)
   std::string custom_user_agent_;
 #endif
@@ -1010,7 +1038,7 @@ void SetAsyncStackId(uint64_t stackId) override;
   base::circular_deque<std::unique_ptr<content::PrerenderHandle>>
       prerender_handles_;
 #endif
-#if BUILDFLAG(ARKWEB_NETWORK_BASE)
+#if BUILDFLAG(ARKWEB_NETWORK_BASE) || BUILDFLAG(ARKWEB_ZOOM)
   base::WeakPtrFactory<ArkWebBrowserHostExtImpl> weak_ptr_factory_;
 #endif
 };
