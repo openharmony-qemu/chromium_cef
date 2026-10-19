@@ -545,6 +545,20 @@ class ResourceResponseWrapper : public ResourceResponse {
   }
 #endif
 
+#if BUILDFLAG(ARKWEB_SCHEME_HANDLER)
+  int GetCustomErrorCode() override {
+    auto handler = handler_provider_->handler();
+    if (!handler) {
+      return 0;
+    }
+    auto* ext = handler->AsCefResourceHandlerExt();
+    if (!ext) {
+      return 0;
+    }
+    return ext->GetCustomErrorCode();
+  }
+#endif
+
  private:
   const int32_t request_id_;
 

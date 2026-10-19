@@ -56,11 +56,12 @@ public:
 void OnRequestError(int32_t request_id,
                     const network::ResourceRequest& request,
                     int error_code,
+                    int custom_error_code,
                     bool safebrowsing_hit) override {
   if (init_state_ && wrapper_helper_) {
     wrapper_helper_->OnRequestError(init_state_->browser_, init_state_->GetFrame(),
                                     request_id, request, error_code,
-                                    safebrowsing_hit);
+                                    custom_error_code, safebrowsing_hit);
   }
 }
 #endif
