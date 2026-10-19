@@ -97,8 +97,8 @@ void CefBrowserPlatformDelegateAlloy::SendTouchEventToRender(
   auto frame = browser_->GetMainFrame();
   if (frame && frame->IsValid()) {
     frame.get()->AsCefFrameHostImpl()->SendHitEvent(
-        event.x * ratio, event.y * ratio, event.radius_x * ratio,
-        event.radius_y * ratio);
+        event.x * ratio, event.y * ratio, event.radius_x * 2 * ratio,
+        event.radius_y * 2 * ratio);
   }
 }
 #endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
