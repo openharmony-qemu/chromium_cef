@@ -122,6 +122,20 @@ class CefJSDialogHandler : public virtual CefBaseRefCounted {
   ///
   /*--cef()--*/
   virtual void OnDialogClosed(CefRefPtr<CefBrowser> browser) {}
+
+  ///
+  /// Called when the dialog is handled by engine (e.g. CDP command).
+  /// |accept| indicates whether the dialog was accepted (true) or dismissed
+  /// (false). |prompt_text| contains the user input text if applicable.
+  /// Returns an int result code from the handler: 0 = success, negative value
+  /// = ArkTS returned error code, positive value = core internal error code.
+  ///
+  /*--cef(optional_param=prompt_text)--*/
+  virtual int OnHandleJavaScriptDialog(CefRefPtr<CefBrowser> browser,
+                                       bool accept,
+                                       const CefString& prompt_text) {
+    return 1;
+  }
 };
 
 #endif  // CEF_INCLUDE_CEF_JSDIALOG_HANDLER_H_

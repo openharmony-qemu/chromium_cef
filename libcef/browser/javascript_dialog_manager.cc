@@ -316,6 +316,25 @@ void CefJavaScriptDialogManager::DialogClosed(
     const std::u16string& user_input) {
   if (handler_) {
     handler_->OnDialogClosed(browser_.get());
+#if BUILDFLAG(ARKWEB_NWEB_EX)
+    DLOG(INFO) << "DialogClosed success=" << success
+               << ", has_handler=" << (handler_ != nullptr)
+               << ", has_callback=" << !callback.is_null();
+    // ArkWeb: notify handler with full dialog result (success + user_input)
+    // for CDP handleJavaScriptDialog -> ArkUI dialog close chain.
+    if (callback.is_null()) {
+      DLOG(INFO) << " DialogClosed calling from CDP handleJavaScriptDialog";
+      // Return value is informational only (NWeb business result code:
+      // 0=success, negative=ArkTS error, positive=core internal error).
+      // CDP handleJavaScriptDialog always succeeds at the engine level, see
+      // PageHandler::HandleJavaScriptDialog which returns Response::Success()
+      // unconditionally. This is consistent with upstream Chromium ignoring
+      // the bool return of JavaScriptDialogManager::HandleJavaScriptDialog.
+      int result = handler_->OnHandleJavaScriptDialog(browser_.get(), success,
+                                                      CefString(user_input));
+      DLOG(INFO) << " OnHandleJavaScriptDialog result=" << result;
+    }
+#endif  // BUILDFLAG(ARKWEB_NWEB_EX)
     // Call OnResetDialogState.
     CancelDialogs(/*web_contents=*/nullptr, /*reset_state=*/true);
   }
