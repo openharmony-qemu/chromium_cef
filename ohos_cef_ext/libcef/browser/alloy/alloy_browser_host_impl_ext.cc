@@ -1984,6 +1984,60 @@ void AlloyBrowserHostImplExt::AcceleratorPressedUI(
   cef_key_view.AcceleratorPressed(accelerator);
 }
 
+bool AlloyBrowserHostImplExt::HandleEscapeKey(
+    content::WebContents* source,
+    const input::NativeWebKeyboardEvent& event) {
+  // Handle the Escape key here, so it doesn't interfere with other parts (e.g. the
+  // URL bar). When Escape with no modifiers is pressed, stop loading the page.
+  // Exclude auto-repeated events, so holding Escape doesn't repeatedly call Stop().
+  if (event.windows_key_code == ui::VKEY_ESCAPE &&
+      event.GetModifiers() == blink::WebKeyboardEvent::kNoModifiers &&
+      event.GetType() == blink::WebKeyboardEvent::Type::kRawKeyDown) {
+    if (source && source->IsLoading()) {
+      source->Stop();
+      return true;
+    }
+  }
+  return false;
+}
+
+void AlloyBrowserHostImplExt::HandleAcceleratorKey(
+    content::WebContents* source,
+    const input::NativeWebKeyboardEvent& event) {
+  if (!source) {
+    return;
+  }
+  content::BrowserContext* browser_context = source->GetBrowserContext();
+  extensions::ExtensionCommandsGlobalRegistry* registry =
+      extensions::ExtensionCommandsGlobalRegistry::Get(browser_context);
+  if (registry) {
+    registry->registry_for_active_window();
+  }
+
+  bool run_accelerator_flag = true;
+  ui::Accelerator accelerator =
+      ui::GetAcceleratorFromNativeWebKeyboardEvent(event);
+  ui::KeyEvent key_event = accelerator.ToKeyEvent();
+  const ui::EventType type = key_event.type();
+  if (run_accelerator_flag && (type == ui::EventType::kKeyPressed &&
+      event.GetType() != blink::WebKeyboardEvent::Type::kChar)) {
+    run_accelerator_flag = true;
+  } else {
+    run_accelerator_flag = false;
+  }
+
+  if (run_accelerator_flag) {
+    if (!CEF_CURRENTLY_ON_UIT()) {
+      CEF_POST_TASK(
+          CEF_UIT,
+          base::BindOnce(&AlloyBrowserHostImplExt::AcceleratorPressedUI, this,
+                         accelerator, browser_context));
+    } else {
+      AcceleratorPressedUI(accelerator, browser_context);
+    }
+  }
+}
+
 bool AlloyBrowserHostImplExt::WebHandleKeyboardEvent(
     content::WebContents* source,
     const input::NativeWebKeyboardEvent& event) {
@@ -1996,38 +2050,12 @@ bool AlloyBrowserHostImplExt::WebHandleKeyboardEvent(
     return true;
   }
 
-  if (source) {
-    content::BrowserContext* browser_context = source->GetBrowserContext();
-    extensions::ExtensionCommandsGlobalRegistry* registry =
-        extensions::ExtensionCommandsGlobalRegistry::Get(browser_context);
-    if (registry) {
-      registry->registry_for_active_window();
-    }
- 
-    bool run_accelerator_flag = true;
-    ui::Accelerator accelerator =
-        ui::GetAcceleratorFromNativeWebKeyboardEvent(event);
-    ui::KeyEvent key_event = accelerator.ToKeyEvent();
-    const ui::EventType type = key_event.type();
-    if (run_accelerator_flag && (type == ui::EventType::kKeyPressed &&
-        event.GetType() != blink::WebKeyboardEvent::Type::kChar)) {
-      run_accelerator_flag = true;
-    } else {
-      run_accelerator_flag = false;
-    }
- 
-    if (run_accelerator_flag) {
-      if (!CEF_CURRENTLY_ON_UIT()) {
-        CEF_POST_TASK(
-            CEF_UIT,
-            base::BindOnce(&AlloyBrowserHostImplExt::AcceleratorPressedUI, this,
-                           accelerator, browser_context));
-      } else {
-        AcceleratorPressedUI(accelerator, browser_context);
-      }
-    }
+  if (HandleEscapeKey(source, event)) {
+    return true;
   }
-  
+
+  HandleAcceleratorKey(source, event);
+
   if (platform_delegate_ && platform_delegate_->HandleKeyboardEvent(event)) {
     return true;
   }
