@@ -78,6 +78,10 @@ class ArkWebBrowserContentsDelegateExt : public CefBrowserContentsDelegate {
       const content::LoadCommittedDetails& load_details) override;
 #endif  // BUILDFLAG(ARKWEB_NAVIGATION)
 
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+  void NavigationEntriesDeleted() override;
+#endif  // BUILDFLAG(ARKWEB_DEVTOOLS)
+
 #if BUILDFLAG(ARKWEB_NETWORK_BASE)
   // Shows the repost form confirmation dialog box.
   void ShowRepostFormWarningDialog(content::WebContents* source) override;

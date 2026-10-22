@@ -5,6 +5,7 @@
 #include "cef/ohos_cef_ext/libcef/browser/arkweb_browser_contents_delegate_ext.h"
 
 #include "arkweb/build/features/features.h"
+#include "base/logging.h"
 #include "base/memory/raw_ptr.h"
 #include "cef/libcef/browser/browser_event_util.h"
 #include "cef/libcef/browser/browser_host_base.h"
@@ -234,6 +235,22 @@ void ArkWebBrowserContentsDelegateExt::NavigationEntryCommitted(
 #endif
 }
 #endif  // BUILDFLAG(ARKWEB_NAVIGATION)
+
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+void ArkWebBrowserContentsDelegateExt::NavigationEntriesDeleted() {
+  LOG(INFO) << "ArkWebBrowserContentsDelegateExt::NavigationEntriesDeleted entered";
+  if (!browser_info_) {
+    return;
+  }
+  if (auto c = client()) {
+    if (auto handler = c->GetLoadHandler()) {
+      LOG(INFO) << "ArkWebBrowserContentsDelegateExt::NavigationEntriesDeleted will OnNavigationEntriesDeleted()";
+      handler->OnNavigationEntriesDeleted();
+    }
+  }
+  LOG(INFO) << "ArkWebBrowserContentsDelegateExt::NavigationEntriesDeleted completed";
+}
+#endif  // BUILDFLAG(ARKWEB_DEVTOOLS)
 
 #if BUILDFLAG(ARKWEB_DISPLAY_CUTOUT)
 void ArkWebBrowserContentsDelegateExt::ViewportFitChanged(
