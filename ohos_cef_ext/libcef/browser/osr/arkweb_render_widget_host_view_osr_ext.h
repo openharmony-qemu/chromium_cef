@@ -346,8 +346,6 @@ class ArkWebRenderWidgetHostViewOSRExt
   float GetShrinkViewportHeight() override;
   float GetShrinkVisualViewportHeight() override;
   float GetTopControlsOffset() const override;
-  float GetTopContentOffset() const override;
-  float GetBottomContentOffset() const override;
   void OnTopControlsHeightChanged();
   void OnTopControlsChanged(float top_controls_offset,
                             float top_content_offset);
