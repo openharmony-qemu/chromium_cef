@@ -267,8 +267,9 @@ class ArkWebRenderWidgetHostViewOSRExt
 #endif
 
 #if BUILDFLAG(ARKWEB_DELEGATE_COMPOSITING)
-void DiscardCompositingResources() override;
-void UpdateFocusAndScreenStatus(bool is_focused, bool is_single_screen) override;
+  void DiscardCompositingResources() override;
+  void UpdateFocusAndScreenStatus(bool is_focused, bool is_single_screen) override;
+  void UpdateCompositorStatus();
 #endif
 
 #if BUILDFLAG(ARKWEB_CLEAN_BUFFERS_WHEN_INVISIBLE)
