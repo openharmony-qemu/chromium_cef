@@ -1270,6 +1270,10 @@ void AlloyBrowserHostImplExt::WebExtensionActionShowPopup(
 
 void AlloyBrowserHostImplExt::WebExtensionSetViewType(int32_t type) {
   content::WebContents* web_contents = GetWebContents();
+  if (!web_contents) {
+    LOG(ERROR) << "WebExtensionSetViewType failed, web_contents is null";
+    return;
+  }
   extensions::SetViewType(web_contents, static_cast<extensions::mojom::ViewType>(type));
 
   int windowsId = extensions::GetCurrentWindowId(web_contents, extension_misc::kCurrentWindowId);
