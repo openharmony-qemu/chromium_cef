@@ -21,6 +21,8 @@ namespace ohos_safe_browsing {
 
 class SbClient : public content::WebContentsObserver {
  public:
+  static constexpr int kErrMaliciousUrlMatched = -1;
+
   explicit SbClient(content::WebContents* web_contents,
                     PrefService* prefs,
                     bool incognito_mode);

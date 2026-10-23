@@ -351,7 +351,8 @@ void SbClient::EvaluateAndDisplayBlockPage() {
 
   bool is_page_type_normal =
       (last_committed_entry->GetPageType() == content::PAGE_TYPE_NORMAL);
-  if (!is_page_type_normal) {
+  int extended_error_code = last_committed_entry->GetExtendedErrorCode();
+  if (!is_page_type_normal && extended_error_code != kErrMaliciousUrlMatched) {
     LOG(WARNING) << "SafeBrowsing warning: page type is abnormal";
     return;
   }

@@ -96,6 +96,10 @@ OhosSafeBrowsingNavigationThrottle::WillFailRequest() {
     return content::NavigationThrottle::PROCEED;
   }
 
+  if (handle->GetNetExtendedErrorCode() == SbClient::kErrMaliciousUrlMatched) {
+    return content::NavigationThrottle::PROCEED;
+  }
+
   CheckEvilUrlAndMaybeRetry();
 
   if (!check_evil_url_completed_) {
