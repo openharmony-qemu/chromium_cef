@@ -46,9 +46,14 @@ void CefBrowserFrame::ShouldOverrideUrlLoading(
 #endif
 
 #if BUILDFLAG(ARKWEB_INPUT_EVENTS)
-void CefBrowserFrame::UpdateHitTestData(int32_t type, const std::string& extra_data, int32_t node_id) {
+void CefBrowserFrame::UpdateHitTestData(
+    int32_t type,
+    const std::string& extra_data,
+    int32_t node_id,
+    const std::string& xpath,
+    const std::string& text_content) {
   if (auto host = GetFrameHost(/*prefer_speculative=*/false)) {
-    host->UpdateHitTestData(type, extra_data, node_id);
+    host->UpdateHitTestData(type, extra_data, node_id, xpath, text_content);
   }
 }
 #endif
