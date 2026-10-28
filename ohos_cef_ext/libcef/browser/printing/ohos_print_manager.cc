@@ -28,6 +28,7 @@
 #include "base/logging.h"
 #include "base/memory/ptr_util.h"
 #include "base/memory/ref_counted_memory.h"
+#include "base/no_destructor.h"
 #include "base/numerics/safe_conversions.h"
 #include "base/task/task_traits.h"
 #include "base/task/thread_pool.h"
@@ -55,7 +56,8 @@ constexpr int PRINT_JOB_SPOOLER_CLOSED_FOR_CANCELED = 5;
 
 constexpr int LIMITED_PRINT_RANGE = 5;
 constexpr int LIMITED_PRINT_DURATION = 10000;
-const std::string PROTOCOL_PATH = "://";
+constexpr char PROTOCOL_PATH[] = "://";
+constexpr size_t PROTOCOL_PATH_LENGTH = sizeof(PROTOCOL_PATH) - 1;
 
 uint32_t SaveDataToFd(int fd,
                       uint32_t page_count,
@@ -295,9 +297,23 @@ OhosPrintManager::OhosPrintManager(content::WebContents* contents)
 OhosPrintManager::~OhosPrintManager() = default;
 
 // init static values
-std::unordered_map<std::string, PrintAttrs> OhosPrintManager::printAttrsMap_{};
-std::string OhosPrintManager::print_job_id_ = "";
-std::unordered_map<uint32_t, void*> OhosPrintManager::printTokenMap_{};
+std::unordered_map<std::string, PrintAttrs>&
+OhosPrintManager::GetPrintAttrsMapInstance() {
+  static base::NoDestructor<std::unordered_map<std::string, PrintAttrs>>
+      printAttrsMap;
+  return *printAttrsMap;
+}
+
+std::string& OhosPrintManager::GetPrintJobIdInstance() {
+  static base::NoDestructor<std::string> printJobId;
+  return *printJobId;
+}
+
+std::unordered_map<uint32_t, void*>& OhosPrintManager::GetPrintTokenMapInstance() {
+  static base::NoDestructor<std::unordered_map<uint32_t, void*>> printTokenMap;
+  return *printTokenMap;
+}
+
 bool OhosPrintManager::display_header_footer_ = true;
 bool OhosPrintManager::print_backgrounds_ = false;
 
@@ -406,9 +422,9 @@ bool OhosPrintManager::PrintNow() {
       printDocumentAdapterImpl(new PrintDocumentAdapterImpl(GetRfhId(), false));
   auto customOptions = CreateCustomOptions();
 
-  if (!token_ && printTokenMap_.find(base::Process::Current().Pid()) !=
-                     printTokenMap_.end()) {
-    token_ = printTokenMap_[base::Process::Current().Pid()];
+  if (!token_ && GetPrintTokenMapInstance().find(base::Process::Current().Pid()) !=
+                     GetPrintTokenMapInstance().end()) {
+    token_ = GetPrintTokenMapInstance()[base::Process::Current().Pid()];
   }
   int32_t ret = OHOS::NWeb::OhosAdapterHelper::GetInstance()
                     .GetPrintManagerInstance()
@@ -446,10 +462,11 @@ void OhosPrintManager::PrintPageImpl(bool isApplication) {
     LOG(ERROR) << "PrintPageImpl webContents is nullptr.";
     return;
   }
+  std::string& printJobId = GetPrintJobIdInstance();
   auto* rfh = web_contents->GetPrimaryMainFrame();
   if (!rfh || !rfh->IsRenderFrameLive()) {
     LOG(ERROR) << "rfh is nullptr.";
-    RunCallback(print_job_id_, PRINT_JOB_CREATE_FILE_COMPLETED_FAILED);
+    RunCallback(printJobId, PRINT_JOB_CREATE_FILE_COMPLETED_FAILED);
     return;
   }
 
@@ -463,7 +480,7 @@ void OhosPrintManager::PrintPageImpl(bool isApplication) {
       GetPrintRenderFrame(pdf_rfh)->ApplicationPrintRequestedPages();
     } else {
       LOG(ERROR) << "failed to get rfh from id for pdf print";
-      RunCallback(print_job_id_, PRINT_JOB_CREATE_FILE_COMPLETED_FAILED);
+      RunCallback(printJobId, PRINT_JOB_CREATE_FILE_COMPLETED_FAILED);
     }
     return;
   }
@@ -600,14 +617,15 @@ void OhosPrintManager::DidPrintDocument(
 
 // static
 void OhosPrintManager::RunCallback(const std::string& jobId, int32_t result) {
-  if (printAttrsMap_.find(jobId) == printAttrsMap_.end()) {
+  auto& printAttrsMap = GetPrintAttrsMapInstance();
+  if (printAttrsMap.find(jobId) == printAttrsMap.end()) {
     return;
   }
 
-  if (printAttrsMap_[jobId].callback) {
+  if (printAttrsMap[jobId].callback) {
     LOG(INFO) << "OhosPrintManager calls WriteResultCallback with " << result;
-    printAttrsMap_[jobId].callback->WriteResultCallback(jobId, result);
-    printAttrsMap_[jobId].callback = nullptr;
+    printAttrsMap[jobId].callback->WriteResultCallback(jobId, result);
+    printAttrsMap[jobId].callback = nullptr;
   } else {
     LOG(INFO) << "OhosPrintManager WriteResultCallback is empty";
   }
@@ -621,14 +639,15 @@ void OhosPrintManager::OnDidPrintDocumentWritingDone(
   DCHECK_LE(page_count, printing::kMaxPageCount);
   PdfWritingDone(base::checked_cast<int>(page_count));
   std::move(did_print_document_cb).Run(true);
-  RunCallback(print_job_id_, PRINT_JOB_CREATE_FILE_COMPLETED_SUCCESS);
+  RunCallback(GetPrintJobIdInstance(), PRINT_JOB_CREATE_FILE_COMPLETED_SUCCESS);
 }
 
 std::unique_ptr<printing::PrintSettings> OhosPrintManager::CreatePdfSettings(
     const printing::PageRanges& page_ranges) {
   OHOS::NWeb::PrintAttributesAdapter newAttrs;
-  if (printAttrsMap_.find(print_job_id_) != printAttrsMap_.end()) {
-    newAttrs = printAttrsMap_[print_job_id_].attrs;
+  auto& printAttrsMap = GetPrintAttrsMapInstance();
+  if (printAttrsMap.find(GetPrintJobIdInstance()) != printAttrsMap.end()) {
+    newAttrs = printAttrsMap[GetPrintJobIdInstance()].attrs;
   }
   auto settings = std::make_unique<printing::PrintSettings>();
   int dpi = dpi_;
@@ -718,21 +737,21 @@ void OhosPrintManager::SetBackground(
 void OhosPrintManager::SetPrintAttrs(const PrintAttrs printAttrs) {
   // clear old callback if any
   RunCallback(printAttrs.jobId, PRINT_JOB_CREATE_FILE_COMPLETED_FAILED);
-  printAttrsMap_[printAttrs.jobId] = printAttrs;
+  GetPrintAttrsMapInstance()[printAttrs.jobId] = printAttrs;
   if (base::IsValueInRangeForNumericType<int>(printAttrs.fd)) {
     fd_ = static_cast<int>(printAttrs.fd);
   } else {
     fd_ = -1;
   }
-  print_job_id_ = printAttrs.jobId;
+  GetPrintJobIdInstance() = printAttrs.jobId;
 }
 
 void OhosPrintManager::ClearPrintAttrs(const std::string& jobId) {
   // clear callback before erase
   RunCallback(jobId, PRINT_JOB_CREATE_FILE_COMPLETED_FAILED);
-  printAttrsMap_.erase(jobId);
+  GetPrintAttrsMapInstance().erase(jobId);
   fd_ = -1;
-  print_job_id_ = "";
+  GetPrintJobIdInstance().clear();
 }
 
 void OhosPrintManager::PrintRequested(PrintRequestedCallback callback) {
@@ -765,9 +784,9 @@ void OhosPrintManager::RunPrintRequestedCallbackImpl(const std::string& jobId) {
 
 void OhosPrintManager::PrintPdfRequested() {
   is_pdf_print_ = true;
-  if (printTokenMap_.find(base::Process::Current().Pid()) !=
-      printTokenMap_.end()) {
-    token_ = printTokenMap_[base::Process::Current().Pid()];
+  if (GetPrintTokenMapInstance().find(base::Process::Current().Pid()) !=
+      GetPrintTokenMapInstance().end()) {
+    token_ = GetPrintTokenMapInstance()[base::Process::Current().Pid()];
   }
   cancel_ = false;
   if (!PrintNow()) {
@@ -796,13 +815,13 @@ std::string OhosPrintManager::RemoveProtocol(const std::string& url) {
   std::string result = url;
   std::size_t pos = result.find(PROTOCOL_PATH);
   if (pos != std::string::npos) {
-    result = result.substr(pos + PROTOCOL_PATH.size());
+    result = result.substr(pos + PROTOCOL_PATH_LENGTH);
   }
   return result;
 }
 
 void OhosPrintManager::SetToken(void* token) {
-  printTokenMap_[base::Process::Current().Pid()] = token;
+  GetPrintTokenMapInstance()[base::Process::Current().Pid()] = token;
   token_ = token;
 }
 

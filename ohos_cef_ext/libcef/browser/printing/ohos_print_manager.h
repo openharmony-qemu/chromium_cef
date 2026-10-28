@@ -158,9 +158,9 @@ class OhosPrintManager : public printing::PrintManager,
   bool is_print_disable_ = false;
   content::GlobalRenderFrameHostId rfh_id_;
   content::GlobalRenderFrameHostId pdf_rfh_id_;
-  static std::unordered_map<std::string, PrintAttrs> printAttrsMap_;
-  static std::string print_job_id_;
-  static std::unordered_map<uint32_t, void*> printTokenMap_;
+  static std::unordered_map<std::string, PrintAttrs>& GetPrintAttrsMapInstance();
+  static std::string& GetPrintJobIdInstance();
+  static std::unordered_map<uint32_t, void*>& GetPrintTokenMapInstance();
   PrintRequestedCallback printRequestedCallback_;
   // last user choise for custom options
   static bool display_header_footer_;
