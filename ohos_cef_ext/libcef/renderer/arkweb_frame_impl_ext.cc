@@ -133,9 +133,9 @@ static double POSITION_RATIO = 138.9;
 #include "third_party/blink/renderer/core/layout/hit_test_result.h"
 
 #if BUILDFLAG(IS_ARKWEB)
-const std::string kAddressPrefix = "geo:0,0?q=";
-const std::string kEmailPrefix = "mailto:";
-const std::string kPhoneNumberPrefix = "tel:";
+constexpr char kAddressPrefix[] = "geo:0,0?q=";
+constexpr char kEmailPrefix[] = "mailto:";
+constexpr char kPhoneNumberPrefix[] = "tel:";
 
 #if BUILDFLAG(ARKWEB_PAGE_UP_DOWN)
 // The amount of content to overlap between two screens when using
