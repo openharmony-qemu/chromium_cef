@@ -116,6 +116,9 @@ std::string RegisterFileSystem(content::WebContents* web_contents,
   storage::IsolatedContext::ScopedFSHandle file_system =
       isolated_context()->RegisterFileSystemForPath(
           storage::kFileSystemTypeLocal, std::string(), path, &root_name);
+  if (!file_system.is_valid()) {
+    return "";
+  }
 
   content::ChildProcessSecurityPolicy* policy =
       content::ChildProcessSecurityPolicy::GetInstance();
