@@ -17,6 +17,7 @@
 #include <string>
 
 #include "base/logging.h"
+#include "base/no_destructor.h"
 #include "base/values.h"
 #include "components/pref_registry/pref_registry_syncable.h"
 #include "components/prefs/pref_service.h"
@@ -87,13 +88,16 @@ predictor::PreconnectUrlInfo::~PreconnectUrlInfo() {}
 predictor::PreconnectUrlInfo::PreconnectUrlInfo(
     const PreconnectUrlInfo& other) = default;
 
-std::vector<PreconnectUrlInfo> PredictorDatabase::preconnect_url_info_list =
-    std::vector<PreconnectUrlInfo>();
-
 // static
 PredictorDatabase* PredictorDatabase::GetInstance() {
   static PredictorDatabase instance;
   return &instance;
+}
+
+// static
+std::vector<PreconnectUrlInfo>& PredictorDatabase::GetPreconnectUrlInfoList() {
+  static base::NoDestructor<std::vector<PreconnectUrlInfo>> instance;
+  return *instance;
 }
 
 // static

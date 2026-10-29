@@ -35,7 +35,7 @@ namespace ohos_anti_tracking {
 
 namespace {
 
-const std::string TBW_DOMAIN_KEY = "trackingBehaviorWebsite";
+constexpr char TBW_DOMAIN_KEY[] = "trackingBehaviorWebsite";
 
 base::LazyInstance<ThirdPartyCookieAccessPolicy>::Leaky g_lazy_instance;
 

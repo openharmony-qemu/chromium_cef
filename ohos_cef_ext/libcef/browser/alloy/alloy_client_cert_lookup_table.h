@@ -60,8 +60,8 @@ class AlloyClientCertLookupTable : public virtual CefBaseRefCounted {
   static std::string HostAndPort(const std::string& host, int port);
 
  private:
-  static std::map<std::string, AlloyCert> certs_;
-  static std::set<std::string> denieds_;
+  static std::map<std::string, AlloyCert>& GetCerts();
+  static std::set<std::string>& GetDenieds();
 
   IMPLEMENT_REFCOUNTING(AlloyClientCertLookupTable);
 };

@@ -16,20 +16,30 @@
 #include "libcef/browser/alloy/alloy_client_cert_lookup_table.h"
 
 #include "base/logging.h"
+#include "base/no_destructor.h"
 
 #if BUILDFLAG(IS_ARKWEB)
-std::map<std::string, AlloyCert> AlloyClientCertLookupTable::certs_;
-std::set<std::string> AlloyClientCertLookupTable::denieds_;
+// static
+std::map<std::string, AlloyCert>& AlloyClientCertLookupTable::GetCerts() {
+  static base::NoDestructor<std::map<std::string, AlloyCert>> certs;
+  return *certs;
+}
+
+// static
+std::set<std::string>& AlloyClientCertLookupTable::GetDenieds() {
+  static base::NoDestructor<std::set<std::string>> denieds;
+  return *denieds;
+}
 
 void AlloyClientCertLookupTable::Clear() {
-  certs_.clear();
-  denieds_.clear();
+  GetCerts().clear();
+  GetDenieds().clear();
 }
 
 bool AlloyClientCertLookupTable::IsDenied(const std::string& host, int port) {
   std::string host_port = HostAndPort(host, port);
-  auto it = denieds_.find(host_port);
-  if (it != denieds_.end()) {
+  auto it = GetDenieds().find(host_port);
+  if (it != GetDenieds().end()) {
     return true;
   }
   return false;
@@ -41,22 +51,22 @@ void AlloyClientCertLookupTable::Allow(const std::string& host,
                                        const std::string& cert_chain) {
   std::string host_port = HostAndPort(host, port);
   AlloyCert cert(private_key, cert_chain);
-  certs_[host_port] = cert;
-  denieds_.erase(host_port);
+  GetCerts()[host_port] = cert;
+  GetDenieds().erase(host_port);
 }
 
 void AlloyClientCertLookupTable::Deny(const std::string& host, int port) {
   std::string host_port = HostAndPort(host, port);
-  certs_.erase(host_port);
-  denieds_.insert(host_port);
+  GetCerts().erase(host_port);
+  GetDenieds().insert(host_port);
 }
 
 bool AlloyClientCertLookupTable::GetCertData(const std::string& host,
                                              int port,
                                              AlloyCert& cert) {
   std::string host_port = HostAndPort(host, port);
-  auto it = certs_.find(host_port);
-  if (it != certs_.end()) {
+  auto it = GetCerts().find(host_port);
+  if (it != GetCerts().end()) {
     cert = (*it).second;
     return true;
   }

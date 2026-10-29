@@ -71,10 +71,10 @@ class PredictorDatabase {
   static void RegisterPrefs(user_prefs::PrefRegistrySyncable* registry);
   static PredictorDatabase* GetInstance();
 
+  static std::vector<PreconnectUrlInfo>& GetPreconnectUrlInfoList();
+
   void RecordVisitedUrl(VisitedUrlInfo url_info);
   std::set<std::string> GetRecentVisitedUrl();
-
-  static std::vector<PreconnectUrlInfo> preconnect_url_info_list;
 
  private:
   void UpdateFromPrefsAndClear();

@@ -15,6 +15,7 @@
 
 #include "ohos_cef_ext/libcef/browser/net/extra_headers_throttle.h"
 #include "base/feature_list.h"
+#include "base/no_destructor.h"
 #include "base/strings/string_util.h"
 #include "net/base/registry_controlled_domains/registry_controlled_domain.h"
 #include "net/http/http_request_headers.h"
@@ -25,7 +26,11 @@
 
 namespace throttle {
 
-std::map<std::string, std::string> ExtraHeadersThrottle::extra_headers_map;
+// static
+std::map<std::string, std::string>& ExtraHeadersThrottle::GetExtraHeadersMap() {
+  static base::NoDestructor<std::map<std::string, std::string>> extra_headers_map;
+  return *extra_headers_map;
+}
 
 ExtraHeadersThrottle::ExtraHeadersThrottle() {}
 
@@ -87,9 +92,9 @@ void ExtraHeadersThrottle::SetExtraHeaders(const GURL& url,
     return;
   }
   if (!headers.empty()) {
-    ExtraHeadersThrottle::extra_headers_map[url.spec()] = headers;
+    ExtraHeadersThrottle::GetExtraHeadersMap()[url.spec()] = headers;
   } else {
-    ExtraHeadersThrottle::extra_headers_map.erase(url.spec());
+    ExtraHeadersThrottle::GetExtraHeadersMap().erase(url.spec());
   }
 }
 
@@ -98,8 +103,8 @@ std::string ExtraHeadersThrottle::GetExtraHeaders(const GURL& url) {
     return std::string();
   }
   std::map<std::string, std::string>::iterator iter =
-      ExtraHeadersThrottle::extra_headers_map.find(url.spec());
-  return iter != ExtraHeadersThrottle::extra_headers_map.end() ? iter->second : std::string();
+      ExtraHeadersThrottle::GetExtraHeadersMap().find(url.spec());
+  return iter != ExtraHeadersThrottle::GetExtraHeadersMap().end() ? iter->second : std::string();
 }
 
 }  // namespace throttle

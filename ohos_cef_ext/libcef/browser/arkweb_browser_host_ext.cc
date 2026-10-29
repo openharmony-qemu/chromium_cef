@@ -325,7 +325,7 @@ bool CheckUrlPath(base::FilePath url_path, CefString& path) {
 }  // namespace
 
 #if BUILDFLAG(ARKWEB_NETWORK_BASE)
-const std::string WEB_ARCHIVE_EXTENSION = ".mht";
+constexpr char WEB_ARCHIVE_EXTENSION[] = ".mht";
 
 CefString GenerateArchiveAutoNamePath(const GURL& url,
                                       const CefString& base_name) {

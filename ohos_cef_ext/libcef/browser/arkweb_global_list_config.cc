@@ -42,8 +42,8 @@ const char kFallbackProxyBlockList[] = "fallbackProxyBlockList";
 const char kFraudWebAllowList[] = "fraudWebAllowList";
 }  // namespace prefs
 
-const std::string supported_list_keys[] = {prefs::kFallbackProxyBlockList,
-                                           prefs::kFraudWebAllowList};
+constexpr const char* supported_list_keys[] = {prefs::kFallbackProxyBlockList,
+                                               prefs::kFraudWebAllowList};
 
 base::LazyInstance<ArkwebGlobalListConfig>::Leaky g_lazy_instance;
 ArkwebGlobalListConfig* ArkwebGlobalListConfig::GetInstance() {

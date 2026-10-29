@@ -59,7 +59,7 @@ class ExtraHeadersThrottle : public blink::URLLoaderThrottle {
   void AddExtraHeadersIfNeeded(const GURL& url,
                                net::HttpRequestHeaders* headers);
 
-  static std::map<std::string, std::string> extra_headers_map;
+  static std::map<std::string, std::string>& GetExtraHeadersMap();
   std::vector<std::string> added_headers_;
   url::Origin original_origin_;
 };
