@@ -41,11 +41,54 @@ ExtensionFunction::ResponseAction ActionOpenPopupFunction::Run() {
 
   NWebExtensionActionOpenPopupOptions open_popup_option;
   open_popup_option.windowId = window_id;
-  OHOS::NWeb::NWebExtensionActionCefDelegate::GetInstance()->OnOpenPopup(
+
+  if (!OHOS::NWeb::NWebExtensionActionCefDelegate::HasExtensionListener()) {
+    OHOS::NWeb::NWebExtensionActionCefDelegate::GetInstance()->OnOpenPopup(
       extension()->id(), open_popup_option,
       OHOS::NWeb::GetExtensionContextType(browser_context()),
       include_incognito_information());
-  return RespondNow(NoArguments());
+    return RespondNow(NoArguments());
+  }
+
+  call_action_open_popup_ = true;
+  bool success = OHOS::NWeb::NWebExtensionActionCefDelegate::GetInstance()->OnOpenPopupV3(
+      extension()->id(), open_popup_option,
+      base::BindRepeating(&ActionOpenPopupFunction::OpenPopupCallback,
+                          weak_ptr_factory_.GetWeakPtr()),
+      OHOS::NWeb::GetExtensionContextType(browser_context()),
+      include_incognito_information());
+  call_action_open_popup_ = false;
+
+  if (did_respond()) {
+    return AlreadyResponded();
+  }
+
+  if (success) {
+    AddRef();
+    LOG(INFO) << "ActionOpenPopupFunction AddRef";
+    return RespondLater();
+  } else {
+    return RespondNow(Error("not support action.openPopup"));
+  }
+}
+
+void ActionOpenPopupFunction::OpenPopupCallback(
+    const base::WeakPtr<ActionOpenPopupFunction>& function,
+    const std::optional<std::string>& error) {
+  DCHECK(function);
+  if (!function) {
+    return;
+  }
+
+  if (error) {
+    function->Respond(function->Error(error.value()));
+  } else {
+    function->Respond(function->NoArguments());
+  }
+
+  if (!function->call_action_open_popup_) {
+    function->Release();
+  }
 }
 
 }  // namespace extensions
