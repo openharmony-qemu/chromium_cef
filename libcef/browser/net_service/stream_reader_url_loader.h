@@ -103,6 +103,10 @@ class ResourceResponse {
   virtual size_t GetResponseDataBuffer(char* data, size_t dest_size) = 0;
   virtual size_t GetResponseDataBufferSize() = 0;
 #endif
+
+#if BUILDFLAG(ARKWEB_SCHEME_HANDLER)
+  virtual int GetCustomErrorCode() { return 0; }
+#endif
 };
 
 // Custom URLLoader implementation for loading network responses from stream.

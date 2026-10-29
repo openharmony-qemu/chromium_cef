@@ -50,9 +50,17 @@ class CefResponseImpl : public CefResponse {
 
   void SetReadOnly(bool read_only);
 
+#if BUILDFLAG(ARKWEB_SCHEME_HANDLER)
+  void SetCustomErrorCode(int custom_error_code) override;
+  int GetCustomErrorCode() override;
+#endif
+
  protected:
   cef_errorcode_t error_code_ = ERR_NONE;
   int status_code_ = 0;
+#if BUILDFLAG(ARKWEB_SCHEME_HANDLER)
+  int custom_error_code_ = 0;
+#endif
   CefString status_text_;
   CefString mime_type_;
   CefString charset_;

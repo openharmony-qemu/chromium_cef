@@ -58,6 +58,7 @@ class ArkWebInterceptedRequestHandlerWrapperHelper {
                       int32_t request_id,
                       const network::ResourceRequest& request,
                       int error_code,
+                      int custom_error_code,
                       bool safebrowsing_hit);
   void OnHttpError(CefRefPtr<CefBrowserHostBase> browser,
                    CefRefPtr<CefRequest> request,
@@ -109,6 +110,7 @@ void OnRequestErrorInUiTask(CefRefPtr<CefBrowserHostBase> browser,
                             CefRefPtr<ArkWebRequestImplExt> request,
                             bool has_user_gesture,
                             int32_t error_code,
+                            int32_t custom_error_code,
                             cef_transition_type_t transition_type);
 #endif  // BUILDFLAG(ARKWEB_NETWORK_LOAD)
 

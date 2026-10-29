@@ -504,7 +504,11 @@ class InterceptedRequest : public network::mojom::URLLoader,
   void SendErrorStatusAndCompleteImmediately(
       const network::URLLoaderCompletionStatus& status);
 
-  void SendErrorCallback(int error_code, bool safebrowsing_hit);
+  void SendErrorCallback(int error_code,
+#if BUILDFLAG(ARKWEB_SCHEME_HANDLER)
+                         int custom_error_code,
+#endif
+                         bool safebrowsing_hit);
 
   void OnUploadProgressACK();
 
@@ -622,6 +626,7 @@ class InterceptDelegate : public StreamReaderURLLoader::Delegate {
                                   extra_headers);
   }
 
+
 #if BUILDFLAG(ARKWEB_RESOURCE_INTERCEPTION)
   const std::string& GetResponseData() override {
     return response_->GetResponseData();
@@ -633,6 +638,12 @@ class InterceptDelegate : public StreamReaderURLLoader::Delegate {
 
   size_t GetResponseDataBufferSize() override {
     return response_->GetResponseDataBufferSize();
+  }
+#endif
+
+#if BUILDFLAG(ARKWEB_SCHEME_HANDLER)
+  int GetCustomErrorCode() override {
+    return response_->GetCustomErrorCode();
   }
 #endif
 
@@ -688,7 +699,11 @@ InterceptedRequest::InterceptedRequest(
 
 InterceptedRequest::~InterceptedRequest() {
   if (status_.error_code != net::OK) {
-    SendErrorCallback(status_.error_code, false);
+    SendErrorCallback(status_.error_code,
+#if BUILDFLAG(ARKWEB_SCHEME_HANDLER)
+                      status_.custom_error_code,
+#endif
+                      false);
   }
   if (on_headers_received_callback_) {
     std::move(on_headers_received_callback_)
@@ -1662,7 +1677,11 @@ void InterceptedRequest::OnURLLoaderError(uint32_t custom_reason,
                                           const std::string& description) {
   if (custom_reason == network::mojom::URLLoader::kClientDisconnectReason &&
       description == safe_browsing::kCustomCancelReasonForURLLoader) {
-    SendErrorCallback(safe_browsing::kNetErrorCodeForSafeBrowsing, true);
+    SendErrorCallback(safe_browsing::kNetErrorCodeForSafeBrowsing,
+#if BUILDFLAG(ARKWEB_SCHEME_HANDLER)
+                      status_.custom_error_code,
+#endif
+                      true);
   }
 
   got_loader_error_ = true;
@@ -1727,11 +1746,18 @@ void InterceptedRequest::SendErrorStatusAndCompleteImmediately(
   status_ = status;
 #endif
 
-  SendErrorCallback(status_.error_code, false);
+  SendErrorCallback(status_.error_code,
+#if BUILDFLAG(ARKWEB_SCHEME_HANDLER)
+                    status_.custom_error_code,
+#endif
+                    false);
   OnDestroy();
 }
 
 void InterceptedRequest::SendErrorCallback(int error_code,
+#if BUILDFLAG(ARKWEB_SCHEME_HANDLER)
+                                           int custom_error_code,
+#endif
                                            bool safebrowsing_hit) {
   // Ensure we only send one error callback, e.g. to avoid sending two if
   // there's both a networking error and safe browsing blocked the request.
@@ -1752,6 +1778,9 @@ void InterceptedRequest::SendErrorCallback(int error_code,
 
   sent_error_callback_ = true;
   factory_->request_handler_->OnRequestError(id_, request_, error_code,
+#if BUILDFLAG(ARKWEB_SCHEME_HANDLER)
+                                             custom_error_code,
+#endif
                                              safebrowsing_hit);
 }
 

@@ -76,8 +76,9 @@ void ArkWebInterceptedRequestHandlerWrapperHelper::OnRequestError(
     int32_t request_id,
     const network::ResourceRequest& request,
     int error_code,
+    int custom_error_code,
     bool safebrowsing_hit) {
-  LOG(DEBUG) << "OnRequestError " << error_code;
+  LOG(DEBUG) << "OnRequestError error_code=" << error_code << " custom_error_code="<< custom_error_code;
   if (browser && frame && error_code != net::ERR_ABORTED) {
     CefRefPtr<ArkWebRequestImplExt> arkweb_request = new ArkWebRequestImplExt();
     arkweb_request->SetURL(CefString(request.url.spec()));
@@ -87,6 +88,7 @@ void ArkWebInterceptedRequestHandlerWrapperHelper::OnRequestError(
     CEF_POST_TASK(CEF_UIT, base::BindOnce(&OnRequestErrorInUiTask, browser,
                                           frame, arkweb_request,
                                           request.has_user_gesture, error_code,
+                                          custom_error_code,
                                           static_cast<cef_transition_type_t>(
                                               request.transition_type)));
   }
@@ -254,6 +256,7 @@ void OnRequestErrorInUiTask(CefRefPtr<CefBrowserHostBase> browser,
                             CefRefPtr<ArkWebRequestImplExt> request,
                             bool has_user_gesture,
                             int32_t error_code,
+                            int32_t custom_error_code,
                             cef_transition_type_t transition_type) {
   if (!browser || !browser->GetHost() || !browser->browser_info() || !request) {
     LOG(ERROR) << "OnRequestErrorInUiTask parame error";
@@ -277,6 +280,7 @@ void OnRequestErrorInUiTask(CefRefPtr<CefBrowserHostBase> browser,
     load_handler->OnLoadErrorWithRequest(request, frame,
                                          request->IsMainFrame(),
                                          has_user_gesture, error_code,
+                                         custom_error_code,
                                          net::ErrorToShortString(error_code));
     // To use OuterMostMainFrame.
     if (request->IsMainFrame()) {
