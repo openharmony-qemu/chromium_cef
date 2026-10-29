@@ -385,6 +385,12 @@ void UpdateFocusAndScreenStatus(bool is_focused, bool is_single_screen) override
                              int32_t detectedContentfulNodesCount) override;
 #endif
 
+#if BUILDFLAG(ARKWEB_BLANK_SCREEN_MONITOR)
+  void OnMonitoredBlankScreen(const std::string& url,
+                              int32_t reason,
+                              const std::string& extra_msg) override;
+#endif
+
 #if BUILDFLAG(ARKWEB_FIRST_SCREEN_PAINT)
   void OnFirstScreenPaint(const std::string &url,
                           int64_t navigationStartTime, int64_t firstScreenPaintTime) override;

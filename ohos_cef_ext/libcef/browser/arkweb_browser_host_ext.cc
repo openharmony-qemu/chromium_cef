@@ -5183,3 +5183,29 @@ void ArkWebBrowserHostExtImpl::SetAsyncStackId(uint64_t stackId) {
   }
 }
 #endif
+
+#if BUILDFLAG(ARKWEB_BLANK_SCREEN_DETECTION)
+void ArkWebBrowserHostExtImpl::NotifyBlankScreenViewResize(uint32_t width,
+                                                            uint32_t height) {
+  auto* web_contents = GetWebContents();
+  if (web_contents) {
+    static_cast<content::WebContentsImpl*>(web_contents)
+        ->AsWebContentsImplExt()
+        ->NotifyBlankScreenViewResize(width, height);
+  }
+}
+
+void ArkWebBrowserHostExtImpl::PutWebBlankScreenMonitorEnabled(bool enable) {
+  LOG(INFO) << "PutWebBlankScreenMonitorEnabled, enable: " << enable;
+  auto* web_contents = GetWebContents();
+  if (!web_contents) {
+    return;
+  }
+#if BUILDFLAG(ARKWEB_BLANK_SCREEN_MONITOR)
+  auto web_contents_ex = static_cast<content::WebContentsImpl*>(web_contents)->AsWebContentsImplExt();
+  if (web_contents_ex) {
+    web_contents_ex->SetBlankScreenMonitorEnabled(enable);
+  }
+#endif
+}
+#endif
