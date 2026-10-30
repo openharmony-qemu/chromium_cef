@@ -297,12 +297,13 @@ ArkWebRenderWidgetHostViewOSRExt::~ArkWebRenderWidgetHostViewOSRExt() {
   // Dispatch any pending callbacks with empty details to avoid permanent hang.
   if (!pending_language_callbacks_.empty()) {
     ArkWebLanguageDetectionDetails empty_details;
-    for (auto& callback : pending_language_callbacks_) {
+    std::vector<CefRefPtr<CefWebLanguageDetectedCallback>> callbacks;
+    callbacks.swap(pending_language_callbacks_);
+    for (auto& callback : callbacks) {
       if (callback) {
         callback->OnWebLanguageDetected(empty_details);
       }
     }
-    pending_language_callbacks_.clear();
   }
 #endif
 }
@@ -1049,12 +1050,13 @@ void ArkWebRenderWidgetHostViewOSRExt::OnLanguageDetermined(
   language_details_.adopted_language = details.adopted_language;
 
   // Dispatch all pending callbacks now that detection has completed.
-  for (auto& callback : pending_language_callbacks_) {
+  std::vector<CefRefPtr<CefWebLanguageDetectedCallback>> callbacks;
+  callbacks.swap(pending_language_callbacks_);
+  for (auto& callback : callbacks) {
     if (callback) {
       callback->OnWebLanguageDetected(language_details_);
     }
   }
-  pending_language_callbacks_.clear();
 }
 
 void ArkWebRenderWidgetHostViewOSRExt::OnTranslateDriverDestroyed(
@@ -1064,12 +1066,13 @@ void ArkWebRenderWidgetHostViewOSRExt::OnTranslateDriverDestroyed(
   // Dispatch pending callbacks with empty details to avoid permanent hang.
   if (!pending_language_callbacks_.empty()) {
     ArkWebLanguageDetectionDetails empty_details;
-    for (auto& callback : pending_language_callbacks_) {
+    std::vector<CefRefPtr<CefWebLanguageDetectedCallback>> callbacks;
+    callbacks.swap(pending_language_callbacks_);
+    for (auto& callback : callbacks) {
       if (callback) {
         callback->OnWebLanguageDetected(empty_details);
       }
     }
-    pending_language_callbacks_.clear();
   }
 }
 
@@ -1096,24 +1099,26 @@ void ArkWebRenderWidgetHostViewOSRExt::GetWebLanguageAsync(
     // Observer registration failed (e.g. no ChromeTranslateClient yet).
     // Dispatch pending callbacks with empty details to avoid permanent hang.
     ArkWebLanguageDetectionDetails empty_details;
-    for (auto& cb : pending_language_callbacks_) {
+    std::vector<CefRefPtr<CefWebLanguageDetectedCallback>> callbacks;
+    callbacks.swap(pending_language_callbacks_);
+    for (auto& cb : callbacks) {
       if (cb) {
         cb->OnWebLanguageDetected(empty_details);
       }
     }
-    pending_language_callbacks_.clear();
     return;
   }
   if (!TriggerReCapturePageText()) {
     // IPC could not be sent (e.g. no main frame). Dispatch pending callbacks
     // with empty details to avoid permanent hang.
     ArkWebLanguageDetectionDetails empty_details;
-    for (auto& cb : pending_language_callbacks_) {
+    std::vector<CefRefPtr<CefWebLanguageDetectedCallback>> callbacks;
+    callbacks.swap(pending_language_callbacks_);
+    for (auto& cb : callbacks) {
       if (cb) {
         cb->OnWebLanguageDetected(empty_details);
       }
     }
-    pending_language_callbacks_.clear();
   }
 }
 
@@ -1158,12 +1163,13 @@ void ArkWebRenderWidgetHostViewOSRExt::RestoreLanguageDetailsForBFCache() {
   language_details_ = bf_cache_language_details_;
   // After restoring, dispatch any callbacks that were queued while the page
   // was in BFCache.
-  for (auto& callback : pending_language_callbacks_) {
+  std::vector<CefRefPtr<CefWebLanguageDetectedCallback>> callbacks;
+  callbacks.swap(pending_language_callbacks_);
+  for (auto& callback : callbacks) {
     if (callback) {
       callback->OnWebLanguageDetected(language_details_);
     }
   }
-  pending_language_callbacks_.clear();
 }
 
 void ArkWebRenderWidgetHostViewOSRExt::ClearLanguageCache(
@@ -1174,13 +1180,15 @@ void ArkWebRenderWidgetHostViewOSRExt::ClearLanguageCache(
     return;
   }
   // Normal main-frame navigation: clear the cached language details.
+
   ArkWebLanguageDetectionDetails empty_details;
-  for (auto& callback : pending_language_callbacks_) {
+  std::vector<CefRefPtr<CefWebLanguageDetectedCallback>> callbacks;
+  callbacks.swap(pending_language_callbacks_);
+  for (auto& callback : callbacks) {
     if (callback) {
       callback->OnWebLanguageDetected(empty_details);
     }
   }
-  pending_language_callbacks_.clear();
   language_details_.Reset();
 }
 #endif
