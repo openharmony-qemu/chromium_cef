@@ -318,6 +318,10 @@ public:
   bool WebHandleKeyboardEvent(
     content::WebContents* source,
     const input::NativeWebKeyboardEvent& event);
+  bool HandleEscapeKey(content::WebContents* source,
+                       const input::NativeWebKeyboardEvent& event);
+  void HandleAcceleratorKey(content::WebContents* source,
+                            const input::NativeWebKeyboardEvent& event);
 
   std::unique_ptr<content::EyeDropper> OpenEyeDropper(
       content::RenderFrameHost *frame,
