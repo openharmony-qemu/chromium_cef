@@ -239,10 +239,11 @@ interface RenderFrame {
   [EnableIf=arkweb_input_events, Sync]
   ExecuteInputInsertCommand(string content, int32 index) => (int32 result);
 
-  // Batch autofill: combines xpath-based element lookup + fill in one call.
+  // Batch autofill: prefer DOM node id, then fall back to xpath.
   // mode: 0=Overwrite (SetValue without Focus), 1=Insert (Focus + insert at index)
   [EnableIf=arkweb_input_events, Sync]
-  ExecuteAutoFillCommand(string xpath, string content, int32 index, int32 mode)
+  ExecuteAutoFillCommand(string xpath, int32 node_id, string content, int32 index,
+                         int32 mode)
       => (int32 result);
 
   [EnableIf=arkweb_input_events, Sync]

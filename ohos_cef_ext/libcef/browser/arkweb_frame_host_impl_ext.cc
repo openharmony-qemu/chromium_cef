@@ -1272,6 +1272,7 @@ int32_t ArkwebFrameHostExtImpl::ExecuteInputInsertCommand(
 
 int32_t ArkwebFrameHostExtImpl::ExecuteAutoFillCommand(
     const std::string& xpath,
+    int32_t node_id,
     const std::string& content,
     int32_t index,
     int32_t mode,
@@ -1304,7 +1305,7 @@ int32_t ArkwebFrameHostExtImpl::ExecuteAutoFillCommand(
       CEF_IOT,
       base::BindOnce(&ArkwebFrameHostExtImpl::ExecuteAutoFillCommandOnIO,
                      weak_ptr_factory_.GetWeakPtr(), std::move(callback),
-                     xpath, content, index, mode,
+                     xpath, node_id, content, index, mode,
                      std::move(pending_clone)));
 
   // Per-item timeout: min(1s, remaining) so each item respects the total deadline
@@ -1734,6 +1735,7 @@ void ArkwebFrameHostExtImpl::ExecuteInputInsertCommandOnIO(
 void ArkwebFrameHostExtImpl::ExecuteAutoFillCommandOnIO(
     base::OnceCallback<void(int32_t)> callback,
     const std::string& xpath,
+    int32_t node_id,
     const std::string& content,
     int32_t index,
     int32_t mode,
@@ -1749,7 +1751,7 @@ void ArkwebFrameHostExtImpl::ExecuteAutoFillCommandOnIO(
   }
   if (io_thread_render_frame_ && io_thread_render_frame_->is_bound()) {
     (*io_thread_render_frame_)->ExecuteAutoFillCommand(
-        xpath, content, index, mode, std::move(callback));
+        xpath, node_id, content, index, mode, std::move(callback));
   } else {
     LOG(ERROR) << "[WebCommandAction] ExecuteAutoFillCommandOnIO: io_thread_render_frame_ is not bound";
     std::move(callback).Run(static_cast<int32_t>(

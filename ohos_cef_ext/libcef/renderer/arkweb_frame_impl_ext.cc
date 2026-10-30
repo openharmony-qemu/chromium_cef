@@ -1156,6 +1156,7 @@ void ArkwebFrameExtImpl::ExecuteInputInsertCommand(
 
 void ArkwebFrameExtImpl::ExecuteAutoFillCommand(
     const std::string& xpath,
+    int32_t node_id,
     const std::string& content,
     int32_t index,
     int32_t mode,
@@ -1168,7 +1169,7 @@ void ArkwebFrameExtImpl::ExecuteAutoFillCommand(
     std::move(callback).Run(result);
     return;
   }
-  result = render_frame->ExecuteAutoFillCommand(xpath, content, index, mode);
+  result = render_frame->ExecuteAutoFillCommand(xpath, node_id, content, index, mode);
   std::move(callback).Run(result);
 }
 

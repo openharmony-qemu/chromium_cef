@@ -223,6 +223,7 @@ std::string OverrideErrorPage(const CefString& url,
       cef::mojom::RenderFrame::ExecuteInputInsertCommandCallback callback) override;
   void ExecuteAutoFillCommand(
       const std::string& xpath,
+      int32_t node_id,
       const std::string& content,
       int32_t index,
       int32_t mode,
