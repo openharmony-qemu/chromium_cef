@@ -4493,6 +4493,9 @@ bool ArkWebBrowserHostExtImpl::CanStoreWebArchive() {
   }
 
   auto web_contents = GetWebContents();
+  if (!web_contents) {
+    return false;
+  }
   std::string mime_type = web_contents->GetContentsMimeType();
   GURL url = web_contents->GetURL();
   content::NavigationEntry* entry =
