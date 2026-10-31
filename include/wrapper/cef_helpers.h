@@ -124,13 +124,15 @@ struct CefDeleteOnRendererThread : public CefDeleteOnThread<TID_RENDERER> {};
                                                         \
  private:                                               \
   CefRefCount ref_count_
-
+#ifndef IMPLEMENT_REFCOUNTING_DELETE_ON_UIT
 #define IMPLEMENT_REFCOUNTING_DELETE_ON_UIT(ClassName) \
   IMPLEMENT_REFCOUNTING_EX(ClassName, CefDeleteOnUIThread)
+#endif
 
+#ifndef IMPLEMENT_REFCOUNTING_DELETE_ON_IOT
 #define IMPLEMENT_REFCOUNTING_DELETE_ON_IOT(ClassName) \
   IMPLEMENT_REFCOUNTING_EX(ClassName, CefDeleteOnIOThread)
-
+#endif
 ///
 /// Helper class to manage a scoped copy of |argv|.
 ///

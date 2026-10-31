@@ -32,5 +32,8 @@ class ArkWebCefContextMenuParamsImplExt : public CefContextMenuParamsImpl {
   void GetImageRect(int& x, int& y, int& w, int& h) override;
   bool IsAILink() override;
 #endif
+
+  const content::ContextMenuParams* GetContentContextMenuParams() const override;
+
 };
 #endif  // CEF_LIBCEF_BROWSER_CONTEXT_MENU_PARAMS_IMPL_EXT_H_

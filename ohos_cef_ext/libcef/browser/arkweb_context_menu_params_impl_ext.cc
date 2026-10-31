@@ -67,3 +67,8 @@ bool ArkWebCefContextMenuParamsImplExt::IsAILink() {
   return const_value().is_ai_link;
 }
 #endif
+
+const content::ContextMenuParams*
+ArkWebCefContextMenuParamsImplExt::GetContentContextMenuParams() const {
+  return &const_value();
+}
