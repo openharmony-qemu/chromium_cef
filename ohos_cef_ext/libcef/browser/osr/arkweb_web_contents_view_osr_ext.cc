@@ -194,13 +194,15 @@ float ArkWebCefWebContentsViewOSRExt::GetTopControlsHeight() {
 
 bool ArkWebCefWebContentsViewOSRExt::DoBrowserControlsShrinkRendererSize()
     const {
-  if (CefRenderWidgetHostViewOSR* view = GetView()) {
-    auto arkweb_view = view->AsArkWebRenderWidgetHostViewOSRExt();
-    return arkweb_view->GetTopContentOffset() - top_controls_min_height_ >
+  CefRefPtr<AlloyBrowserHostImpl> browser = GetBrowser();
+  if (browser.get() && browser->GetClient() && browser->GetClient()->AsArkWebClient()) {
+    auto arkweb_client = browser->GetClient()->AsArkWebClient();
+    return arkweb_client->GetTopContentOffset() - top_controls_min_height_ >
                0.01f ||
-           arkweb_view->GetBottomContentOffset() - bottom_controls_min_height_ >
+           arkweb_client->GetBottomContentOffset() - bottom_controls_min_height_ >
                0.01f;
   }
+
   return false;
 }
 

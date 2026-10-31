@@ -3035,15 +3035,6 @@ float ArkWebRenderWidgetHostViewOSRExt::GetTopControlsOffset() const {
   return (enable_nweb_ex_ ? top_controls_offset_ : 0);
 }
 
-float ArkWebRenderWidgetHostViewOSRExt::GetTopContentOffset() const {
-  return (enable_nweb_ex_ ? top_content_offset_ * GetDeviceScaleFactor() : 0);
-}
-
-float ArkWebRenderWidgetHostViewOSRExt::GetBottomContentOffset() const {
-  return (enable_nweb_ex_ ? bottom_content_offset_ * GetDeviceScaleFactor()
-                          : 0);
-}
-
 float ArkWebRenderWidgetHostViewOSRExt::GetShrinkVisualViewportHeight() {
   float shrink_visual_viewport_height = 0;
   if (!enable_nweb_ex_ || !host()->delegate()) {
