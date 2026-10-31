@@ -161,6 +161,13 @@ class CefDevToolsFileManager {
   void ShowDevToolsInfoBar(
       const std::string& type,
       const base::FilePath& path);
+  void ShowDevToolsDialog(
+      const std::string& type,
+      const base::FilePath& path);
+  void OnDialogResult(
+      const std::string& type,
+      const base::FilePath& path,
+      bool accepted);
 #endif // BUILDFLAG(ARKWEB_DEVTOOLS)
 
   // Guaranteed to outlive this object.

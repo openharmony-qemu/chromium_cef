@@ -17,6 +17,8 @@
 #define OHOS_CEF_EXT_INCLUDE_ARKWEB_CLIENT_EXT_H_
 #pragma once
 
+#include <memory>
+
 #include "arkweb/build/features/features.h"
 #if BUILDFLAG(IS_ARKWEB_EXT)
 #include "arkweb/ohos_nweb_ex/build/features/features.h"
@@ -26,6 +28,10 @@
 #include "include/cef_media_handler.h"
 #include "include/cef_permission_request.h"
 #include "include/cef_web_client_extension_handler.h"
+
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+#include "ohos_nweb/src/capi/nweb_modal_dialog_handler.h"
+#endif
 
 #if BUILDFLAG(ARKWEB_AI)
 #include "arkweb/chromium_ext/content/public/browser/ai_session_types.h"
@@ -273,6 +279,22 @@ class ArkWebClientExt : public CefClient, public virtual CefBaseRefCounted {
   /// Return the content offset of bottom controls.
   ///
   virtual float GetBottomContentOffset() { return 0; }
+
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+  ///
+  /// Shows a modal dialog.  |handler| ownership transfers to the implementor
+  /// via NWebModalDialogHandlerPtr (std::unique_ptr with a custom deleter that
+  /// dispatches to delete_this() on the ArkWeb side).  On return false
+  /// (unhandled), |handler| is destroyed by the unique_ptr deleter.  On return
+  /// true (handled), the implementor has taken ownership and is responsible
+  /// for eventually destroying |handler|.
+  /// Returns true if handled.
+  ///
+  /*--cef()--*/
+  virtual bool OnShowDialog(NWebModalDialogHandlerPtr handler) {
+    return false;
+  }
+#endif  // BUILDFLAG(ARKWEB_DEVTOOLS)
 };
 
 #endif  // OHOS_CEF_EXT_INCLUDE_ARKWEB_CLIENT_EXT_H_

@@ -27,6 +27,7 @@
 #include "libcef/browser/devtools/arkweb/devtools_message_handler.h"
 #include "base/datashare_uri_utils.h"
 #include "chrome/grit/generated_resources.h"
+#include "ui/strings/grit/ui_strings.h"
 #include "content/public/browser/child_process_security_policy.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/render_view_host.h"
@@ -35,6 +36,10 @@
 #include "storage/browser/file_system/isolated_context.h"
 #include "storage/common/file_system/file_system_util.h"
 #include "ui/base/l10n/l10n_util.h"
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+#include "ohos_nweb/src/capi/nweb_modal_dialog_handler.h"
+#include "cef/ohos_cef_ext/include/arkweb_client_ext.h"
+#endif
 #endif // BUILDFLAG(ARKWEB_DEVTOOLS)
 
 namespace {
@@ -46,6 +51,62 @@ static const char kPermissionDenied[] = "<permission denied>";
 static const char kSelectionCancelled[] = "<selection cancelled>";
 static const char kDevToolsFileSystemPaths[] = "devtools.file_system_paths";
 #endif // BUILDFLAG(ARKWEB_DEVTOOLS)
+
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+class DevToolsModalDialog : public NWebModalDialogHandler {
+ public:
+  using CallbackType = base::OnceCallback<void(bool)>;
+
+  DevToolsModalDialog(const base::FilePath& path, CallbackType callback)
+      : path_(path), callback_(std::move(callback)) {}
+
+  void DeleteThis() override { delete this; }
+
+  ~DevToolsModalDialog() override = default;
+
+  const char* Title() override {
+    title_ = l10n_util::GetStringUTF8(
+        IDS_DEV_TOOLS_EDIT_DIRECTORY_PERMISSION_TITLE);
+    return title_.c_str();
+  }
+
+  const char* Content() override {
+    content_ = l10n_util::GetStringFUTF8(
+        IDS_FILE_SYSTEM_ACCESS_WRITE_PERMISSION_DIRECTORY_TEXT,
+        u"DevTools",
+        base::UTF8ToUTF16(path_.AsEndingWithSeparator().AsUTF8Unsafe()));
+    return content_.c_str();
+  }
+
+  const char* AcceptButtonLabel() override {
+    accept_label_ = l10n_util::GetStringUTF8(
+        IDS_FILE_SYSTEM_ACCESS_EDIT_DIRECTORY_PERMISSION_ALLOW_TEXT);
+    return accept_label_.c_str();
+  }
+
+  const char* CancelButtonLabel() override {
+    cancel_label_ = l10n_util::GetStringUTF8(IDS_APP_CANCEL);
+    return cancel_label_.c_str();
+  }
+
+  int Modal() override { return DIALOG_MODAL_TAB; }
+
+  void OnDialogResult(bool accepted) override {
+    // External interface callback may run on a non-UI thread (SEC-02+SEC-12).
+    // PostTask to UI thread to avoid touching UI-thread objects off-sequence
+    // and to eliminate the TOCTOU race between is_null() and std::move().
+    if (!callback_.is_null()) {
+      content::GetUIThreadTaskRunner({})->PostTask(
+          FROM_HERE, base::BindOnce(std::move(callback_), accepted));
+    }
+  }
+
+ private:
+  base::FilePath path_;
+  CallbackType callback_;
+  std::string title_, content_, accept_label_, cancel_label_;
+};
+#endif  // BUILDFLAG(ARKWEB_DEVTOOLS)
 
 base::LazyInstance<base::FilePath>::Leaky g_last_save_path =
     LAZY_INSTANCE_INITIALIZER;
@@ -460,7 +521,7 @@ void CefDevToolsFileManager::AddFileSystem(const std::string& type) {
   params.mode = blink::mojom::FileChooserParams::Mode::kUploadFolder;
 
   auto selectedCallback = base::BindOnce(
-      &CefDevToolsFileManager::ShowDevToolsInfoBar,
+      &CefDevToolsFileManager::ShowDevToolsDialog,
       weak_factory_.GetWeakPtr(), type);
   auto cancelCallback = base::BindOnce(
       &CefDevToolsFileManager::FileSystemAdded,
@@ -602,5 +663,55 @@ void CefDevToolsFileManager::ShowDevToolsInfoBar(
   }
   devtools_message_handler_->ShowInfoBar(
       message, path_display_name, std::move(info_bar_cb));
+}
+
+void CefDevToolsFileManager::ShowDevToolsDialog(
+    const std::string& type,
+    const base::FilePath& path) {
+  auto callback = base::BindOnce(
+      &CefDevToolsFileManager::OnDialogResult,
+      weak_factory_.GetWeakPtr(), type, path);
+
+  // DevToolsModalDialog is allocated with ArkWeb's allocator and wrapped in
+  // NWebModalDialogHandlerPtr (std::unique_ptr with NWebModalDialogHandlerDeleter)
+  // so that the deleter dispatches to delete_this() on the ArkWeb side
+  // regardless of which path releases it. DevToolsModalDialog overrides
+  // DeleteThis() to `delete this`, so the deleter correctly invokes the
+  // derived-class delete.
+  // - On the handled path, ownership transfers into the handler chain via
+  //   std::move; the handler chain eventually destroys it through the
+  //   unique_ptr's deleter (which calls delete_this()).
+  // - On the unhandled path, the unique_ptr goes out of scope here and
+  //   destroys the dialog; the callback stays un-run, and we fall back to
+  //   ShowDevToolsInfoBar, which owns its own callback lifecycle.
+  NWebModalDialogHandlerPtr dialog(
+      new DevToolsModalDialog(path, std::move(callback)));
+
+  if (!browser_impl_) {
+    LOG(ERROR) << "browser_impl_ is null.";
+    ShowDevToolsInfoBar(type, path);
+    return;
+  }
+  auto client = browser_impl_->GetClient();
+  auto* arkweb_client = client.get() ? client->AsArkWebClient().get() : nullptr;
+  bool handled = false;
+  if (arkweb_client) {
+    handled = arkweb_client->OnShowDialog(std::move(dialog));
+  }
+  if (!handled) {
+    // Not handled: dialog has been destroyed by the NWebModalDialogHandlerPtr
+    // deleter (either it was moved into the handler chain and returned back
+    // via the false path, or never moved at all). ShowDevToolsInfoBar creates
+    // its own callback for the fallback path.
+    ShowDevToolsInfoBar(type, path);
+  }
+}
+
+void CefDevToolsFileManager::OnDialogResult(
+    const std::string& type,
+    const base::FilePath& path,
+    bool accepted) {
+  LOG(INFO) << "OnDialogResult: type=" << type << " accepted=" << accepted;
+  InnerAddFileSystem(type, path, accepted);
 }
 #endif // BUILDFLAG(ARKWEB_DEVTOOLS)
