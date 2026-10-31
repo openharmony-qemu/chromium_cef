@@ -1680,6 +1680,35 @@ void ArkWebBrowserHostExtImpl::SlideScroll(float vx, float vy) {
   }
 }
 
+void ArkWebBrowserHostExtImpl::SetFlingSpeedLimit(float speed_limit) {
+  // NaN/Infinity validation is handled downstream: the ace_engine layer
+  // clamps non-finite values to 0.0 via NormalizeFlingSpeedLimit, and
+  // WebViewImpl::SetFlingSpeedLimit treats <=0/NaN as "clear override".
+  {
+    base::AutoLock lock(fling_speed_limit_lock_);
+    stored_fling_speed_limit_ = speed_limit;
+    has_stored_fling_speed_limit_ = true;
+  }
+  ApplyStoredFlingSpeedLimitToCurrentMainFrame();
+}
+
+void ArkWebBrowserHostExtImpl::ApplyStoredFlingSpeedLimitToCurrentMainFrame() {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+  float speed_limit = 0.0f;
+  {
+    base::AutoLock lock(fling_speed_limit_lock_);
+    if (!has_stored_fling_speed_limit_) {
+      return;
+    }
+    speed_limit = stored_fling_speed_limit_;
+  }
+
+  auto frame = GetMainFrame();
+  if (frame && frame->IsValid()) {
+    static_cast<ArkwebFrameHostExtImpl*>(frame.get())->SetFlingSpeedLimit(speed_limit);
+  }
+}
+
 void ArkWebBrowserHostExtImpl::ZoomBy(float delta, float width, float height) {
   if (delta < DEFAULT_MIN_ZOOM_FACTOR || delta > DEFAULT_MAX_ZOOM_FACTOR) {
     LOG(ERROR) << "invalid zommby delta";

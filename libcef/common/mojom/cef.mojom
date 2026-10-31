@@ -179,7 +179,10 @@ interface RenderFrame {
  
   [EnableIf=is_ohos]
   SlideScroll(float vx, float vy);
- 
+
+  [EnableIf=is_ohos]
+  SetFlingSpeedLimit(float speed_limit);
+
   [EnableIf=is_ohos]
   ZoomBy(float delta, float width, float height);
  

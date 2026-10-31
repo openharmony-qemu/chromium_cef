@@ -229,4 +229,23 @@ TEST_F(ArkwebFrameHostExtImplTest,
             static_cast<int32_t>(WebCommandErrorCode::PAGE_NOT_READY));
 }
 
+/**
+ * @tc.name: SetFlingSpeedLimit_NoRenderFrame_NoCrash
+ * @tc.desc: SetFlingSpeedLimit does not crash when render_frame_host_ is null.
+ * @tc.type: FUNC
+ */
+TEST_F(ArkwebFrameHostExtImplTest, SetFlingSpeedLimit_NoRenderFrame_NoCrash) {
+  EXPECT_NO_FATAL_FAILURE(frame_->SetFlingSpeedLimit(5000.0f));
+}
+
+/**
+ * @tc.name: SetFlingSpeedLimit_InvalidValue_NoCrash
+ * @tc.desc: SetFlingSpeedLimit with invalid values (0, negative) does not crash.
+ * @tc.type: FUNC
+ */
+TEST_F(ArkwebFrameHostExtImplTest, SetFlingSpeedLimit_InvalidValue_NoCrash) {
+  EXPECT_NO_FATAL_FAILURE(frame_->SetFlingSpeedLimit(0.0f));
+  EXPECT_NO_FATAL_FAILURE(frame_->SetFlingSpeedLimit(-1.0f));
+}
+
 #endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
