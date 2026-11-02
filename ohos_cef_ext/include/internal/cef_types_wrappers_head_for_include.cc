@@ -51,6 +51,11 @@ static inline void setForInclude(const struct_type* src,
   /* ohos webview end */
 #endif  // BUILDFLAG(IS_OHOS)
 
+#if BUILDFLAG(ARKWEB_CARET_COLOR)
+  target->caret_color =
+      CEF_MEMBER_EXISTS(src, caret_color) ? src->caret_color : 0;
+#endif  // BUILDFLAG(ARKWEB_CARET_COLOR)
+
 #if BUILDFLAG(ARKWEB_AI)
   target->arkweb_agent_enabled = src->arkweb_agent_enabled;
   target->agent_need_highlight = src->agent_need_highlight;

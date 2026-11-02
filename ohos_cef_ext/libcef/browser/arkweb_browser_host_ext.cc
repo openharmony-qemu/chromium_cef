@@ -887,6 +887,10 @@ void ArkWebBrowserHostExtImpl::UpdateBrowserSettings(
   settings_.scrollbar_color = browser_settings.scrollbar_color;
 #endif  // ARKWEB_SCROLLBAR
 
+#if BUILDFLAG(ARKWEB_CARET_COLOR)
+  settings_.caret_color = browser_settings.caret_color;
+#endif  // BUILDFLAG(ARKWEB_CARET_COLOR)
+
 #if BUILDFLAG(ARKWEB_EXT_FREE_COPY)
   settings_.contextmenu_customization_enabled =
       browser_settings.contextmenu_customization_enabled;

@@ -885,6 +885,11 @@ typedef struct _cef_browser_settings_t {
   bool has_web_set_cursive_font;
   bool has_web_set_fantasy_font;
 #endif
+#if BUILDFLAG(ARKWEB_CARET_COLOR)
+  // ARGB caret color. Zero means unset. Keep new size-versioned members at
+  // the end of this structure to preserve existing member offsets.
+  cef_color_t caret_color;
+#endif  // BUILDFLAG(ARKWEB_CARET_COLOR)
 } cef_browser_settings_t;
 
 ///

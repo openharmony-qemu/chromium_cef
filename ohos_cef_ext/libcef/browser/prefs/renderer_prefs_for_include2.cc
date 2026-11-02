@@ -142,6 +142,9 @@ void SetCefPrefsSetStateExt(const CefBrowserSettings& cef,
 #if BUILDFLAG(ARKWEB_SCROLLBAR)
   web.scrollbar_color = cef.scrollbar_color;
 #endif  // ARKWEB_SCROLLBAR
+#if BUILDFLAG(ARKWEB_CARET_COLOR)
+  web.caret_color = cef.caret_color;
+#endif  // BUILDFLAG(ARKWEB_CARET_COLOR)
 #if BUILDFLAG(ARKWEB_MEDIA_CAST)
   SET_STATE(cef.cast_enabled, web.cast_enabled);
 #endif
