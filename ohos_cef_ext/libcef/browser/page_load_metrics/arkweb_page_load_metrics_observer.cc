@@ -8,7 +8,9 @@
 #include <string>
 
 #include "arkweb/build/features/features.h"
+#include "base/json/json_writer.h"
 #include "base/time/time.h"
+#include "base/values.h"
 #include "chrome/browser/browser_process.h"
 #include "components/page_load_metrics/browser/observers/core/largest_contentful_paint_handler.h"
 #include "components/page_load_metrics/browser/page_load_metrics_util.h"
@@ -34,11 +36,19 @@
 #include "net/cert/cert_status_flags.h"
 #include "net/http/http_connection_info.h"
 #include "arkweb/ohos_nweb_ex/overrides/cef/libcef/browser/page_load_metrics/nweb_page_load_metrics_shim.h"
+#include "content/browser/web_contents/web_contents_impl.h"
 #if BUILDFLAG(ARKWEB_EX_FALLBACK_PROXY)
 #include "libcef/browser/fallback_proxy/fallback_proxy_detector.h"
 #endif  // ARKWEB_EX_FALLBACK_PROXY
 #endif  // ARKWEB_NWEB_EX
 #endif  // ARKWEB_NETWORK_DFX
+
+#if BUILDFLAG(IS_ARKWEB_EXT) && BUILDFLAG(ARKWEB_BIGDATA_METRICS)
+#include "arkweb/ohos_nweb_ex/overrides/ohos_nweb/src/cef_delegate/bigdata_metrics/nweb_bigdata_metrics_handler.h"
+#include "arkweb/ohos_nweb_ex/overrides/ohos_nweb/src/cef_delegate/bigdata_metrics/nweb_bigdata_metrics_event.h"
+#include "content/public/browser/render_frame_host.h"
+#include "third_party/blink/public/mojom/opengraph/metadata.mojom.h"
+#endif
 
 #if BUILDFLAG(ARKWEB_NETWORK_DFX)
 #if BUILDFLAG(ARKWEB_CRASHPAD)
@@ -96,6 +106,12 @@ static int64_t GetCurrentTimestampMS() {
 OhPageLoadMetricsObserver::OhPageLoadMetricsObserver() {
   network_quality_tracker_ = g_browser_process->network_quality_tracker();
   DCHECK(network_quality_tracker_);
+}
+
+OhPageLoadMetricsObserver::~OhPageLoadMetricsObserver() {
+#if BUILDFLAG(IS_ARKWEB_EXT) && BUILDFLAG(ARKWEB_BIGDATA_METRICS)
+  ReportPageLoadMetrics();
+#endif
 }
 
 OhPageLoadMetricsObserver::ObservePolicy OhPageLoadMetricsObserver::OnStart(
@@ -219,7 +235,7 @@ OhPageLoadMetricsObserver::OnCommit(
       << "PageCommit navigationId:" << navigation_id_
       << " currentNavigationId:" << navigation_handle->GetNavigationId();
 #endif
-
+  
 #if BUILDFLAG(ARKWEB_NWEB_EX) && BUILDFLAG(ARKWEB_NETWORK_DFX)
   const std::optional<net::SSLInfo>& ssl_info = navigation_handle->GetSSLInfo();
   web_performance_timing_.is_ssl_cert_error =
@@ -253,6 +269,10 @@ void OhPageLoadMetricsObserver::OnComplete(
   ReportBufferedMetrics(timing);
   ReportLargestContentfulPaint(timing);
 #endif
+
+#if BUILDFLAG(IS_ARKWEB_EXT) && BUILDFLAG(ARKWEB_BIGDATA_METRICS)
+  CacheBigdataMetrics();
+#endif
 }
 
 int64_t OhPageLoadMetricsObserver::GetNavigationStartTime() {
@@ -267,6 +287,128 @@ int64_t OhPageLoadMetricsObserver::GetNavigationStartTime() {
                                   base::Time::kMicrosecondsPerMillisecond;
   return navigation_start_time;
 }
+
+#if BUILDFLAG(IS_ARKWEB_EXT) && BUILDFLAG(ARKWEB_BIGDATA_METRICS)
+void OhPageLoadMetricsObserver::CacheBigdataMetrics() {
+  if (!OHOS::NWeb::NWebBigdataMetricsHandler::GetInstance().IsFeatureEnabled())
+    return;
+  content::WebContents* web_contents = GetDelegate().GetWebContents();
+  if (!web_contents)
+    return;
+
+#if BUILDFLAG(ARKWEB_REPORT_SYS_EVENT)
+  CefRefPtr<CefBrowserHostBase> browser_base =
+      CefBrowserHostBase::GetBrowserForContents(web_contents);
+  if (browser_base && browser_base->IsAlloyStyle()) {
+    if (auto* browser = browser_base->AsAlloyBrowserHostImpl().get())
+      nweb_id_ = browser->GetNWebId();
+  }
+#else
+  if (auto* browser = AlloyBrowserHostImpl::GetBrowserForContents(web_contents).get())
+    nweb_id_ = browser->GetNWebId();
+#endif
+
+  if (auto* rfh = web_contents->GetPrimaryMainFrame()) {
+    if (auto* response_head = rfh->GetLastResponseHead()) {
+      if (response_head->headers)
+        http_response_code_ = response_head->headers->response_code();
+    }
+  }
+}
+
+void OhPageLoadMetricsObserver::ReportPageLoadMetrics() {
+  if (bigdata_reported_)
+    return;
+  bigdata_reported_ = true;
+
+  std::string page_url;
+#if BUILDFLAG(ARKWEB_NWEB_EX) && BUILDFLAG(ARKWEB_NETWORK_DFX)
+  page_url = page_load_report_metrics_.url.spec();
+#endif
+  if (page_url.empty())
+    return;
+
+  std::string event_message = BuildBigdataEventMessage(
+      page_load_report_metrics_.first_contentful_paint,
+      page_load_report_metrics_.dns_duration,
+      page_load_report_metrics_.connect_duration,
+      had_video_, og_type_, http_response_code_, page_url);
+
+  OHOS::NWeb::NWebBigdataMetricsHandler::GetInstance().ReportMetrics(
+      OHOS::NWeb::ArkWebMetricsEvent::Create(
+          nweb_id_, page_url,
+          OHOS::NWeb::MetricsModule::LOADING,
+          OHOS::NWeb::kPageLoadEvent, event_message));
+
+  LOG(INFO) << "ArkWebMetrics[Report]: had_video=" << had_video_
+            << " og_type=" << og_type_
+            << " nweb_id=" << nweb_id_
+            << " http_response_code=" << http_response_code_;
+}
+
+void OhPageLoadMetricsObserver::FetchOpenGraphType() {
+  if (!OHOS::NWeb::NWebBigdataMetricsHandler::GetInstance().IsFeatureEnabled())
+    return;
+  content::WebContents* web_contents = GetDelegate().GetWebContents();
+  if (!web_contents || !web_contents->GetPrimaryMainFrame())
+    return;
+  web_contents->GetPrimaryMainFrame()->GetOpenGraphMetadata(
+      base::BindOnce(&OhPageLoadMetricsObserver::OnOpenGraphMetadataReceived,
+                     weak_ptr_factory_.GetWeakPtr()));
+}
+
+void OhPageLoadMetricsObserver::OnOpenGraphMetadataReceived(
+    blink::mojom::OpenGraphMetadataPtr metadata) {
+  if (!metadata || !metadata->og_type.has_value())
+    return;
+  static constexpr char kNovelOgType[] = "novel";
+  const std::string& og_type = metadata->og_type.value();
+  if (og_type == kNovelOgType)
+    og_type_ = og_type;
+}
+#endif
+
+#if BUILDFLAG(IS_ARKWEB_EXT) && BUILDFLAG(ARKWEB_BIGDATA_METRICS)
+void OhPageLoadMetricsObserver::MediaStartedPlaying(
+    const content::WebContentsObserver::MediaPlayerInfo& media_player_info,
+    content::RenderFrameHost* render_frame_host) {
+  if (media_player_info.has_video)
+    had_video_ = true;
+}
+#endif
+
+#if BUILDFLAG(IS_ARKWEB_EXT) && BUILDFLAG(ARKWEB_BIGDATA_METRICS)
+std::string OhPageLoadMetricsObserver::BuildBigdataEventMessage(
+    int64_t fcp_ms,
+    int64_t dns_duration_ms,
+    int64_t connect_duration_ms,
+    bool has_video,
+    const std::string& og_type,
+    int http_response_code,
+    const std::string& page_url) {
+  GURL gurl(page_url);
+  std::string desensitized_url =
+      gurl.is_valid() ? std::string(gurl.host()) : std::string();
+  bool is_data_url = gurl.SchemeIs(url::kDataScheme);
+
+  base::Value::Dict root;
+  root.Set("virtualUrl", desensitized_url);
+  root.Set("isDataUrl", is_data_url);
+  root.Set("ogType", og_type);
+  root.Set("hasVideo", has_video);
+  root.Set("firstContentfulPaint", static_cast<int>(fcp_ms));
+  root.Set("finalResult", http_response_code);
+  root.Set("dnsDuration", static_cast<int>(dns_duration_ms));
+  root.Set("connectDuration", static_cast<int>(connect_duration_ms));
+
+  std::string json;
+  if (!base::JSONWriter::Write(root, &json)) {
+    LOG(WARNING) << "Failed to serialize bigdata event message";
+    return std::string();
+  }
+  return json;
+}
+#endif  // IS_ARKWEB_EXT && ARKWEB_BIGDATA_METRICS
 
 void OhPageLoadMetricsObserver::OnFirstContentfulPaintInPage(
     const page_load_metrics::mojom::PageLoadTiming& timing) {
@@ -507,6 +649,10 @@ void OhPageLoadMetricsObserver::OnDomContentLoadedEventStart(
       timing.fetch_start ? timing.fetch_start->InMilliseconds() : -1;
   web_performance_timing_.response_end =
       timing.response_end ? timing.response_end->InMilliseconds() : -1;
+
+#if BUILDFLAG(IS_ARKWEB_EXT) && BUILDFLAG(ARKWEB_BIGDATA_METRICS)
+  FetchOpenGraphType();
+#endif
 }
 
 void OhPageLoadMetricsObserver::OnLoadEventEnd(
