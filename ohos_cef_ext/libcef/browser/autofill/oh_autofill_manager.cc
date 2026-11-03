@@ -41,28 +41,28 @@ using OhPasswordManagerClient = ChromePasswordManagerClient;
 #endif
 
 namespace {
-const std::string EVENT = "event";
-const std::string EVENT_SAVE = "save";
-const std::string EVENT_FILL = "fill";
-const std::string EVENT_UPDATE = "update";
-const std::string EVENT_CLOSE = "close";
+constexpr char EVENT[] = "event";
+constexpr char EVENT_SAVE[] = "save";
+constexpr char EVENT_FILL[] = "fill";
+constexpr char EVENT_UPDATE[] = "update";
+constexpr char EVENT_CLOSE[] = "close";
 
-const std::string KEY_NODEID = "nodeId";
-const std::string KEY_NODEID_DEFAULT = "0";
-const std::string KEY_FOUCS = "focus";
-const std::string KEY_RECT_X = "x";
-const std::string KEY_RECT_Y = "y";
-const std::string KEY_RECT_W = "width";
-const std::string KEY_RECT_H = "height";
-const std::string KEY_PLACEHOLDER = "placeholder";
-const std::string KEY_VALUE = "value";
-const std::string VALUE_OFF = "off";
+constexpr char KEY_NODEID[] = "nodeId";
+constexpr char KEY_NODEID_DEFAULT[] = "0";
+constexpr char KEY_FOUCS[] = "focus";
+constexpr char KEY_RECT_X[] = "x";
+constexpr char KEY_RECT_Y[] = "y";
+constexpr char KEY_RECT_W[] = "width";
+constexpr char KEY_RECT_H[] = "height";
+constexpr char KEY_PLACEHOLDER[] = "placeholder";
+constexpr char KEY_VALUE[] = "value";
+constexpr char VALUE_OFF[] = "off";
 
 #if BUILDFLAG(ARKWEB_PASSWORD_AUTOFILL)
-const std::string KEY_USERNAME = "username";
-const std::string KEY_PASSWORD = "password";
-const std::string KEY_RETURN_PAGE_URL = "autofill_viewdata_origin_pageurl";
-const std::string KEY_RETURN_OTHER_ACCOUNT = "autofill_viewdata_other_account";
+constexpr char KEY_USERNAME[] = "username";
+constexpr char KEY_PASSWORD[] = "password";
+constexpr char KEY_RETURN_PAGE_URL[] = "autofill_viewdata_origin_pageurl";
+constexpr char KEY_RETURN_OTHER_ACCOUNT[] = "autofill_viewdata_other_account";
 #endif
 }  // namespace
 
@@ -126,7 +126,7 @@ absl::optional<std::string> OhAutofillManager::FormDataToJson(
   for (const FormFieldData& field_data : form.fields()) {
     base::Value::List list;
     auto key = GetAttributeOrUniqueId(field_data);
-    auto renderer_id = KEY_NODEID_DEFAULT;
+    std::string renderer_id = KEY_NODEID_DEFAULT;
     if (!field_data.renderer_id().is_null()) {
       renderer_id = base::NumberToString(field_data.renderer_id().value());
     }
