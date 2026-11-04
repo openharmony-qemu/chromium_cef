@@ -127,6 +127,29 @@ class CefNavigationEntry : public virtual CefBaseRefCounted {
                           int& alpha_type,
                           int& pixel_width,
                           int& pixel_height) = 0;
+
+  ///
+  /// Set user data for this navigation entry. The user data is session
+  /// scoped, kept in memory only, and retained when the navigation entry is
+  /// cloned for back/forward navigation history. Setting the same key again
+  /// overwrites the previous value. Empty key or value is silently ignored.
+  ///
+  /*--cef()--*/
+  virtual void SetUserData(const CefString& key, const CefString& value) = 0;
+
+  ///
+  /// Return the user data for this navigation entry matching |key|, or an
+  /// empty string if no value exists for |key|.
+  ///
+  /*--cef()--*/
+  virtual CefString GetUserData(const CefString& key) = 0;
+
+  ///
+  /// Remove the user data for this navigation entry matching |key|. Does
+  /// nothing if no value exists for |key|.
+  ///
+  /*--cef()--*/
+  virtual void RemoveUserData(const CefString& key) = 0;
 #endif  // BUILDFLAG(IS_OHOS)
 };
 

@@ -14,6 +14,7 @@
  */
 
 #if BUILDFLAG(ARKWEB_NAVIGATION)
+#include "cef/ohos_cef_ext/include/cef_navigation_entry_user_data.h"
 #include "content/public/browser/favicon_status.h"
 #include "third_party/skia/include/core/SkBitmap.h"
 #endif  // BUILDFLAG(ARKWEB_NAVIGATION)
@@ -39,5 +40,44 @@ bool CefNavigationEntryImpl::GetFavicon(void** pixel_data,
   pixel_height = bitmap->height();
   *pixel_data = bitmap->getPixels();
   return true;
+}
+
+void CefNavigationEntryImpl::SetUserData(const CefString& key,
+                                         const CefString& value) {
+  CEF_VALUE_VERIFY_RETURN_VOID(true);
+  // Empty key or value is silently ignored (spec EB-4).
+  if (key.empty() || value.empty()) {
+    return;
+  }
+  auto* user_data = static_cast<CefNavigationEntryUserData*>(
+      mutable_value()->GetUserData(&CefNavigationEntryUserData::kKey));
+  if (!user_data) {
+    auto owned_data = std::make_unique<CefNavigationEntryUserData>();
+    user_data = owned_data.get();
+    mutable_value()->SetUserData(&CefNavigationEntryUserData::kKey,
+                                 std::move(owned_data));
+  }
+  user_data->SetUserData(key.ToString(), value.ToString());
+}
+
+CefString CefNavigationEntryImpl::GetUserData(const CefString& key) {
+  CEF_VALUE_VERIFY_RETURN(false, CefString());
+  auto* user_data = static_cast<CefNavigationEntryUserData*>(
+      mutable_value()->GetUserData(&CefNavigationEntryUserData::kKey));
+  if (!user_data) {
+    return CefString();
+  }
+  std::string result = user_data->GetUserData(key.ToString());
+  return CefString(result);
+}
+
+void CefNavigationEntryImpl::RemoveUserData(const CefString& key) {
+  CEF_VALUE_VERIFY_RETURN_VOID(true);
+  auto* user_data = static_cast<CefNavigationEntryUserData*>(
+      mutable_value()->GetUserData(&CefNavigationEntryUserData::kKey));
+  if (!user_data) {
+    return;
+  }
+  user_data->RemoveUserData(key.ToString());
 }
 #endif  // BUILDFLAG(ARKWEB_NAVIGATION)
