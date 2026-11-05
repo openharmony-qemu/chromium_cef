@@ -1,5 +1,5 @@
 diff --git chrome/browser/ui/webui/about/about_ui.cc chrome/browser/ui/webui/about/about_ui.cc
-index d9b2b09c16bf47a8fca8b29b0d3b1ae462467894..0d3f2227a1c30ff67168340706e746e29202545b 100644
+index 38d07f1bfd0c0302ac5d6114b7183dfd670be780..b9c971f33e83a386b12468a87cd099793ceaa050 100644
 --- chrome/browser/ui/webui/about/about_ui.cc
 +++ chrome/browser/ui/webui/about/about_ui.cc
 @@ -84,6 +84,10 @@
@@ -69,7 +69,7 @@ index cc7393a05800d80a7dc6a6bc571e77cf5ddda50d..bf5e8e1547f87f72cb18221ab2184fd0
  // chrome://terms
  class TermsUIConfig : public AboutUIConfigBase {
 diff --git chrome/browser/ui/webui/chrome_web_ui_configs.cc chrome/browser/ui/webui/chrome_web_ui_configs.cc
-index 139fecebd5645797d1c3f3989d664c38ac5fe241..c164e5261de87acb8070dbea7ab987f25e52c976 100644
+index d79e9dfdb0e675f19c4a3f7e8ef8b06abdc7d3f5..e2996c00520ec136f2aacad85affc5816611e43b 100644
 --- chrome/browser/ui/webui/chrome_web_ui_configs.cc
 +++ chrome/browser/ui/webui/chrome_web_ui_configs.cc
 @@ -7,6 +7,7 @@
@@ -80,7 +80,7 @@ index 139fecebd5645797d1c3f3989d664c38ac5fe241..c164e5261de87acb8070dbea7ab987f2
  #include "chrome/browser/browser_actuator/internals/browser_actuator_internals_ui.h"
  #include "chrome/browser/contextual_tasks/contextual_tasks_ui.h"
  #include "chrome/browser/glic/experimental_opt_in/glic_experimental_opt_in_ui.h"
-@@ -269,6 +270,9 @@ void RegisterChromeWebUIConfigs() {
+@@ -275,6 +276,9 @@ void RegisterChromeWebUIConfigs() {
    map.AddWebUIConfig(
        std::make_unique<browser_actuator::BrowserActuatorInternalsUIConfig>());
    map.AddWebUIConfig(std::make_unique<chrome_urls::ChromeUrlsUIConfig>());
@@ -91,10 +91,10 @@ index 139fecebd5645797d1c3f3989d664c38ac5fe241..c164e5261de87acb8070dbea7ab987f2
    map.AddWebUIConfig(std::make_unique<CrashesUIConfig>());
    map.AddWebUIConfig(std::make_unique<commerce::CommerceInternalsUIConfig>());
 diff --git chrome/common/webui_url_constants.cc chrome/common/webui_url_constants.cc
-index 9ca40912a26851968cec444048f6c5f492f1c152..2cf3ce9fd7be5bdadf496332d2b84d5c8b9d318e 100644
+index bb97c63d19778ea77853a1dc13b17a8b994eb21e..293cbbfb9439f2b673f583ad9e56f0df2b9a4e4c 100644
 --- chrome/common/webui_url_constants.cc
 +++ chrome/common/webui_url_constants.cc
-@@ -149,6 +149,9 @@ base::span<const base::cstring_view> ChromeURLHosts() {
+@@ -148,6 +148,9 @@ base::span<const base::cstring_view> ChromeURLHosts() {
        kChromeUIHistoryHost,
        history_clusters_internals::kChromeUIHistoryClustersInternalsHost,
        kChromeUIInterstitialHost,
@@ -105,7 +105,7 @@ index 9ca40912a26851968cec444048f6c5f492f1c152..2cf3ce9fd7be5bdadf496332d2b84d5c
        kChromeUIIwaDevHost,
  #endif
 diff --git chrome/common/webui_url_constants.h chrome/common/webui_url_constants.h
-index a462094cd3d23066539c26d202e2df0b6decf0f9..c43a063c3a68c1a9392cc3010bb69efd1f04610d 100644
+index 066f46dbe14318b66828afc6478a738b81a3b9d9..d2770749eec3bc122ac5f22eecef871fff330757 100644
 --- chrome/common/webui_url_constants.h
 +++ chrome/common/webui_url_constants.h
 @@ -18,6 +18,7 @@

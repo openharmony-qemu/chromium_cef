@@ -375,7 +375,7 @@ index dd498d434b193c8100d34458b873752fb6d893ad..cebc1d21c15b2de1d1cd36ee33885a64
  }
  
 diff --git mojo/public/cpp/bindings/receiver_set.h mojo/public/cpp/bindings/receiver_set.h
-index 19f83388e0be3e7ef4d1f5ae42be94b3c1dba267..86780b52a0daef34c337bd09f52be027cf084229 100644
+index 1555facedbe70798090ec90ab474ee0fc96cde9a..5d191a78907ca3b2e5e3d19ecc5860d33f928a3b 100644
 --- mojo/public/cpp/bindings/receiver_set.h
 +++ mojo/public/cpp/bindings/receiver_set.h
 @@ -73,7 +73,8 @@ class COMPONENT_EXPORT(MOJO_CPP_BINDINGS) ReceiverSetState {
