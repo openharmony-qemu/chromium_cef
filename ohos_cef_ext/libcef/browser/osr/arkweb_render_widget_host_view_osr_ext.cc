@@ -1037,7 +1037,6 @@ std::string ArkWebRenderWidgetHostViewOSRExt::GetCurrentLanguage() {
       LOG(WARNING) << "render_widget_host() is null";
     }
   }
-  LOG(INFO) << "[CefRenderWidgetHostViewOSR::GetCurrentLanguage] Returning final language identifier: " << language_;
   return language_;
 }
 
