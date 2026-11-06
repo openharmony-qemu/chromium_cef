@@ -13,6 +13,7 @@
 #include "cef/libcef/common/frame_util.h"
 #include "chrome/browser/picture_in_picture/picture_in_picture_window_manager.h"
 #include "chrome/common/chrome_result_codes.h"
+#include "components/find_in_page/find_tab_helper.h"
 #include "components/input/native_web_keyboard_event.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/public/browser/focused_node_details.h"
@@ -90,9 +91,24 @@ CefBrowserContentsDelegate::CefBrowserContentsDelegate(
 
 void CefBrowserContentsDelegate::ObserveWebContents(
     content::WebContents* new_contents) {
+  if (auto* old_contents = web_contents()) {
+    if (auto* helper =
+            find_in_page::FindTabHelper::FromWebContents(old_contents)) {
+      helper->RemoveObserver(this);
+    }
+  }
+
+  // Chrome tabs already have a FindTabHelper. Alloy WebContents may not.
+  if (new_contents &&
+      !find_in_page::FindTabHelper::FromWebContents(new_contents)) {
+    find_in_page::FindTabHelper::CreateForWebContents(new_contents);
+  }
+
   WebContentsObserver::Observe(new_contents);
 
   if (new_contents) {
+    find_in_page::FindTabHelper::FromWebContents(new_contents)
+        ->AddObserver(this);
     // Make sure MaybeCreateFrame is called at least one time.
     // Create the frame representation before OnAfterCreated is called for a new
     // browser.
@@ -669,20 +685,14 @@ bool CefBrowserContentsDelegate::TakeFocus(content::WebContents* source,
   return false;
 }
 
-void CefBrowserContentsDelegate::FindReply(content::WebContents* web_contents,
-                                           int request_id,
-                                           int number_of_matches,
-                                           const gfx::Rect& selection_rect,
-                                           int active_match_ordinal,
-                                           bool final_update) {
+void CefBrowserContentsDelegate::OnFindResultAvailable(
+    content::WebContents* web_contents) {
   auto browser_host = browser_info_->browser();
   if (!browser_host) {
     return;
   }
 
-  if (browser_host->HandleFindReply(request_id, number_of_matches,
-                                    selection_rect, active_match_ordinal,
-                                    final_update)) {
+  if (browser_host->HandleFindReply()) {
     if (auto c = client()) {
       if (auto handler = c->GetFindHandler()) {
         const auto& details = browser_host->last_search_result();

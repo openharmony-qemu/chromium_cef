@@ -612,17 +612,6 @@ blink::mojom::DisplayMode AlloyBrowserHostImpl::GetDisplayMode(
                         : blink::mojom::DisplayMode::kBrowser;
 }
 
-void AlloyBrowserHostImpl::FindReply(content::WebContents* web_contents,
-                                     int request_id,
-                                     int number_of_matches,
-                                     const gfx::Rect& selection_rect,
-                                     int active_match_ordinal,
-                                     bool final_update) {
-  contents_delegate_.FindReply(web_contents, request_id, number_of_matches,
-                               selection_rect, active_match_ordinal,
-                               final_update);
-}
-
 void AlloyBrowserHostImpl::ImeSetComposition(
     const CefString& text,
     const std::vector<CefCompositionUnderline>& underlines,

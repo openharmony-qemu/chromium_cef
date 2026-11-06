@@ -690,6 +690,7 @@ ChromeContentBrowserClientCef::CreateLoginDelegate(
     const GURL& url,
     scoped_refptr<net::HttpResponseHeaders> response_headers,
     bool first_auth_attempt,
+    bool do_not_prompt_for_login,
     content::GuestPageHolder* guest,
     content::LoginDelegate::LoginAuthRequiredCallback auth_required_callback) {
   // |web_contents| is nullptr for CefURLRequests without an associated frame.
@@ -704,7 +705,7 @@ ChromeContentBrowserClientCef::CreateLoginDelegate(
   return ChromeContentBrowserClient::CreateLoginDelegate(
       auth_info, web_contents, browser_context, request_id,
       is_request_for_primary_main_frame_navigation, is_request_for_navigation,
-      url, response_headers, first_auth_attempt, guest,
+      url, response_headers, first_auth_attempt, do_not_prompt_for_login, guest,
       std::move(auth_required_callback));
 }
 
