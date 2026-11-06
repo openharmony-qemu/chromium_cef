@@ -9,9 +9,9 @@
 #include "base/logging.h"
 
 #if (defined(__aarch64__) || defined(__x86_64__))
-const std::string FRAME_AWARE_SO_PATH = "/system/lib64/libframe_ui_intf.z.so";
+constexpr char FRAME_AWARE_SO_PATH[] = "/system/lib64/libframe_ui_intf.z.so";
 #else
-const std::string FRAME_AWARE_SO_PATH = "/system/lib/libframe_ui_intf.z.so";
+constexpr char FRAME_AWARE_SO_PATH[] = "/system/lib/libframe_ui_intf.z.so";
 #endif
 
 ResReporter& ResReporter::GetInstance() {
@@ -42,7 +42,7 @@ NO_SANITIZE("cfi-icall") void ResReporter::Init() {
 
 bool ResReporter::LoadLibrary() {
   if (!resSchedSoLoaded_) {
-    resSchedHandle_ = dlopen(FRAME_AWARE_SO_PATH.c_str(), RTLD_LAZY);
+    resSchedHandle_ = dlopen(FRAME_AWARE_SO_PATH, RTLD_LAZY);
     if (resSchedHandle_ == nullptr) {
       LOG(DEBUG)
           << "ResReporter:[LoadLibrary]dlopen libframe_ui_intf.so failed!";
