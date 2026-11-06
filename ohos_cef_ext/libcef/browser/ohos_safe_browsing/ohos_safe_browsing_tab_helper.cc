@@ -177,10 +177,7 @@ void SafeBrowsingTabHelper::OnDetectionResult(
   }
 
   if (sb_client_) {
-    sb_client_->SetEvilUrlPolicyAndHwCode(
-        GURL(safeBrowsingDetectionResult.access_url),
-        safeBrowsingDetectionResult.policy, threat_type,
-        safeBrowsingDetectionResult.code, GURL(""));
+    sb_client_->SetEvilUrlPolicyAndHwCode(safeBrowsingDetectionResult);
   }
 }
 

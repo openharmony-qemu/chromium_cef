@@ -22,8 +22,10 @@
 #include "libcef/browser/ohos_safe_browsing/ohos_sb_malicious_allowlist.h"
 #include "libcef/browser/ohos_safe_browsing/ohos_sb_prefs.h"
 #include "libcef/browser/ohos_safe_browsing/ohos_sb_snapshot_info.h"
+#include "libcef/browser/ohos_safe_browsing/ohos_safe_browsing_tab_helper.h"
 #if BUILDFLAG(IS_ARKWEB_EXT)
 #include "arkweb/ohos_nweb_ex/overrides/cef/libcef/browser/ohos_safe_browsing/safe_browsing_utils.h"
+#include "ohos_nweb_ex/overrides/cef/libcef/browser/alloy/alloy_arkweb_safebrowsing_af_detection_config.h"
 #endif
 
 #if BUILDFLAG(ARKWEB_SAFEBROWSING)
@@ -49,6 +51,43 @@ OHSBPolicyLevel GetPolicyLevel(int policy_type) {
     default:
       return OHSBPolicyLevel::POLICY_LEVEL_NO_PROMPT;
   }
+}
+
+OhosSbBlockingPageInfo ToBlockingPageInfo(const SafeBrowsingDetectionResult& detection_result) {
+  OhosSbBlockingPageInfo blocking_page_info;
+  blocking_page_info.req_id = detection_result.req_id;
+  blocking_page_info.info_url = GURL(detection_result.access_url);
+  blocking_page_info.info_hw_code = detection_result.code;
+  blocking_page_info.mapping_type = detection_result.mapping_type;
+  blocking_page_info.info_block_type = TransformMappingType(detection_result.mapping_type);
+  blocking_page_info.info_original_block_type = blocking_page_info.info_block_type;
+  blocking_page_info.info_policy = detection_result.policy;
+  blocking_page_info.info_policy_level = GetPolicyLevel(detection_result.policy);
+  blocking_page_info.desensitized_url = detection_result.desensitized_url;
+  blocking_page_info.is_content_check = detection_result.is_content_check;
+  blocking_page_info.content_check_parameters = detection_result.content_check_parameters;
+  blocking_page_info.uuid = detection_result.uuid;
+  blocking_page_info.appname = detection_result.appname;
+  blocking_page_info.is_from_af_detect = detection_result.is_from_af_detect;
+  blocking_page_info.is_minor_protection = detection_result.is_minor_protection;
+  return blocking_page_info;
+}
+
+SafeBrowsingDetectionResult ToDetectionResult(const OhosSbBlockingPageInfo& blocking_page_info) {
+  SafeBrowsingDetectionResult detection_result;
+  detection_result.req_id = blocking_page_info.req_id;
+  detection_result.code = blocking_page_info.info_hw_code;
+  detection_result.policy = blocking_page_info.info_policy;
+  detection_result.mapping_type = blocking_page_info.mapping_type;
+  detection_result.desensitized_url = blocking_page_info.desensitized_url;
+  detection_result.is_content_check = blocking_page_info.is_content_check;
+  detection_result.access_url = blocking_page_info.info_url.spec();
+  detection_result.content_check_parameters = blocking_page_info.content_check_parameters;
+  detection_result.uuid = blocking_page_info.uuid;
+  detection_result.appname = blocking_page_info.appname;
+  detection_result.is_from_af_detect = blocking_page_info.is_from_af_detect;
+  detection_result.is_minor_protection = blocking_page_info.is_minor_protection;
+  return detection_result;
 }
 }
 
@@ -412,7 +451,15 @@ void SbClient::EvaluateAndDisplayBlockPage() {
       NavigationEntrySafeBrowsingData::GetOrCreate(last_committed_entry);
   OhosSbBlockingPageInfo last_blocking_page_info =
       last_safe_browsing_data->GetBlockingPageInfo(last_committed_entry->GetURL());
-  bool is_unprocessed = (last_blocking_page_info.info_block_type == OHSBThreatType::THREAT_UNPROCESSED);
+
+#if BUILDFLAG(IS_ARKWEB_EXT)
+  if (nweb_ex::AlloyArkwebSafebrowsingAFDetectionConfig::GetInstance()->IsArkwebSafebrowsingAFDetectionEnabled() &&
+      last_blocking_page_info.is_content_check &&
+      blocking_page_info.info_policy_level <= OHSBPolicyLevel::POLICY_LEVEL_NO_PROMPT) {
+    RequestSnapshotOnce(last_blocking_page_info);
+    return;
+  }
+#endif
 
   if (ShouldShowBlockingPage(blocking_page_info)) {
     bool is_new_intercept =
@@ -425,6 +472,7 @@ void SbClient::EvaluateAndDisplayBlockPage() {
                        first_url, last_url, redirect_chain_size,
                        is_new_intercept, false);
   }
+  bool is_unprocessed = (last_blocking_page_info.info_block_type == OHSBThreatType::THREAT_UNPROCESSED);
   HandleBlockingPage(blocking_page_info, last_safe_browsing_data, is_unprocessed);
 }
  
@@ -474,15 +522,11 @@ void SbClient::HandleBlockingPage(
   }
 }
 
-void SbClient::SetEvilUrlPolicyAndHwCode(const GURL& url,
-                                         int policy,
-                                         OHSBThreatType block_type,
-                                         int hw_code,
-                                         const GURL& redirect_url) {
+void SbClient::SetEvilUrlPolicyAndHwCode(const SafeBrowsingDetectionResult& detection_result) {
   if (!web_contents() || web_contents()->IsBeingDestroyed()) {
     return;
   }
-  OhosSbBlockingPageInfo blocking_page_info(url, block_type, hw_code, policy, GetPolicyLevel(policy), redirect_url);
+  OhosSbBlockingPageInfo blocking_page_info = ToBlockingPageInfo(detection_result);
   BlockingPageInfoCache* blocking_page_info_cache =
       BlockingPageInfoCache::GetOrCreateForWebContents(web_contents(), incognito_mode_);
   blocking_page_info_cache->AddBlockingPageInfo(blocking_page_info);
@@ -498,19 +542,20 @@ void SbClient::SetEvilUrlPolicyAndHwCode(const GURL& url,
     return;
   }
 
+  const GURL& url = blocking_page_info.info_url;
 #if BUILDFLAG(ARKWEB_EXT_NAVIGATION)
   // Save safe browsing check detail to WebContents
   content::WebContentsImpl* web_contents_impl =
       static_cast<content::WebContentsImpl*>(web_contents());
   if (web_contents_impl && web_contents_impl->AsWebContentsImplExt()) {
-    int threat_type = static_cast<int>(block_type);
+    int threat_type = static_cast<int>(blocking_page_info.info_block_type);
     web_contents_impl->AsWebContentsImplExt()->SetSafeBrowsingCheckDetail(
-        hw_code, threat_type, url);
+        blocking_page_info.info_hw_code, threat_type, url);
   }
 #endif
 
   if (SafeBrowsingConfigUtil::GetInstance().OptimizeEnable()) {
-    SaveResultToAllEntries({url, block_type, hw_code, policy, GetPolicyLevel(policy), redirect_url});
+    SaveResultToAllEntries(blocking_page_info);
   }
   
   if (!pending_entry && !web_contents()->IsWaitingForResponse() && visible_entry->GetURL() == url) {
@@ -843,6 +888,41 @@ void SbClient::NotifySafeBrowsingHit(const GURL& url,
   int threat = static_cast<int>(block_type);
   load_handler->AsArkWebLoadHandlerExt()->OnSafeBrowsingHit(
       url.spec(), code, policy, threat, response_key);
+}
+
+void SbClient::RequestSnapshotOnce(const OhosSbBlockingPageInfo& blocking_page_info) {
+  if (!web_contents()) {
+    LOG(WARNING) << "CheckContent: web_contents is null";
+    return;
+  }
+
+  SafeBrowsingDetectionResult detection_result = ToDetectionResult(blocking_page_info);
+  ohos_safe_browsing::SafeBrowsingSnapshotManager::GetInstance().
+        SetNewUrl(detection_result.access_url,
+                  detection_result, web_contents()->GetNWebId());
+ 
+  CefRefPtr<AlloyBrowserHostImpl> browser =
+      AlloyBrowserHostImpl::GetBrowserForContents(web_contents());
+  if (!browser) {
+    LOG(WARNING) << "CheckContent: browser is null";
+    return;
+  }
+
+  CefRefPtr<CefFrame> cef_frame = browser->GetMainFrame();
+  if (!cef_frame || !cef_frame->IsValid()) {
+    LOG(WARNING) << "CheckContent: cef_frame is null or is invalid";
+    return;
+  }
+
+  CefRefPtr<ArkwebFrameExt> arkweb_frame_ext = cef_frame->AsArkWebFrame();
+  if (!arkweb_frame_ext) {
+    LOG(WARNING) << "CheckContent: arkweb_frame_ext is null";
+    return;
+  }
+
+  if (ohos_safe_browsing::SafeBrowsingSnapshotManager::GetInstance().IsAllowRequestSnapshot()) {
+    arkweb_frame_ext->RequestSnapshotOnce();
+  }
 }
 
 WEB_CONTENTS_USER_DATA_KEY_IMPL(SbClient::BlockingPageInfoCache);
