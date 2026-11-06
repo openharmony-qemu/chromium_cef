@@ -14,6 +14,7 @@
 #include "base/json/json_reader.h"
 #include "base/json/json_writer.h"
 #include "base/logging.h"
+#include "base/no_destructor.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/uuid.h"
 #include "base/values.h"
@@ -25,7 +26,7 @@ namespace global_config {
 
 const uint32_t kMaxProbability = 10001;
 const char kGlobalConfigFeaturesSwitches[] = "global_config.FeaturesSwitches";
-std::string kGlobalConfigDataPath = "";
+base::NoDestructor<std::string> kGlobalConfigDataPath("");
 
 void RegisterGlobalConfigPrefs(PrefRegistrySimple* registry) {
   registry->RegisterListPref(kGlobalConfigFeaturesSwitches);
@@ -125,7 +126,7 @@ bool ProcessFeaturesSwitches(const base::Value& value, PrefService* localState) 
 }
 
 bool ParseFeaturesSwitchesToPrefs(PrefService* localState) {
-  base::FilePath global_config_path(kGlobalConfigDataPath);
+  base::FilePath global_config_path(*kGlobalConfigDataPath);
   if (!base::PathExists(global_config_path)) {
     LOG(ERROR) << "global config path is not exist:" << global_config_path.value();
     return false;
@@ -178,7 +179,7 @@ bool ParseFeaturesSwitchesToPrefs(PrefService* localState) {
 
 bool OnGlobalConfigResult(const std::string& path, PrefService* localState) {
   if (!path.empty()) {
-    kGlobalConfigDataPath = path;
+    *kGlobalConfigDataPath = path;
   }
   return ParseFeaturesSwitchesToPrefs(localState);
 }

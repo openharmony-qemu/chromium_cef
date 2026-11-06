@@ -102,7 +102,7 @@ void ChromeBrowserMainExtraPartsCef::PostProfileInit(Profile* profile,
       }
 
       std::vector<predictor::PreconnectUrlInfo> preconnect_url_infos =
-          std::move(predictor::PredictorDatabase::preconnect_url_info_list);
+          std::move(predictor::PredictorDatabase::GetPreconnectUrlInfoList());
       for (auto& preconnect_url_info : preconnect_url_infos) {
         predictor->PrepareForPageLoad(GURL(preconnect_url_info.url),
                                       ohos_predictors::HintOrigin::OMNIBOX,

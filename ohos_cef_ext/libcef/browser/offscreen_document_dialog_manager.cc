@@ -20,6 +20,7 @@
 #include "arkweb/build/features/features.h"
 #include "base/functional/bind.h"
 #include "base/functional/callback_helpers.h"
+#include "base/no_destructor.h"
 #include "base/synchronization/lock.h"
 #include "base/logging.h"
 #include "cef/libcef/browser/browser_guest_util.h"
@@ -76,11 +77,14 @@ class CefJSDialogCallbackImpl : public CefJSDialogCallback {
 };
 
 static std::atomic<int> g_request_new_id = 0;
-static std::unordered_map<int, std::shared_ptr<OHOS::NWeb::NWebJSDialogResult>>
+static base::NoDestructor<
+    std::unordered_map<int, std::shared_ptr<OHOS::NWeb::NWebJSDialogResult>>>
     g_alert_requests_map;
-static std::unordered_map<int, std::shared_ptr<OHOS::NWeb::NWebJSDialogResult>>
+static base::NoDestructor<
+    std::unordered_map<int, std::shared_ptr<OHOS::NWeb::NWebJSDialogResult>>>
     g_confirm_requests_map;
-static std::unordered_map<int, std::shared_ptr<OHOS::NWeb::NWebJSDialogResult>>
+static base::NoDestructor<
+    std::unordered_map<int, std::shared_ptr<OHOS::NWeb::NWebJSDialogResult>>>
     g_prompt_requests_map;
 
 static base::Lock g_requests_lock;
@@ -151,29 +155,29 @@ void CefOffScreenDocumentDialogManager::Prompt(const bool type,
 int CefOffScreenDocumentDialogManager::AddAlertRequest(
     std::shared_ptr<OHOS::NWeb::NWebJSDialogResult> callback) {
   base::AutoLock lock_scope(g_requests_lock);
-  g_alert_requests_map[++g_request_new_id] = std::move(callback);
+  (*g_alert_requests_map)[++g_request_new_id] = std::move(callback);
   return g_request_new_id;
 }
 
 int CefOffScreenDocumentDialogManager::AddConfirmRequest(
     std::shared_ptr<OHOS::NWeb::NWebJSDialogResult> callback) {
   base::AutoLock lock_scope(g_requests_lock);
-  g_confirm_requests_map[++g_request_new_id] = std::move(callback);
+  (*g_confirm_requests_map)[++g_request_new_id] = std::move(callback);
   return g_request_new_id;
 }
 
 int CefOffScreenDocumentDialogManager::AddPromptRequest(
     std::shared_ptr<OHOS::NWeb::NWebJSDialogResult> callback) {
   base::AutoLock lock_scope(g_requests_lock);
-  g_prompt_requests_map[++g_request_new_id] = std::move(callback);
+  (*g_prompt_requests_map)[++g_request_new_id] = std::move(callback);
   return g_request_new_id;
 }
 
 std::shared_ptr<OHOS::NWeb::NWebJSDialogResult>
 CefOffScreenDocumentDialogManager::FindAlertRequestById(int request_id) {
   base::AutoLock lock_scope(g_requests_lock);
-  if (auto it = g_alert_requests_map.find(request_id);
-      it != g_alert_requests_map.end()) {
+  if (auto it = g_alert_requests_map->find(request_id);
+      it != g_alert_requests_map->end()) {
     return it->second;
   }
   return nullptr;
@@ -182,8 +186,8 @@ CefOffScreenDocumentDialogManager::FindAlertRequestById(int request_id) {
 std::shared_ptr<OHOS::NWeb::NWebJSDialogResult>
 CefOffScreenDocumentDialogManager::FindConfirmRequestById(int request_id) {
   base::AutoLock lock_scope(g_requests_lock);
-  if (auto it = g_confirm_requests_map.find(request_id);
-      it != g_confirm_requests_map.end()) {
+  if (auto it = g_confirm_requests_map->find(request_id);
+      it != g_confirm_requests_map->end()) {
     return it->second;
   }
   return nullptr;
@@ -192,8 +196,8 @@ CefOffScreenDocumentDialogManager::FindConfirmRequestById(int request_id) {
 std::shared_ptr<OHOS::NWeb::NWebJSDialogResult>
 CefOffScreenDocumentDialogManager::FindPromptRequestById(int request_id) {
   base::AutoLock lock_scope(g_requests_lock);
-  if (auto it = g_prompt_requests_map.find(request_id);
-      it != g_prompt_requests_map.end()) {
+  if (auto it = g_prompt_requests_map->find(request_id);
+      it != g_prompt_requests_map->end()) {
     return it->second;
   }
   return nullptr;
@@ -201,34 +205,34 @@ CefOffScreenDocumentDialogManager::FindPromptRequestById(int request_id) {
 
 void CefOffScreenDocumentDialogManager::RemoveAlertRequestById(int request_id) {
   base::AutoLock lock_scope(g_requests_lock);
-  g_alert_requests_map.erase(request_id);
+  g_alert_requests_map->erase(request_id);
 }
 
 void CefOffScreenDocumentDialogManager::RemoveConfirmRequestById(
     int request_id) {
   base::AutoLock lock_scope(g_requests_lock);
-  g_confirm_requests_map.erase(request_id);
+  g_confirm_requests_map->erase(request_id);
 }
 
 void CefOffScreenDocumentDialogManager::RemovePromptRequestById(
     int request_id) {
   base::AutoLock lock_scope(g_requests_lock);
-  g_prompt_requests_map.erase(request_id);
+  g_prompt_requests_map->erase(request_id);
 }
 
 void CefOffScreenDocumentDialogManager::ClearAlertRequest() {
   base::AutoLock lock_scope(g_requests_lock);
-  g_alert_requests_map.clear();
+  g_alert_requests_map->clear();
 }
 
 void CefOffScreenDocumentDialogManager::ClearConfirmRequest() {
   base::AutoLock lock_scope(g_requests_lock);
-  g_confirm_requests_map.clear();
+  g_confirm_requests_map->clear();
 }
 
 void CefOffScreenDocumentDialogManager::ClearPromptRequest() {
   base::AutoLock lock_scope(g_requests_lock);
-  g_prompt_requests_map.clear();
+  g_prompt_requests_map->clear();
 }
 
 void CefOffScreenDocumentDialogManager::RunJavaScriptDialog(

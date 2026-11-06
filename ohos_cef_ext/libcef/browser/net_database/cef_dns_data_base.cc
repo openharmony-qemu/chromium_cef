@@ -10,6 +10,7 @@
 #include <set>
 #endif
 #include "base/logging.h"
+#include "base/no_destructor.h"
 #include "net/base/ip_endpoint.h"
 #include "nweb_pre_dns_adapter.h"
 #include "ohos_adapter_helper.h"
@@ -17,13 +18,13 @@
 
 #if BUILDFLAG(ARKWEB_PER_DFX)
 namespace {
-std::set<const std::string> g_hostname;
+base::NoDestructor<std::set<const std::string>> g_hostname;
 }
 #endif
 void CacheHostName(const std::string& hostname) {
 #if BUILDFLAG(ARKWEB_PER_DFX)
-  if (g_hostname.count(hostname) == 0) {
-    g_hostname.insert(hostname);
+  if (g_hostname->count(hostname) == 0) {
+    g_hostname->insert(hostname);
     auto& dnsDatabaseAdapter = OHOS::NWeb::OhosAdapterHelper::GetInstance()
                                    .GetWebDnsDataBaseInstance();
     dnsDatabaseAdapter.InsertHostname(hostname);

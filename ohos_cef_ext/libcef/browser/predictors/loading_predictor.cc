@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "base/strings/stringprintf.h"
+#include "base/no_destructor.h"
 #include "base/trace_event/trace_event.h"
 #include "content/public/browser/browser_thread.h"
 #include "libcef/common/response_impl.h"
@@ -36,7 +37,7 @@ struct ResourceInfo {
   base::Time response_time;
   uint32_t cache_valid_time = 300;  // 默认有效期为300s
 };
-std::list<std::shared_ptr<ResourceInfo>> g_predictor_post_cache_;
+base::NoDestructor<std::list<std::shared_ptr<ResourceInfo>>> g_predictor_post_cache_;
 
 class PredictorResourceHandler : public CefResourceHandler {
  public:
@@ -373,12 +374,12 @@ void LoadingPredictor::PrefetchResource(
 void LoadingPredictor::ClearPrefetchedResource(
     const std::vector<std::string>& cache_key_list) {
   for (auto& cache_key : cache_key_list) {
-    for (auto it = g_predictor_post_cache_.begin();
-         it != g_predictor_post_cache_.end(); it++) {
+    for (auto it = g_predictor_post_cache_->begin();
+         it != g_predictor_post_cache_->end(); it++) {
       if ((*it)->cache_key == cache_key) {
         TRACE_EVENT1("net", "clear prefetched post cache", "cache_key",
                      cache_key);
-        g_predictor_post_cache_.erase(it);
+        g_predictor_post_cache_->erase(it);
         break;
       }
     }
@@ -411,21 +412,21 @@ void LoadingPredictor::OnSimpleURLLoaderComplete(
     resource->response_body = std::move(*response_body);
   }
 
-  for (auto it = g_predictor_post_cache_.begin();
-       it != g_predictor_post_cache_.end(); it++) {
+  for (auto it = g_predictor_post_cache_->begin();
+       it != g_predictor_post_cache_->end(); it++) {
     if ((*it)->cache_key == cache_key) {
       TRACE_EVENT0("net", "update the old same post cache");
-      g_predictor_post_cache_.erase(it);
+      g_predictor_post_cache_->erase(it);
       break;
     }
   }
 
-  if (g_predictor_post_cache_.size() == MAX_POST_NUM) {
+  if (g_predictor_post_cache_->size() == MAX_POST_NUM) {
     TRACE_EVENT0("net", "remove the oldest post cache");
-    g_predictor_post_cache_.pop_front();
+    g_predictor_post_cache_->pop_front();
   }
   TRACE_EVENT0("net", "add new post cache");
-  g_predictor_post_cache_.push_back(resource);
+  g_predictor_post_cache_->push_back(resource);
   loader_map_.erase(request_id);
 }
 
@@ -436,8 +437,8 @@ CefRefPtr<CefResourceHandler> LoadingPredictor::GetResourceHandler(
                "cacheKey", cache_key);
   std::shared_ptr<ResourceInfo> resource_response;
   std::list<std::shared_ptr<ResourceInfo>>::iterator it;
-  for (it = g_predictor_post_cache_.begin();
-       it != g_predictor_post_cache_.end(); it++) {
+  for (it = g_predictor_post_cache_->begin();
+       it != g_predictor_post_cache_->end(); it++) {
     if ((*it)->cache_key == cache_key) {
       resource_response = *it;
       break;
@@ -457,8 +458,8 @@ CefRefPtr<CefResourceHandler> LoadingPredictor::GetResourceHandler(
     return new PredictorResourceHandler(url, resource_response);
   }
 
-  if (it != g_predictor_post_cache_.end()) {
-    g_predictor_post_cache_.erase(it);
+  if (it != g_predictor_post_cache_->end()) {
+    g_predictor_post_cache_->erase(it);
   }
   TRACE_EVENT0("net", "prefetched resource is invalid.");
   return nullptr;

@@ -17,6 +17,7 @@
 
 #include "base/logging.h"
 #include "base/memory/singleton.h"
+#include "base/no_destructor.h"
 #include "base/observer_list.h"
 #include "base/path_service.h"
 #include "base/strings/string_number_conversions.h"
@@ -34,8 +35,8 @@ using subresource_filter::UserAdblockRulesetManager;
 namespace adblock {
 long long mAdBlockEasyListVersion = 0;
 
-base::FilePath mOfficialEasyListPath;
-base::FilePath mUserEasyListPath;
+base::NoDestructor<base::FilePath> mOfficialEasyListPath;
+base::NoDestructor<base::FilePath> mUserEasyListPath;
 
 namespace {
 
@@ -74,10 +75,10 @@ void UpdateEasyListRulesInIOThread() {
       ->NotifyEasyListToObservers();
 
   std::vector<base::FilePath> easylists;
-  easylists.push_back(mOfficialEasyListPath);
+  easylists.push_back(*mOfficialEasyListPath);
 
   LOG(INFO) << "[AdBlock] Received a request to update easylist rules:"
-            << mOfficialEasyListPath.value();
+            << mOfficialEasyListPath->value();
 
   AdblockRulesetManager::GetInstance()->EasyListFileUpdated(
       easylists, mAdBlockEasyListVersion);
@@ -85,16 +86,16 @@ void UpdateEasyListRulesInIOThread() {
 
 void UpdateUserEasyListRulesInIOThread() {
   std::vector<base::FilePath> user_easylists;
-  user_easylists.push_back(mUserEasyListPath);
+  user_easylists.push_back(*mUserEasyListPath);
 
   LOG(INFO) << "[AdBlock] Received a request to update user easylist rules:"
-            << mUserEasyListPath.value();
+            << mUserEasyListPath->value();
   UserAdblockRulesetManager::GetInstance()->UserEasyListFileUpdated(
       user_easylists);
 }
 
 void AdBlockList::UpdateUserEasyListRules(const std::string& path) {
-  mUserEasyListPath = base::FilePath(path);
+  *mUserEasyListPath = base::FilePath(path);
 
   content::GetIOThreadTaskRunner({})->PostTask(
       FROM_HERE, base::BindOnce(&UpdateUserEasyListRulesInIOThread));
@@ -108,7 +109,7 @@ void UpdateAdblockEasyListRules(long adBlockEasyListVersion) {
 }
 
 void UpdateAdblockEasyListRules(base::FilePath path) {
-  mOfficialEasyListPath = path;
+  *mOfficialEasyListPath = path;
 
   content::GetIOThreadTaskRunner({})->PostTask(
       FROM_HERE, base::BindOnce(&UpdateEasyListRulesInIOThread));
