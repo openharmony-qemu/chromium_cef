@@ -1,5 +1,5 @@
 diff --git content/browser/renderer_host/render_widget_host_view_aura.cc content/browser/renderer_host/render_widget_host_view_aura.cc
-index 6dd861aaf326cd27f822660895e4c426f14fddfd..3c2708cf69e666b9212525d813782443c90c83e1 100644
+index 5e68fd479b3c466ca38f1d5ee0b1e2831ca32755..650092cb75c387cea1f7cc37e6c76cc014af1e33 100644
 --- content/browser/renderer_host/render_widget_host_view_aura.cc
 +++ content/browser/renderer_host/render_widget_host_view_aura.cc
 @@ -8,6 +8,7 @@
@@ -28,7 +28,7 @@ index 6dd861aaf326cd27f822660895e4c426f14fddfd..3c2708cf69e666b9212525d813782443
    SkColor4f background_color =
        SkColor4f::FromColor(GetBackgroundColor().value());
    window_->SetTransparent(!background_color.isOpaque());
-@@ -1300,6 +1305,12 @@ void RenderWidgetHostViewAura::TransformPointToRootSurface(gfx::PointF* point) {
+@@ -1301,6 +1306,12 @@ void RenderWidgetHostViewAura::TransformPointToRootSurface(gfx::PointF* point) {
  }
  
  gfx::Rect RenderWidgetHostViewAura::GetBoundsInScreen() {
@@ -41,7 +41,7 @@ index 6dd861aaf326cd27f822660895e4c426f14fddfd..3c2708cf69e666b9212525d813782443
    aura::Window* top_level = window_->GetToplevelWindow();
    gfx::Rect bounds(top_level->GetBoundsInScreen());
  
-@@ -3122,6 +3133,16 @@ void RenderWidgetHostViewAura::CreateAuraWindow(aura::client::WindowType type) {
+@@ -3131,6 +3142,16 @@ void RenderWidgetHostViewAura::CreateAuraWindow(aura::client::WindowType type) {
    window_->SetTransparent(!background_color.isOpaque());
    window_->layer()->AsSurface()->SetFallbackBackgroundColor(background_color);
    UpdateFrameSinkIdRegistration();
@@ -59,10 +59,10 @@ index 6dd861aaf326cd27f822660895e4c426f14fddfd..3c2708cf69e666b9212525d813782443
  
  void RenderWidgetHostViewAura::UpdateFrameSinkIdRegistration() {
 diff --git content/browser/renderer_host/render_widget_host_view_aura.h content/browser/renderer_host/render_widget_host_view_aura.h
-index 09955d46ae93f93e26bd3d940482ab8936d2e7dd..ea78be36f8e478f57c808ed6036c29f16fa38f17 100644
+index 0f0580728cac1204749fb084cd4ed987f2cb9d35..7581a5220f2d0d242794d66c24f7754770ad7c15 100644
 --- content/browser/renderer_host/render_widget_host_view_aura.h
 +++ content/browser/renderer_host/render_widget_host_view_aura.h
-@@ -483,6 +483,12 @@ class CONTENT_EXPORT RenderWidgetHostViewAura
+@@ -487,6 +487,12 @@ class CONTENT_EXPORT RenderWidgetHostViewAura
  
    bool ShouldUseDefaultDeadlineOnResize() const;
  
@@ -75,7 +75,7 @@ index 09955d46ae93f93e26bd3d940482ab8936d2e7dd..ea78be36f8e478f57c808ed6036c29f1
   protected:
    ~RenderWidgetHostViewAura() override;
  
-@@ -920,6 +926,8 @@ class CONTENT_EXPORT RenderWidgetHostViewAura
+@@ -924,6 +930,8 @@ class CONTENT_EXPORT RenderWidgetHostViewAura
  
    bool use_default_deadline_on_resize_ = false;
  

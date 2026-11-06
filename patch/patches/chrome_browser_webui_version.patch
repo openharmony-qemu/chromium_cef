@@ -124,7 +124,7 @@ index 7d1beedfffbfdd34323cfb749bec83187b54778e..d4c79e26e51deb9a32fb9649a1c21a18
    // Factory for the creating refs in callbacks.
    base::WeakPtrFactory<VersionHandler> weak_ptr_factory_{this};
 diff --git chrome/browser/ui/webui/version/version_ui.cc chrome/browser/ui/webui/version/version_ui.cc
-index 4c523d48d8f8537042a9483e4fd0c6d163c8de52..35a8e8de47893687e3a11a762c7101a358b252e0 100644
+index 7a9234630b90fce67d4e9e51f03c786355141f9d..1476e05e16eb056f0cecd622e0ccecf9bcb1d88d 100644
 --- chrome/browser/ui/webui/version/version_ui.cc
 +++ chrome/browser/ui/webui/version/version_ui.cc
 @@ -19,6 +19,7 @@

@@ -1,8 +1,8 @@
 diff --git chrome/browser/extensions/BUILD.gn chrome/browser/extensions/BUILD.gn
-index 2acb4ecd06cd42f46a473bfa3cef87b1ce153baa..b7dc4ef71fc43d8c7c60001565a2cb10174105d4 100644
+index 8f5ae8c9a383c1bc09dd83c10a00d6e92f8dc90e..a80c2108542216b24097aacf4adb6d4998001586 100644
 --- chrome/browser/extensions/BUILD.gn
 +++ chrome/browser/extensions/BUILD.gn
-@@ -3173,10 +3173,10 @@ source_set("browser_tests") {
+@@ -3229,10 +3229,10 @@ source_set("browser_tests") {
  
      if (!is_chromeos) {
        # Chrome OS doesn't use background mode or download bubbles.

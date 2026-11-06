@@ -1,8 +1,8 @@
 diff --git third_party/blink/public/platform/platform.h third_party/blink/public/platform/platform.h
-index 9ef66ec39e8cb8ef9a8753baf7bbddc227768d77..5aadd8c8cc82b96b07554fa3de5d5563a3fc34c0 100644
+index 25844b6fbed36ecf8ab30c03f8319b4188da53f1..2d80b9fde912a7d38fc9ee212b2999d02298e9c3 100644
 --- third_party/blink/public/platform/platform.h
 +++ third_party/blink/public/platform/platform.h
-@@ -884,6 +884,11 @@ class BLINK_PLATFORM_EXPORT Platform {
+@@ -889,6 +889,11 @@ class BLINK_PLATFORM_EXPORT Platform {
    // calling an OOM.
    virtual void OnV8HeapLastResortGC() {}
  
@@ -15,7 +15,7 @@ index 9ef66ec39e8cb8ef9a8753baf7bbddc227768d77..5aadd8c8cc82b96b07554fa3de5d5563
    static void InitializeMainThreadCommon(
        std::unique_ptr<MainThread> main_thread);
 diff --git third_party/blink/renderer/core/inspector/devtools_session.cc third_party/blink/renderer/core/inspector/devtools_session.cc
-index 1c8215256431b11172c16647082167fc8e4d915c..b2dc55c1e390840ec9010a525f6d186942df24b5 100644
+index ce4da6905ae14aed900edaa322b588ef7d87cff2..a7c46477fff24baf199888601ef337c35683f703 100644
 --- third_party/blink/renderer/core/inspector/devtools_session.cc
 +++ third_party/blink/renderer/core/inspector/devtools_session.cc
 @@ -14,6 +14,7 @@
@@ -34,7 +34,7 @@ index 1c8215256431b11172c16647082167fc8e4d915c..b2dc55c1e390840ec9010a525f6d1869
  }
  
  DevToolsSession::~DevToolsSession() {
-@@ -288,6 +290,7 @@ void DevToolsSession::Detach() {
+@@ -289,6 +291,7 @@ void DevToolsSession::Detach() {
    v8_session_->stop();
    v8_session_.reset();
    agent_->client_->DebuggerTaskFinished();

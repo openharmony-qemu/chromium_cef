@@ -1,5 +1,5 @@
 diff --git base/test/BUILD.gn base/test/BUILD.gn
-index afddfd4a555750837875292fee037329f4b0e585..4ae691ca4eb1ccdcbf1436a02142ba590c4e00cf 100644
+index cfe8e38be8219eb6652b9f3f2a9fb22f6d643400..b72c43f2bce4bbca1c47df35dba0ee94c6d3fd0b 100644
 --- base/test/BUILD.gn
 +++ base/test/BUILD.gn
 @@ -299,11 +299,6 @@ static_library("test_support") {
@@ -88,10 +88,10 @@ index dc5c18bd66d1cc6fe55edc1a0709795cb2b3b3ec..15f25c0e92f87b2dc73be30b5366c084
 +
  #endif  // BASE_TEST_TRACING_TEST_TRACE_PROCESSOR_EXPORT_H_
 diff --git content/shell/BUILD.gn content/shell/BUILD.gn
-index b469f348694065feb03ddc3ea389124b125acf7c..8ca38caa6899d17c8fbad8633048ff4993f06477 100644
+index 2886dc0847f3e72e61b6dde92d33ff2b86a9a94b..dd7629cb7cfb08140ddcacb9a181cd7b4058fa53 100644
 --- content/shell/BUILD.gn
 +++ content/shell/BUILD.gn
-@@ -942,7 +942,6 @@ if (is_mac) {
+@@ -943,7 +943,6 @@ if (is_mac) {
        # Specify a sensible install_name for static builds. The library is
        # dlopen()ed so this is not used to resolve the module.
        ldflags = [ "-Wl,-install_name,@executable_path/../Frameworks/$output_name.framework/$output_name" ]
