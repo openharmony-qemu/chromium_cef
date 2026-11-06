@@ -111,6 +111,14 @@ class ArkWebLoadHandlerExt : public virtual CefLoadHandler,
   virtual void OnNavigationEntryCommitted(
       CefRefPtr<CefLoadCommittedDetails> details) {}
 
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+  ///
+  /// Called when navigation entries have been deleted (e.g. Page.resetNavigationHistory).
+  ///
+  /*--cef()--*/
+  virtual void OnNavigationEntriesDeleted() {}
+#endif  // BUILDFLAG(ARKWEB_DEVTOOLS)
+
   ///
   /// Called when tracker's cookie is prevented.
   ///
