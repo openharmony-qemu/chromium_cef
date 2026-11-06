@@ -55,7 +55,8 @@ class OhPageLoadMetricsObserver
           failed_provisional_load_info) override;
   ObservePolicy OnShown() override;
   ObservePolicy OnCommit(content::NavigationHandle* navigation_handle) override;
-
+  ObservePolicy OnNavigationHandleTimingUpdated(
+      content::NavigationHandle* navigation_handle) override;
   ObservePolicy OnPreviewStart(content::NavigationHandle* navigation_handle,
                                const GURL& currently_committed_url) override;
   void OnDidInternalNavigationAbort(

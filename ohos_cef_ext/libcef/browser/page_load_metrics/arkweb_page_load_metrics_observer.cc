@@ -259,6 +259,21 @@ OhPageLoadMetricsObserver::OnCommit(
   return CONTINUE_OBSERVING;
 }
 
+page_load_metrics::PageLoadMetricsObserver::ObservePolicy
+OhPageLoadMetricsObserver::OnNavigationHandleTimingUpdated(
+    content::NavigationHandle* navigation_handle) {
+#if BUILDFLAG(IS_ARKWEB_EXT) && BUILDFLAG(ARKWEB_BIGDATA_METRICS)
+  if (navigation_handle && OHOS::NWeb::NWebBigdataMetricsHandler::GetInstance().IsFeatureEnabled()) {
+    if (auto* headers = navigation_handle->GetResponseHeaders()) {
+      int code = headers->response_code();
+      if (code > 0)
+        http_response_code_ = code;
+    }
+  }
+#endif
+  return CONTINUE_OBSERVING;
+}
+
 void OhPageLoadMetricsObserver::OnComplete(
     const page_load_metrics::mojom::PageLoadTiming& timing) {
 #if BUILDFLAG(ARKWEB_LOGGER_REPORT)
@@ -307,13 +322,6 @@ void OhPageLoadMetricsObserver::CacheBigdataMetrics() {
   if (auto* browser = AlloyBrowserHostImpl::GetBrowserForContents(web_contents).get())
     nweb_id_ = browser->GetNWebId();
 #endif
-
-  if (auto* rfh = web_contents->GetPrimaryMainFrame()) {
-    if (auto* response_head = rfh->GetLastResponseHead()) {
-      if (response_head->headers)
-        http_response_code_ = response_head->headers->response_code();
-    }
-  }
 }
 
 void OhPageLoadMetricsObserver::ReportPageLoadMetrics() {
