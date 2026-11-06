@@ -160,7 +160,7 @@ enum HitTestDataType {
 
 namespace {
 blink::WebHitTestResult HitTestResultForTap(blink::WebView* web_view,
-                                            const gfx::Point& tap_point,
+                                            const gfx::PointF& tap_point,
                                             const gfx::Size& tap_area) {
   if (!web_view) {
     return blink::HitTestResult();
@@ -182,14 +182,13 @@ blink::WebHitTestResult HitTestResultForTap(blink::WebView* web_view,
     return blink::HitTestResult();
   }
 
-  blink::WebGestureEvent tap_event(blink::WebInputEvent::Type::kGestureTap,
+  blink::WebGestureEvent tap_event(blink::WebInputEvent::Type::kGestureTapDown,
                                    blink::WebInputEvent::kNoModifiers, base::TimeTicks::Now(),
                                    blink::WebGestureDevice::kTouchscreen);
   // GestureTap is only ever from a touchscreen.
-  tap_event.SetPositionInWidget(gfx::PointF(tap_point));
-  tap_event.data.tap.tap_count = 1;
-  tap_event.data.tap.width = tap_area.width();
-  tap_event.data.tap.height = tap_area.height();
+  tap_event.SetPositionInWidget(tap_point);
+  tap_event.data.tap_down.width = tap_area.width();
+  tap_event.data.tap_down.height = tap_area.height();
 
   blink::WebGestureEvent scaled_event =
       blink::TransformWebGestureEvent(local_frame_impl->GetFrameView(), tap_event);
@@ -915,7 +914,7 @@ void ArkwebFrameExtImpl::SendHitEvent(cef::mojom::HitEventParamsPtr params) {
   }
   // TODO(arkweb): The HitTestResultForTap interface is added.
   const blink::WebHitTestResult result =
-      HitTestResultForTap(webview, gfx::Point(params->x, params->y),
+      HitTestResultForTap(webview, gfx::PointF(params->x, params->y),
                                    gfx::Size(params->width, params->height));
   cef::mojom::HitDataParamsPtr data = cef::mojom::HitDataParams::New();
   GURL absolute_image_url = GURL(result.AbsoluteImageURL().GetString().Utf8());
@@ -1281,7 +1280,7 @@ void ArkwebFrameExtImpl::SetFocusByPosition(
   }
   // TODO(arkweb): The HitTestResultForTap interface is added.
   const blink::WebHitTestResult result =
-      HitTestResultForTap(webview, gfx::Point(x, y), gfx::Size(1, 1));
+      HitTestResultForTap(webview, gfx::PointF(x, y), gfx::Size(1, 1));
   if (result.IsContentEditable() && result.GetNode().IsElementNode()) {
     isEditable = true;
     const blink::WebElement webElement =

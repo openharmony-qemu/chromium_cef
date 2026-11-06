@@ -166,6 +166,15 @@ void CefBrowserPlatformDelegateOsrUtils::AdjustAndSendTouchEvent(
 
     #if BUILDFLAG(ARKWEB_INPUT_EVENTS)
     if (event.type == CEF_TET_PRESSED) {
+        // For HitTest, copy from default_radius_ in gesture_configuration.h
+        if (event_adjust.radius_x <= 0) {
+            // 设置矩形长宽为25的命中区域
+            event_adjust.radius_x = 25;
+        }
+        if (event_adjust.radius_y <= 0) {
+            // 设置矩形长宽为25的命中区域
+            event_adjust.radius_y = 25;
+        } 
         cefBrowserPlatformDelegateOsr->SendTouchEventToRender(event_adjust);
     }
     #endif
