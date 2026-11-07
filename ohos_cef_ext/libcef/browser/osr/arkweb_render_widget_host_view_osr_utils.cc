@@ -23,6 +23,7 @@
 #if BUILDFLAG(ARKWEB_EVICT_UNLOCK_FRAMES)
 #include "content/browser/renderer_host/render_view_host_impl.h"
 #endif
+#include "ui/display/screen.h"
 
 #if BUILDFLAG(ARKWEB_EVICT_UNLOCK_FRAMES)
 std::unordered_map<
@@ -77,6 +78,44 @@ void ArkWebRenderWidgetHostViewOSRUtils::UpdateScreenInfoForArkweb(
     const CefScreenInfo& src) {
   screenInfo.orientation_angle = src.angle;
   screenInfo.orientation_type = ConvertOrientationType(src.orientation);
+}
+
+display::ScreenInfos
+ArkWebRenderWidgetHostViewOSRUtils::GetScreenInfosForArkweb(
+    const display::ScreenInfo& osr_screen_info) {
+  auto* screen = display::Screen::Get();
+  if (!screen) {
+    LOG(DEBUG)
+        << "[ScreenIsExtended] OSR source=fallback count=1 currentDisplayId="
+        << osr_screen_info.display_id
+        << " isExtended=" << osr_screen_info.is_extended;
+    return display::ScreenInfos(osr_screen_info);
+  }
+
+  // Use Chromium's builder for IDs, primary/internal/extended state, labels and
+  // color spaces. It also guarantees a valid current entry for an empty list.
+  display::ScreenInfos infos =
+      screen->GetScreenInfosNearestDisplay(screen->GetPrimaryDisplay().id());
+  auto& current = infos.mutable_current();
+
+  // Preserve the CefRenderHandler's rendering contract, including view-rect
+  // fallback already performed by CEF. Do not replace the whole ScreenInfo:
+  // CefScreenInfo cannot carry the platform's multi-display metadata.
+  current.device_scale_factor = osr_screen_info.device_scale_factor;
+  current.depth = osr_screen_info.depth;
+  current.depth_per_component = osr_screen_info.depth_per_component;
+  current.is_monochrome = osr_screen_info.is_monochrome;
+  current.rect = osr_screen_info.rect;
+  current.available_rect = osr_screen_info.available_rect;
+  current.orientation_type = osr_screen_info.orientation_type;
+  current.orientation_angle = osr_screen_info.orientation_angle;
+
+  // Do not log display labels or host/page data.
+  LOG(DEBUG) << "[ScreenIsExtended] OSR source=platform count="
+            << infos.screen_infos.size()
+            << " currentDisplayId=" << infos.current_display_id
+            << " isExtended=" << current.is_extended;
+  return infos;
 }
 
 void ArkWebRenderWidgetHostViewOSRUtils::HandleCompositorCreation(

@@ -23,6 +23,7 @@
 #include "content/browser/renderer_host/delegated_frame_host.h"
 #include "content/browser/renderer_host/frame_tree.h"
 #include "content/public/browser/context_factory.h"
+#include "ui/display/screen_infos.h"
 #include "ui/gfx/text_elider.h"
 
 #if BUILDFLAG(IS_OHOS)
@@ -72,6 +73,9 @@ class ArkWebRenderWidgetHostViewOSRUtils {
       cef_screen_orientation_type_t type);
   static void UpdateScreenInfoForArkweb(display::ScreenInfo& screenInfo,
                                         const CefScreenInfo& src);
+  // Retain platform topology while preserving the host's OSR rendering fields.
+  static display::ScreenInfos GetScreenInfosForArkweb(
+      const display::ScreenInfo& osr_screen_info);
   static auto GetContextFactory() { return content::GetContextFactory(); }
   void HandleCompositorCreation(base::SingleThreadTaskRunner* task_runner,
                                 bool use_external_begin_frame);
