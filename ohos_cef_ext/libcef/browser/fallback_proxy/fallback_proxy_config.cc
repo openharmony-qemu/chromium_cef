@@ -1,0 +1,311 @@
+/*
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "fallback_proxy_config.h"
+
+#include <string>
+
+#include "base/logging.h"
+#include "arkweb/chromium_ext/url/ohos/log_utils.h"
+#include "base/functional/bind.h"
+#include "base/functional/callback.h"
+#include "net/base/proxy_string_util.h"
+#include "net/base/url_util.h"
+
+namespace fallback_proxy {
+FallbackProxyConfig::FallbackProxyConfig() : enabled_(false) {}
+
+FallbackProxyConfig::~FallbackProxyConfig() {}
+
+void FallbackProxyConfig::WriteCurrentConfigToLog() {
+  LOG(INFO) << "Fallback proxy config data : "
+    << " using_proxy_error_codes_size = "
+    << using_proxy_error_codes_.size()
+    << "; hw_codes_size = " << safe_browsing_hw_codes_.size()
+    << "; malicious_types_size = "
+    << safe_browsing_malicious_types_.size()
+    << "; direct_proxy_host_list_size = "
+    << direct_proxy_host_list_.size()
+    << "; proxy_tunnel_timeout = " << proxy_tunnel_timeout_
+    << "; proxy_connect_timeout = " << proxy_connect_timeout_
+    << "; malicious_url_check_wait_time = "
+    << malicious_url_check_wait_time_;
+}
+
+#if BUILDFLAG(IS_ARKWEB_EXT)
+void FallbackProxyConfig::SetFallbackProxyConfigData(
+    const ohos_cloud_control::FallbackProxyConfigData& config_data) {
+  config_enabled_ = config_data.is_fallback_proxy_enabled;
+  std::vector<int> using_proxy_error_codes = config_data.error_code_list;
+  std::vector<int> safe_browsing_hw_codes =
+      config_data.safe_browsing_hw_code_list;
+  std::vector<int> safe_browsing_malicious_types =
+      config_data.safe_browsing_malicious_type_list;
+  std::vector<std::string> direct_proxy_host_list =
+      config_data.direct_proxy_host_list;
+  int restart_proxy_internal = config_data.restart_proxy_internal;
+  int proxy_tunnel_timeout = config_data.proxy_tunnel_timeout;
+  int proxy_connect_timeout = config_data.proxy_connect_timeout;
+  int malicious_url_check_wait_time = config_data.malicious_url_check_wait_time;
+  std::string proxy_server = config_data.fallback_server;
+  std::string accelerate_proxy_server = config_data.accelerate_proxy_server;
+  std::vector<std::string> accelerate_host_list =
+ 	    config_data.accelerate_host_list;
+  std::vector<std::string> proxy_whitelist_domains =
+      config_data.proxy_whitelist_domains;
+
+  UpdateFallbackProxyServerConfig(config_enabled_, proxy_server);
+  if (restart_proxy_internal != restart_proxy_internal_) {
+    LOG(INFO) << "Fallback proxy config data is changed"
+              << ", restart_proxy_internal_before " << restart_proxy_internal_
+              << ", restart_proxy_internal_after " << restart_proxy_internal;
+    restart_proxy_internal_ = restart_proxy_internal;
+  }
+  if (accelerate_proxy_server != accelerate_proxy_server_ ||
+      accelerate_host_list != accelerate_host_list_) {
+    LOG(INFO) << "ActiveProxyAccelerate config data is changed"
+              << ", accelerate_proxy_server_before "
+              << url::LogUtils::ConvertUrlWithMask(accelerate_proxy_server_)
+              << ", accelerate_proxy_server_after "
+              << url::LogUtils::ConvertUrlWithMask(accelerate_proxy_server)
+              << ", accelerate_host_list_size_before "
+              << accelerate_host_list_.size()
+              << ", accelerate_host_list_size_after "
+              << accelerate_host_list.size();
+    accelerate_proxy_server_ = accelerate_proxy_server;
+    accelerate_host_list_ = accelerate_host_list;
+  }
+  if (using_proxy_error_codes != using_proxy_error_codes_ ||
+      safe_browsing_hw_codes != safe_browsing_hw_codes_ ||
+      safe_browsing_malicious_types != safe_browsing_malicious_types_ ||
+      direct_proxy_host_list != direct_proxy_host_list_ ||
+      proxy_tunnel_timeout != proxy_tunnel_timeout_ ||
+      proxy_connect_timeout != proxy_connect_timeout_ ||
+      malicious_url_check_wait_time != malicious_url_check_wait_time_ ||
+      proxy_whitelist_domains != proxy_whitelist_domains_) {
+    LOG(INFO) << "Fallback proxy config data is changed"
+              << ", using_proxy_error_codes_size_before "
+              << using_proxy_error_codes_.size()
+              << ", using_proxy_error_codes_size_after "
+              << using_proxy_error_codes.size()
+              << ", safe_browsing_hw_codes_size_before "
+              << safe_browsing_hw_codes_.size()
+              << ", safe_browsing_hw_codes_size_after "
+              << safe_browsing_hw_codes.size()
+              << ", safe_browsing_malicious_types_size_before "
+              << safe_browsing_malicious_types_.size()
+              << ", safe_browsing_malicious_types_size_after "
+              << safe_browsing_malicious_types.size()
+              << ", direct_proxy_host_list_size_before "
+              << direct_proxy_host_list_.size()
+              << ", direct_proxy_host_list_size_after "
+              << direct_proxy_host_list.size()
+              << ", proxy_tunnel_timeout_before " << proxy_tunnel_timeout_
+              << ", proxy_tunnel_timeout_after " << proxy_tunnel_timeout
+              << ", proxy_connect_timeout_before " << proxy_connect_timeout_
+              << ", proxy_connect_timeout_after " << proxy_connect_timeout
+              << ", malicious_url_check_wait_time_before "
+              << malicious_url_check_wait_time_
+              << ", malicious_url_check_wait_time_after "
+              << malicious_url_check_wait_time
+              << ", proxy_whitelist_domains_size_before "
+              << proxy_whitelist_domains_.size()
+              << ", proxy_whitelist_domains_size_after "
+              << proxy_whitelist_domains.size();
+    using_proxy_error_codes_ = using_proxy_error_codes;
+    safe_browsing_hw_codes_ = safe_browsing_hw_codes;
+    safe_browsing_malicious_types_ = safe_browsing_malicious_types;
+    direct_proxy_host_list_ = direct_proxy_host_list;
+    proxy_tunnel_timeout_ = proxy_tunnel_timeout;
+    proxy_connect_timeout_ = proxy_connect_timeout;
+    malicious_url_check_wait_time_ = malicious_url_check_wait_time;
+    proxy_whitelist_domains_ = proxy_whitelist_domains;
+
+    bypass_rules_.Clear();
+    for (const std::string& host : direct_proxy_host_list_) {
+      if (!net::IsCanonicalizedHostCompliant(host) ||
+          !bypass_rules_.AddRuleFromString(host)) {
+        LOG(WARNING) << "Fallback proxy config direct proxy host skipped, invalid host";
+      }
+    }
+
+    WriteCurrentConfigToLog();
+    if (proxy_info_updated_callback_) {
+      proxy_info_updated_callback_.Run();
+    }
+  }
+}
+#endif
+
+bool FallbackProxyConfig::HasProxyServer(const net::ProxyServer& proxy_server) {
+  if (std::count(proxy_servers_.begin(), proxy_servers_.end(), proxy_server)) {
+    return true;
+  }
+  return false;
+}
+
+std::vector<net::ProxyServer> FallbackProxyConfig::GetProxyServers() const {
+  if (!enabled_) {
+    return std::vector<net::ProxyServer>();
+  }
+
+  return proxy_servers_;
+}
+
+const net::ProxyHostMatchingRules& FallbackProxyConfig::GetBypassRules() {
+  return bypass_rules_;
+}
+
+const std::vector<int>& FallbackProxyConfig::GetUsingProxyErrorCodes() const {
+  return using_proxy_error_codes_;
+}
+
+const std::vector<int>& FallbackProxyConfig::GetSafeBrowsingHwCode() const {
+  return safe_browsing_hw_codes_;
+}
+
+const std::vector<int>& FallbackProxyConfig::GetSafeBrowsingMaliciousType()
+    const {
+  return safe_browsing_malicious_types_;
+}
+
+int FallbackProxyConfig::GetRestartProxyInternal() const {
+  return restart_proxy_internal_;
+}
+
+int FallbackProxyConfig::GetProxyTunnelTimeout() const {
+  return proxy_tunnel_timeout_;
+}
+
+int FallbackProxyConfig::GetProxyConnectTimeout() const {
+  return proxy_connect_timeout_;
+}
+
+int FallbackProxyConfig::GetMaliciousUrlCheckWaitTime() const {
+  return malicious_url_check_wait_time_;
+}
+
+const std::string& FallbackProxyConfig::GetProxyToken() const {
+  return auth_token_;
+}
+
+void FallbackProxyConfig::UpdateProxyToken(const std::string& token,
+                                           const std::string& token_info) {
+  if (auth_token_ != token) {
+    LOG(INFO) << "Fallback proxy config proxy token is changed.";
+    auth_token_ = token;
+    if (proxy_token_updated_callback_) {
+      proxy_token_updated_callback_.Run();
+    }
+  }
+}
+
+const std::string& FallbackProxyConfig::GetAccelerateProxyServer() const {
+  return accelerate_proxy_server_;
+}
+
+const std::vector<std::string>& FallbackProxyConfig::GetAccelerateHostList() const {
+  return accelerate_host_list_;
+}
+
+const std::vector<std::string>& FallbackProxyConfig::GetProxyWhitelistDomains() const {
+  return proxy_whitelist_domains_;
+}
+
+void FallbackProxyConfig::InitializeEnableParamsForTesting(
+    const std::string& proxy_url,
+    const std::string& header) {
+  UpdateFallbackProxyServerConfig(true, proxy_url);
+  InitializeHeadersForTesting(header);
+  LOG(DEBUG) << "Fallback proxy config::InitializeEnableParamsForTesting";
+}
+
+void FallbackProxyConfig::InitializeDisableParamsForTesting() {
+  enabled_ = false;
+  proxy_servers_.clear();
+
+  LOG(DEBUG) << "Fallback proxy config::InitializeDisableParamsForTesting";
+  UpdateProxyServer();
+}
+
+void FallbackProxyConfig::SetBypassRulesForTesting(const std::string& pattern) {
+  bypass_rules_.ParseFromString(pattern);
+}
+
+void FallbackProxyConfig::UpdateProxyServer() {
+  if (proxy_server_updated_callback_) {
+    proxy_server_updated_callback_.Run();
+  }
+}
+
+void FallbackProxyConfig::DisableFallbackProxy() {
+  enabled_ = false;
+  proxy_servers_.clear();
+  UpdateProxyServer();
+}
+
+void FallbackProxyConfig::UpdateFallbackProxyServerConfig(
+    bool config_enabled,
+    const std::string& config_proxy_server) {
+  GURL proxy_url(config_proxy_server);
+  if (!config_enabled || !proxy_url.is_valid() ||
+      proxy_url.scheme() != url::kHttpsScheme) {
+    if (enabled_) {
+      LOG(INFO)
+          << "Fallback proxy config will disable proxy for config_enabled false"
+          << " or proxy url invalid or proxy url scheme not https"
+          << ", enabled_before " << enabled_ << ", config_enabled "
+          << config_enabled << ", config_proxy_server "
+          << url::LogUtils::ConvertUrlWithMask(config_proxy_server);
+      DisableFallbackProxy();
+    }
+    return;
+  }
+
+  net::ProxyServer proxy_server(net::GetSchemeFromUriScheme(proxy_url.scheme()),
+                                net::HostPortPair::FromURL(proxy_url));
+  if (!proxy_server.is_valid()) {
+    if (enabled_) {
+      LOG(INFO)
+          << "Fallback proxy config will disable proxy for proxy server invalid"
+          << ", enabled_before " << enabled_ << ", config_enabled "
+          << config_enabled << ", config_proxy_server "
+          << url::LogUtils::ConvertUrlWithMask(config_proxy_server);
+      DisableFallbackProxy();
+    }
+    return;
+  }
+
+  LOG(INFO) << "Fallback proxy config will enable proxy, for config_enabled "
+                "true and proxy server valid"
+             << ", enabled_before " << enabled_ << ", config_enabled "
+             << config_enabled << ", config_proxy_server "
+             << url::LogUtils::ConvertUrlWithMask(config_proxy_server);
+  enabled_ = config_enabled;
+  std::vector<net::ProxyServer> proxy_servers;
+  proxy_servers.push_back(proxy_server);
+  if (proxy_servers != proxy_servers_) {
+    proxy_servers_ = proxy_servers;
+    UpdateProxyServer();
+  }
+}
+
+void FallbackProxyConfig::InitializeHeadersForTesting(
+    const std::string& header) {
+  std::string token_info;
+  UpdateProxyToken(header, token_info);
+}
+
+}  // namespace fallback_proxy
