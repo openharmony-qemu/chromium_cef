@@ -83,7 +83,6 @@ bool SbClient::InMaliciousAllowlist(const PrefService* prefs,
 void SbClient::BuildAndCacheRedirectChain(const content::LoadCommittedDetails& load_details) {
   NavigationEntrySafeBrowsingData* safe_browsing_data =
       NavigationEntrySafeBrowsingData::GetOrCreate(load_details.entry);
-  safe_browsing_data->ClearSbBlockingPageInfoCache();
   if (!load_details.redirect_chain.empty() && load_details.did_replace_entry) {
     safe_browsing_data->SetRedirectChain(load_details.redirect_chain);
     LOG(INFO) << "SafeBrowsing " << __func__ << " set redirect chain size: "
@@ -185,7 +184,6 @@ void SbClient::NavigationEntryCommitted(
     LOG(INFO) << "SafeBrowsing NavigationEntryCommitted ShowBlockingPage";
     ShowBlockingPage();
   }
-  BlockingPageInfoCache::RemoveBlockingPageInfo(web_contents());
 }
 
 void SbClient::HandleChildModePolicy(OHSBThreatType block_type) {
@@ -523,7 +521,6 @@ void SbClient::SetEvilUrlPolicyAndHwCode(const GURL& url,
   	  LOG(INFO) << "SafeBrowsing SetEvilUrlPolicyAndHwCode ShowBlockingPage";
       ShowBlockingPage();
     }
-    BlockingPageInfoCache::RemoveBlockingPageInfo(web_contents());
   }
 }
 

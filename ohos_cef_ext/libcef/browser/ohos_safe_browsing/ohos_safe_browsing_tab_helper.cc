@@ -116,9 +116,17 @@ void SafeBrowsingTabHelper::DidRedirectNavigation(
 
 void SafeBrowsingTabHelper::DidStartNavigation(
     content::NavigationHandle* navigation_handle) {
+    if (!navigation_handle) {
+      LOG(ERROR) << "navigation_handle is nullptr";
+      return;
+    }
     metrics_collector_->Reset();
     metrics_collector_->RecordSbStartTime();
 
+    if ((!navigation_handle->IsRendererInitiated() || navigation_handle->HasUserGesture()) &&
+         navigation_handle->GetNetErrorCode() != net::ERR_BLOCKED_BY_CLIENT) {
+      SbClient::BlockingPageInfoCache::RemoveBlockingPageInfo(web_contents());
+    }
     DoQuerySafeBrowsing(navigation_handle, NavigationSourceType::kStart);
 }
 
