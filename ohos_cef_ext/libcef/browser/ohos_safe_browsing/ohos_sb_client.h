@@ -9,6 +9,7 @@
 
 #include "arkweb/chromium_ext/components/safe_browsing/content/browser/ohos_navigation_entry_safe_browsing_data.h"
 #include "arkweb/chromium_ext/components/safe_browsing/content/browser/ohos_sb_threat_type.h"
+#include "arkweb/ohos_nweb/src/capi/nweb_safe_browsing_detection_result_item.h"
 #include "components/prefs/pref_service.h"
 #include "content/browser/renderer_host/navigation_entry_impl.h"
 #include "content/public/browser/navigation_handle.h"
@@ -16,6 +17,7 @@
 #include "content/public/browser/web_contents_user_data.h"
 #include "libcef/browser/ohos_safe_browsing/ohos_sb_block_page.h"
 #include "base/memory/raw_ptr.h"
+#include "include/cef_frame.h"
 
 namespace ohos_safe_browsing {
 
@@ -77,11 +79,7 @@ class SbClient : public content::WebContentsObserver {
 
   void BuildAndCacheRedirectChain(const content::LoadCommittedDetails& load_details);
 
-  void SetEvilUrlPolicyAndHwCode(const GURL& url,
-                                 int policy,
-                                 OHSBThreatType block_type,
-                                 int hw_code,
-                                 const GURL& redirect_url);
+  void SetEvilUrlPolicyAndHwCode(const SafeBrowsingDetectionResult& detection_result);
 
   bool ShouldShowBlockingPage(const OhosSbBlockingPageInfo& info) const;
 
@@ -136,6 +134,7 @@ class SbClient : public content::WebContentsObserver {
                              int policy,
                              int64_t response_key);
  
+  void RequestSnapshotOnce(const OhosSbBlockingPageInfo& blocking_page_info);
 
   raw_ptr<PrefService> prefs_;
   bool incognito_mode_{false};

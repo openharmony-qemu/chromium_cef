@@ -4424,18 +4424,7 @@ void ArkWebBrowserHostExtImpl::OnSafeBrowsingDetectionResult(
   if(safeBrowsingDetectionResult.is_content_check && 
       nweb_ex::AlloyArkwebSafebrowsingAFDetectionConfig::GetInstance()
       ->IsArkwebSafebrowsingAFDetectionEnabled()){
-    ohos_safe_browsing::SafeBrowsingSnapshotManager::GetInstance().
-        SetNewUrl(safeBrowsingDetectionResult.access_url,
-        safeBrowsingDetectionResult, web_contents->GetNWebId());
     LOG(INFO) << "safeBrowsingDetectionResult isContentCheck is true";
-    auto browser = GetBrowser();
-    if (!ohos_safe_browsing::SafeBrowsingSnapshotManager::GetInstance().IsAllowRequestSnapshot() ||
-        browser == nullptr || browser->GetMainFrame() == nullptr ||
-        browser->GetMainFrame()->AsArkWebFrame() == nullptr) {
-      return;
-    }
- 
-    browser->GetMainFrame()->AsArkWebFrame()->RequestSnapshotOnce();
     if (safeBrowsingDetectionResult.is_from_af_detect) {
       ohos_safe_browsing::SafeBrowsingTabHelper* safe_browsing_tab_helper =
           ohos_safe_browsing::SafeBrowsingTabHelper::FromWebContents(web_contents);
@@ -4446,7 +4435,6 @@ void ArkWebBrowserHostExtImpl::OnSafeBrowsingDetectionResult(
           }
       }
     }
-    return;
   }
 #endif
 
