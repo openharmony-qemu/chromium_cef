@@ -82,9 +82,13 @@ constexpr int32_t APPLICATION_API_10 = 10;
 #include "base/ohos/nweb_engine_event_logger_code.h"
 #endif
 
+#if BUILDFLAG(ARKWEB_EX_FALLBACK_PROXY) || \
+    BUILDFLAG(ARKWEB_ERROR_PAGE_AUTO_RELOAD)
+#include "cef/ohos_cef_ext/libcef/browser/arkweb_error_page_auto_reloader.h"
+#endif
+
 #if BUILDFLAG(ARKWEB_EX_FALLBACK_PROXY)
 #include "cef/ohos_cef_ext/libcef/browser/arkweb_global_list_config.h"
-#include "cef/ohos_cef_ext/libcef/browser/arkweb_error_page_auto_reloader.h"
 #include "cef/ohos_cef_ext/libcef/browser/fallback_proxy/fallback_proxy_service.h"
 #include "components/error_page/content/browser/net_error_auto_reloader.h"
 #include "third_party/blink/public/common/renderer_preferences/renderer_preferences.h"
@@ -811,12 +815,15 @@ void ChromeContentBrowserClientCef::CreateThrottlesForNavigation(
   ArkWebInnerCreateThrottlesForNavigation(registry);
 #endif
 
-#if BUILDFLAG(ARKWEB_EX_FALLBACK_PROXY)
-  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
-        ::switches::kEnableNwebEx)) {
-      OHOS::NWeb::ErrorPageAutoReloader::MaybeCreateAndAddNavigationThrottle(
-              registry);
-  }
+// ErrorPageAutoReloader hosts both the fallback proxy auto reload (still
+// gated at runtime by --enable-nweb-ex inside the component) and the generic
+// network error auto reload (gated by the NWeb runtime switch). Register the
+// throttle unconditionally; actual reload behavior is decided by the runtime
+// switches inside the component.
+#if BUILDFLAG(ARKWEB_EX_FALLBACK_PROXY) || \
+    BUILDFLAG(ARKWEB_ERROR_PAGE_AUTO_RELOAD)
+  OHOS::NWeb::ErrorPageAutoReloader::MaybeCreateAndAddNavigationThrottle(
+      registry);
 #endif
 }
 

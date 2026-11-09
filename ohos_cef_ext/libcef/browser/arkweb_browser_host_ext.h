@@ -336,6 +336,11 @@ class ArkWebBrowserHostExtImpl : public ArkWebBrowserHostExt,
   bool IsAppLinkingEnabled() const override;
 #endif // BUILDFLAG(IS_ARKWEB)
 
+#if BUILDFLAG(ARKWEB_ERROR_PAGE_AUTO_RELOAD)
+  void SetAutoReloadEnabled(bool enable) override;
+  bool GetAutoReloadEnabled() const override;
+#endif
+
 #if BUILDFLAG(ARKWEB_INPUT_EVENTS)
   void AdvanceFocusForIME(int focusType) override;
 #endif
@@ -964,6 +969,9 @@ void SetAsyncStackId(uint64_t stackId) override;
 #if BUILDFLAG(IS_ARKWEB)
   bool is_arkweb_applinking_enabled_ = true;
 #endif // BUILDFLAG(IS_ARKWEB)
+#if BUILDFLAG(ARKWEB_ERROR_PAGE_AUTO_RELOAD)
+  bool auto_reload_enabled_ = false;
+#endif
 #if BUILDFLAG(ARKWEB_INPUT_EVENTS)
   float virtual_pixel_ratio_ = 2.0;
   uint64_t last_zoom_time_ = 0;

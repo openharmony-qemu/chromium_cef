@@ -1651,15 +1651,28 @@ class ArkWebBrowserHostExt : public virtual CefBrowserHost,
 #endif
 
 #if BUILDFLAG(IS_ARKWEB)
-  /// 
+  ///
   /// set applink enable
   ///
   virtual void EnableAppLinking(bool enable) = 0;
- 
-  /// 
+
+  ///
   /// get app link status
   ///
   virtual bool IsAppLinkingEnabled() const = 0;
+#endif
+
+#if BUILDFLAG(ARKWEB_ERROR_PAGE_AUTO_RELOAD)
+  ///
+  /// Set auto reload enabled. This is a browser-only setting that bypasses
+  /// the preference pipeline and directly pushes to ErrorPageAutoReloader.
+  ///
+  virtual void SetAutoReloadEnabled(bool enable) = 0;
+
+  ///
+  /// Get auto reload enabled status.
+  ///
+  virtual bool GetAutoReloadEnabled() const = 0;
 #endif
 
 #if BUILDFLAG(ARKWEB_BGTASK)

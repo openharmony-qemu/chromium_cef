@@ -219,6 +219,13 @@ libcef_arkweb_sources = [
   "//cef/ohos_cef_ext/libcef/browser/net/ohos_url_rewrite_controller.cc",
   "//cef/ohos_cef_ext/libcef/browser/cdp_handler.cpp",
   "//cef/ohos_cef_ext/libcef/browser/cdp_handler.h",
+
+  # ErrorPageAutoReloader hosts both the fallback proxy auto reload (gated at
+  # runtime, BUILDFLAG(ARKWEB_EX_FALLBACK_PROXY) guarded inside) and the
+  # generic network error auto reload (runtime switch via NWeb API), so it
+  # must always be compiled.
+  "//cef/ohos_cef_ext/libcef/browser/arkweb_error_page_auto_reloader.cc",
+  "//cef/ohos_cef_ext/libcef/browser/arkweb_error_page_auto_reloader.h",
   "//cef/ohos_cef_ext/libcef/browser/cef_navigation_entry_user_data.cc",
 ]
 if (defined(arkweb_logger_report) && arkweb_logger_report) {
@@ -251,8 +258,6 @@ if (defined(arkweb_ex_fallback_proxy) && arkweb_ex_fallback_proxy) {
     "//cef/ohos_cef_ext/libcef/browser/fallback_proxy/fallback_proxy_detector.cc",
     "//cef/ohos_cef_ext/libcef/browser/fallback_proxy/fallback_proxy_detector.h",
     "//cef/ohos_cef_ext/libcef/browser/fallback_proxy/fallback_proxy_service.cc",
-    "//cef/ohos_cef_ext/libcef/browser/arkweb_error_page_auto_reloader.cc",
-    "//cef/ohos_cef_ext/libcef/browser/arkweb_error_page_auto_reloader.h",
   ]
 }
 

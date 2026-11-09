@@ -98,6 +98,10 @@
 #include "cef/ohos_cef_ext/libcef/browser/anti_tracking/third_party_cookie_access_policy.h"
 #endif
 
+#if BUILDFLAG(ARKWEB_ERROR_PAGE_AUTO_RELOAD)
+#include "cef/ohos_cef_ext/libcef/browser/arkweb_error_page_auto_reloader.h"
+#endif
+
 #if BUILDFLAG(ARKWEB_I18N)
 #include "chrome/browser/browser_process.h"
 #include "third_party/blink/public/common/renderer_preferences/renderer_preferences.h"
@@ -1149,6 +1153,23 @@ bool ArkWebBrowserHostExtImpl::IsAppLinkingEnabled() const {
   return is_arkweb_applinking_enabled_;
 }
 #endif // BUILDFLAG(IS_ARKWEB)
+
+#if BUILDFLAG(ARKWEB_ERROR_PAGE_AUTO_RELOAD)
+void ArkWebBrowserHostExtImpl::SetAutoReloadEnabled(bool enable) {
+  auto_reload_enabled_ = enable;
+  if (auto* web_contents = GetWebContents()) {
+    OHOS::NWeb::ErrorPageAutoReloader::CreateForWebContents(web_contents);
+    if (auto* reloader =
+            OHOS::NWeb::ErrorPageAutoReloader::FromWebContents(web_contents)) {
+      reloader->SetAutoReloadEnabled(enable);
+    }
+  }
+}
+
+bool ArkWebBrowserHostExtImpl::GetAutoReloadEnabled() const {
+  return auto_reload_enabled_;
+}
+#endif
 
 int ArkWebBrowserHostExtImpl::GetNWebId() {
 #if BUILDFLAG(ARKWEB_EXT_DOWNLOAD)
