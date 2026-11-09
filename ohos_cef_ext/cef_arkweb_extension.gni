@@ -6,6 +6,7 @@ if (is_arkweb_ext) {
 libcef_arkweb_sources = [
   "//cef/ohos_cef_ext/include/arkweb_app_ext.h",
   "//cef/ohos_cef_ext/include/cef_download_item_ext.h",
+  "//cef/ohos_cef_ext/include/cef_navigation_entry_user_data.h",
   "//cef/ohos_cef_ext/libcef/browser/arkweb_browser_host_ext.cc",
   "//cef/ohos_cef_ext/libcef/browser/arkweb_browser_host_ext.h",
   "//cef/ohos_cef_ext/libcef/browser/arkweb_browser_info_manager_utils.cc",
@@ -218,6 +219,7 @@ libcef_arkweb_sources = [
   "//cef/ohos_cef_ext/libcef/browser/net/ohos_url_rewrite_controller.cc",
   "//cef/ohos_cef_ext/libcef/browser/cdp_handler.cpp",
   "//cef/ohos_cef_ext/libcef/browser/cdp_handler.h",
+  "//cef/ohos_cef_ext/libcef/browser/cef_navigation_entry_user_data.cc",
 ]
 if (defined(arkweb_logger_report) && arkweb_logger_report) {
   libcef_arkweb_sources += [

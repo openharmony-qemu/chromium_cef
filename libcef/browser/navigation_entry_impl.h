@@ -39,6 +39,9 @@ class CefNavigationEntryImpl
                   int& alpha_type,
                   int& pixel_width,
                   int& pixel_height) override;
+  void SetUserData(const CefString& key, const CefString& value) override;
+  CefString GetUserData(const CefString& key) override;
+  void RemoveUserData(const CefString& key) override;
 #endif  // BUILDFLAG(ARKWEB_NAVIGATION)
 };
 
