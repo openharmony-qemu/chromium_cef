@@ -70,6 +70,25 @@ class ErrorPageAutoReloader
   static void MaybeCreateAndAddNavigationThrottle(
       content::NavigationThrottleRegistry& registry);
 
+  // Returns the delay applied when scheduling the next auto-reload of a page
+  // after it's already been auto-reloaded `reload_count` times.
+  static base::TimeDelta GetNextReloadDelayForTesting(size_t reload_count);
+
+  // Permanently unsubscribes this object from receiving OnConnectionChanged
+  // notifications. Used in tests which want to drive this behavior explicitly.
+  void DisableConnectionChangeObservationForTesting();
+
+  // Returns the timer used internally to schedule the next auto-reload task,
+  // or null if no auto-reload task is currently scheduled.
+  std::optional<base::OneShotTimer>& next_reload_timer_for_testing() {
+    return next_reload_timer_;
+  }
+
+  // Sets whether automatic reload of generic network error pages is enabled.
+  // Pushed from the browser host when WebPreferences change; defaults to
+  // disabled. Does not affect the fallback proxy auto reload behavior, which
+  // is isolated via ErrorPageInfo.reason.
+  void SetAutoReloadEnabled(bool enable);
 
   // override content::WebContentsObserver:
   void DidStartNavigation(content::NavigationHandle* handle) override;
@@ -87,6 +106,11 @@ class ErrorPageAutoReloader
 
   void SetInitialConnectionType(network::mojom::ConnectionType type);
   bool IsWebContentsVisible();
+  bool ShouldAutoReload(content::NavigationHandle* handle);
+  // Returns true if the navigation error is a reloadable network error,
+  // ignoring the auto_reload_enabled_ switch. Used to preserve error page
+  // info when auto reload is disabled but the error is otherwise reloadable.
+  bool IsReloadableError(content::NavigationHandle* handle);
   void Reset();
   void PauseAutoReloadTimerIfRunning();
   void ResumeAutoReloadIfPaused();
@@ -112,8 +136,10 @@ class ErrorPageAutoReloader
   bool is_online_ = true;
   std::set<raw_ptr<content::NavigationHandle, SetExperimental>>
       pending_navigations_;
-  std::optional<base::OneShotTimer> reload_timer_;
+  std::optional<base::OneShotTimer> next_reload_timer_;
   std::optional<ErrorPageInfo> current_reloadable_error_page_info_;
+  size_t num_reloads_for_current_error_ = 0;
+  bool auto_reload_enabled_ = false;
   bool is_auto_reload_in_progress_ = false;
   base::WeakPtrFactory<ErrorPageAutoReloader> weak_ptr_factory_{this};
 
