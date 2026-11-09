@@ -987,7 +987,19 @@ display::ScreenInfos CefRenderWidgetHostViewOSR::GetNewScreenInfosForUpdate() {
     display_screen_info = ScreenInfoFrom(screen_info);
   }
 
+#if BUILDFLAG(IS_ARKWEB)
+  auto screen_infos =
+      ArkWebRenderWidgetHostViewOSRUtils::GetScreenInfosForArkweb(
+          display_screen_info);
+
+  LOG(DEBUG) << "[ScreenIsExtended] CEF OSR result"
+            << " screenInfoCount=" << screen_infos.screen_infos.size()
+            << " currentDisplayId=" << screen_infos.current_display_id
+            << " currentIsExtended=" << screen_infos.current().is_extended;
+  return screen_infos;
+#else
   return display::ScreenInfos(display_screen_info);
+#endif
 }
 
 void CefRenderWidgetHostViewOSR::TransformPointToRootSurface(

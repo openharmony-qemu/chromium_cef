@@ -481,6 +481,8 @@ test("libcef_static_unittests") {
     ]
     deps += [
       ":libcef_static",
+      "//ui/display",
+      "//ui/display/util",
       "libcef/common/mojom",
       "ohos_cef_ext/libcef/common/mojom:mojom_javascript_bridge",
     ]
@@ -1119,6 +1121,7 @@ source_set("libcef_static") {
     "//third_party/zlib:minizip",
     "//ui/base",
     "//ui/base/ime",
+    "//ui/display",
     "//ui/events",
     "//ui/events:events_base",
     "//ui/gfx",
