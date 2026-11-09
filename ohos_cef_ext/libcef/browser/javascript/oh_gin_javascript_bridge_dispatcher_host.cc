@@ -30,6 +30,7 @@ namespace {
 // For the sake of the storage API, make this quite large.
 const size_t MAX_RECURSION_DEPTH = 11;
 const size_t MAX_DATA_LENGTH = 10000;
+const size_t kMaxUrlLength = 2 * 1024 * 1024;
 
 class ValueConvertState {
  public:
@@ -1180,6 +1181,21 @@ base::ThreadLocalStorage::Slot& LastCallingFrameUrlContentTLS() {
       last_calling_frame_url_tls(&LastCallingFrameUrlDestructorFunc);
   return *last_calling_frame_url_tls;
 }
+
+void SetLastCallingFrameUrlTLS(const std::string& url) {
+  auto* info = static_cast<LastCallingFrameUrlInfo*>(
+      LastCallingFrameUrlContentTLS().Get());
+  if (!info) {
+    info = new LastCallingFrameUrlInfo();
+    info->url.reserve(kMaxUrlLength);
+    LastCallingFrameUrlContentTLS().Set(info);
+  }
+  if (url.size() > kMaxUrlLength) {
+    info->url = url.substr(0, kMaxUrlLength);
+  } else {
+    info->url = url;
+  }
+}
 #endif
 }  // namespace
 
@@ -1213,11 +1229,7 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethod(
   }
 
 #if BUILDFLAG(ARKWEB_SECURE_JAVASCRIPT_PROXY)
-  {
-    LastCallingFrameUrlInfo* url_info = new LastCallingFrameUrlInfo();
-    url_info->url = document_url;
-    LastCallingFrameUrlContentTLS().Set(reinterpret_cast<void*>(url_info));
-  }
+  SetLastCallingFrameUrlTLS(document_url);
 #endif
 
   if (content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
@@ -1285,11 +1297,7 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodAsync(
   }
 
 #if BUILDFLAG(ARKWEB_SECURE_JAVASCRIPT_PROXY)
-  {
-    LastCallingFrameUrlInfo* url_info = new LastCallingFrameUrlInfo();
-    url_info->url = document_url;
-    LastCallingFrameUrlContentTLS().Set(reinterpret_cast<void*>(url_info));
-  }
+  SetLastCallingFrameUrlTLS(document_url);
 #endif
 
   if (content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
@@ -1351,11 +1359,7 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodFlowbuf(
   }
 
 #if BUILDFLAG(ARKWEB_SECURE_JAVASCRIPT_PROXY)
-  {
-    LastCallingFrameUrlInfo* url_info = new LastCallingFrameUrlInfo();
-    url_info->url = document_url;
-    LastCallingFrameUrlContentTLS().Set(reinterpret_cast<void*>(url_info));
-  }
+  SetLastCallingFrameUrlTLS(document_url);
 #endif
 
   if (content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
