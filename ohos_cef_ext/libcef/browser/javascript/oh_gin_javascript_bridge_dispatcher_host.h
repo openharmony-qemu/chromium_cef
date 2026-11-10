@@ -45,12 +45,6 @@ struct JsProxyPermissionConfigData {
   std::string method_name;
 };
 
-#if BUILDFLAG(ARKWEB_SECURE_JAVASCRIPT_PROXY)
-typedef struct LastCallingFrameUrlInfo {
-  std::string url;
-} LastCallingFrameUrlInfo;
-#endif
-
 class OhGinJavascriptBridgeDispatcherHost
     : public base::RefCountedDeleteOnSequence<
           OhGinJavascriptBridgeDispatcherHost>,
