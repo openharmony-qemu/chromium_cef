@@ -60,10 +60,10 @@ static const int kMaxUserNameLength = 128;
 static const int kMaxPasswordLength = 256;
 static const int kMaxUrlLength = 256;
 static const int kMaxDiconnectCount = 3;
-const std::string BUNDLE_NAME = "com.huawei.hmos.passwordvault";
-const std::string ABILITY_NAME = "ServiceAbility";
-const std::string TOKEN = "passwordVaultServiceKey";
-const std::u16string MIGRATION_LABEL = u"33ee52bb-c2d5-4e13-ba45-94c2e206a6fd";
+constexpr char BUNDLE_NAME[] = "com.huawei.hmos.passwordvault";
+constexpr char ABILITY_NAME[] = "ServiceAbility";
+constexpr char TOKEN[] = "passwordVaultServiceKey";
+constexpr char16_t MIGRATION_LABEL[] = u"33ee52bb-c2d5-4e13-ba45-94c2e206a6fd";
  
 struct UserData {
   std::string username;
