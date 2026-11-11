@@ -4,6 +4,7 @@
 // found in the LICENSE file.
 
 #include <sys/mman.h>
+#include <unistd.h>
 #include "arkweb/build/features/features.h"
 
 #if BUILDFLAG(ARKWEB_SECURE_JAVASCRIPT_PROXY)
@@ -1353,6 +1354,9 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodFlowbuf(
              << method_name;
   if (!CheckIsInJsPermission(document_url, method_name, object_id, false) ||
       !CheckIsInJsPermission(document_url, method_name, object_id, true)) {
+    if (fd >= 0) {
+      close(fd);
+    }
     *error_code =
         content::mojom::OhGinJavascriptBridgeError::kOhGinJavascriptBridgePermissionDenied;
     return;
@@ -1393,6 +1397,9 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodFlowbuf(
   if (!client_) {
     LOG(ERROR) << "OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodFlowbuf: "
                   "client_ is null";
+    if (fd >= 0) {
+      close(fd);
+    }
     *error_code =
         content::mojom::OhGinJavascriptBridgeError::kOhGinJavascriptBridgeClientDeleted;
     return;
@@ -1423,6 +1430,9 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodFlowbufAsync(
       !CheckIsInJsPermission(document_url, method_name, object_id, true)) {
     LOG(ERROR) << "OhGinJavascriptBridgeDispatcherHost::"
                   "OnInvokeMethodFlowbufAsync: jsb permission denied";
+    if (fd >= 0) {
+      close(fd);
+    }
     return;
   }
   if (content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
@@ -1457,6 +1467,9 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodFlowbufAsync(
     LOG(ERROR)
         << "OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodFlowbufAsync: "
            "client_ is null";
+    if (fd >= 0) {
+      close(fd);
+    }
     return;
   }
   // 为了兼容老版本webcotroller方式, classname可能为空
