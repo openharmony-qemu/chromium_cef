@@ -1,0 +1,23 @@
+diff a/libcef/browser/chrome/chrome_browser_host_impl.h b/libcef/browser/chrome/chrome_browser_host_impl.h	(rejected hunks)
+@@ -11,19 +11,20 @@
+ #include "base/memory/raw_ptr.h"
+ #include "base/memory/weak_ptr.h"
+ #include "cef/libcef/browser/browser_host_base.h"
+ #include "cef/libcef/browser/chrome/browser_delegate.h"
+ #include "chrome/browser/ui/browser.h"
++#include "ohos_cef_ext/libcef/browser/arkweb_browser_host_ext.h"
+ 
+ class ChromeBrowserDelegate;
+ class ChromeBrowserView;
+ 
+ // CefBrowser implementation for Chrome style. Method calls are delegated
+ // to the chrome Browser object or the WebContents as appropriate. See the
+ // ChromeBrowserDelegate documentation for additional details. All methods are
+ // thread-safe unless otherwise indicated.
+-class ChromeBrowserHostImpl : public CefBrowserHostBase {
++class ChromeBrowserHostImpl : public ArkWebBrowserHostExtImpl {
+  public:
+   // CEF-specific parameters passed via Browser::CreateParams::cef_params and
+   // possibly shared by multiple Browser instances.
+   class DelegateCreateParams : public cef::BrowserDelegate::CreateParams {
+    public:

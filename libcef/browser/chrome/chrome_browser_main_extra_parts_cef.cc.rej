@@ -1,0 +1,46 @@
+diff a/libcef/browser/chrome/chrome_browser_main_extra_parts_cef.cc b/libcef/browser/chrome/chrome_browser_main_extra_parts_cef.cc	(rejected hunks)
+@@ -9,10 +9,11 @@
+ #include "cef/libcef/browser/chrome/chrome_context_menu_handler.h"
+ #include "cef/libcef/browser/chrome/chrome_startup_browser_creator.h"
+ #include "cef/libcef/browser/context.h"
+ #include "cef/libcef/browser/file_dialog_runner.h"
+ #include "cef/libcef/browser/permission_prompt.h"
++#include "chrome/browser/browser_process.h"
+ #include "chrome/browser/profiles/profile.h"
+ #include "chrome/browser/ui/views/chrome_constrained_window_views_client.h"
+ #include "components/constrained_window/constrained_window_views.h"
+ 
+ #if BUILDFLAG(IS_LINUX)
+@@ -22,10 +23,32 @@
+ 
+ #if BUILDFLAG(IS_WIN)
+ #include "chrome/browser/win/app_icon.h"
+ #endif
+ 
++#if BUILDFLAG(ARKWEB_ENCRYPT)
++#include "base/path_service.h"
++#include "chrome/common/chrome_paths.h"
++#include "chrome/grit/branded_strings.h"
++#include "components/os_crypt/sync/os_crypt.h"
++#include "components/password_manager/core/browser/password_manager_switches.h"
++#include "ui/base/l10n/l10n_util.h"
++#endif
++
++#if BUILDFLAG(ARKWEB_NO_STATE_PREFETCH)
++#include "base/base_switches.h"
++#include "cef/ohos_cef_ext/libcef/browser/predictors/loading_predictor.h"
++#include "cef/ohos_cef_ext/libcef/browser/predictors/loading_predictor_factory.h"
++#include "cef/ohos_cef_ext/libcef/browser/predictors/predictor_database.h"
++#endif
++
++#include "cef/ohos_cef_ext/libcef/browser/arkweb_request_context_impl_ext.h"
++
++#if BUILDFLAG(ARKWEB_COOKIE)
++#include "cef/ohos_cef_ext/libcef/browser/chrome/chrome_browser_main_extra_parts_cef_for_include.cc"
++#endif
++
+ ChromeBrowserMainExtraPartsCef::ChromeBrowserMainExtraPartsCef() = default;
+ 
+ ChromeBrowserMainExtraPartsCef::~ChromeBrowserMainExtraPartsCef() = default;
+ 
+ void ChromeBrowserMainExtraPartsCef::PostProfileInit(Profile* profile,

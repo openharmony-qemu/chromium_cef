@@ -26,6 +26,14 @@
 #include "ui/views/widget/desktop_aura/desktop_window_tree_host_linux.h"
 #endif
 
+#if BUILDFLAG(ARKWEB_INPUT_EVENTS) && !defined(COMPONENT_BUILD)
+#include "arkweb/chromium_ext/base/ohos/sys_info_utils_ext.h"
+#include "arkweb/chromium_ext/ui/events/features_ext.h"
+#include "base/feature_list.h"
+#include "ui/events/keycodes/keyboard_code_conversion_x.h"
+#include "ui/events/keycodes/keyboard_code_conversion_xkb.h"
+#endif
+
 CefBrowserPlatformDelegateNativeLinux::CefBrowserPlatformDelegateNativeLinux(
     const CefWindowInfo& window_info,
     SkColor background_color)

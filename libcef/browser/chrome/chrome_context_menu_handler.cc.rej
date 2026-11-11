@@ -1,0 +1,17 @@
+diff a/libcef/browser/chrome/chrome_context_menu_handler.cc b/libcef/browser/chrome/chrome_context_menu_handler.cc	(rejected hunks)
+@@ -91,11 +91,15 @@ class CefContextMenuObserver : public RenderViewContextMenuObserver,
+   CefContextMenuObserver& operator=(const CefContextMenuObserver&) = delete;
+ 
+   // RenderViewContextMenuObserver methods:
+ 
+   void InitMenu(const content::ContextMenuParams& params) override {
++#if BUILDFLAG(IS_ARKWEB)
++    params_ = new ArkWebCefContextMenuParamsImplExt(
++#else
+     params_ = new CefContextMenuParamsImpl(
++#endif
+         const_cast<content::ContextMenuParams*>(&context_menu_->params()));
+     model_ = new CefSimpleMenuModelImpl(
+         const_cast<ui::SimpleMenuModel*>(&context_menu_->menu_model()),
+         context_menu_, this, /*is_owned=*/false, /*is_submenu=*/false);
+ 

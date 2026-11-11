@@ -1,0 +1,18 @@
+diff a/libcef/browser/alloy/alloy_browser_host_impl.cc b/libcef/browser/alloy/alloy_browser_host_impl.cc	(rejected hunks)
+@@ -606,10 +705,16 @@ bool AlloyBrowserHostImpl::IsFullscreenForTabOrPending(
+   return is_fullscreen_;
+ }
+ 
+ blink::mojom::DisplayMode AlloyBrowserHostImpl::GetDisplayMode(
+     const content::WebContents* web_contents) {
++#if BUILDFLAG(ARKWEB_VIDEO_ASSISTANT)
++  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
++        "enable-nweb-ex-video-assistant")) {
++    return blink::mojom::DisplayMode::kBrowser;
++  }
++#endif // ARKWEB_VIDEO_ASSISTANT
+   return is_fullscreen_ ? blink::mojom::DisplayMode::kFullscreen
+                         : blink::mojom::DisplayMode::kBrowser;
+ }
+ 
+ void AlloyBrowserHostImpl::FindReply(content::WebContents* web_contents,

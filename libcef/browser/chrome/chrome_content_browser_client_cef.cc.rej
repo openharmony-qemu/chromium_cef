@@ -1,0 +1,263 @@
+diff a/libcef/browser/chrome/chrome_content_browser_client_cef.cc b/libcef/browser/chrome/chrome_content_browser_client_cef.cc	(rejected hunks)
+@@ -49,52 +50,126 @@
+ 
+ #if !BUILDFLAG(IS_MAC)
+ #include "cef/libcef/browser/chrome/chrome_web_contents_view_delegate_cef.h"
+ #endif
+ 
++#if BUILDFLAG(IS_ARKWEB)
++#include "base/files/file_util.h"
++#include "base/ohos/sys_info_utils_ext.h"
++#include "cef/ohos_cef_ext/libcef/browser/alloy/alloy_client_cert_identity.h"
++#include "cef/ohos_cef_ext/libcef/browser/alloy/alloy_client_cert_lookup_table.h"
++#include "cef/ohos_cef_ext/libcef/browser/alloy/alloy_ssl_platform_key.h"
++#include "cef/ohos_cef_ext/libcef/browser/alloy/alloy_ssl_platform_key_ohos.h"
++#include "cef/ohos_cef_ext/libcef/browser/alloy/alloy_ssl_platform_u_key_ohos.h"
++#include "content/public/browser/shared_cors_origin_access_list.h"
++#endif
++
++#if BUILDFLAG(ARKWEB_CA)
++#include "base/base_switches.h"
++#include "third_party/bounds_checking_function/include/securec.h"
++constexpr int32_t APPLICATION_API_10 = 10;
++#endif
++
++#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
++#include "cef/ohos_cef_ext/libcef/browser/ark_web_certificate_query.h"
++#include "components/page_load_metrics/browser/metrics_web_contents_observer.h"
++#include "extensions/browser/event_router.h"
++#include "extensions/browser/extension_frame_host.h"
++#include "extensions/browser/renderer_startup_helper.h"
++#endif  // BUILDFLAG(ARKWEB_NETWORK_LOAD)
++
++#if BUILDFLAG(IS_ARKWEB)
++#include "base/ohos/nweb_engine_event_logger.h"
++#include "base/ohos/nweb_engine_event_logger_code.h"
++#endif
++
++#if BUILDFLAG(ARKWEB_EX_FALLBACK_PROXY)
++#include "cef/ohos_cef_ext/libcef/browser/arkweb_global_list_config.h"
++#include "cef/ohos_cef_ext/libcef/browser/arkweb_error_page_auto_reloader.h"
++#include "cef/ohos_cef_ext/libcef/browser/fallback_proxy/fallback_proxy_service.h"
++#include "components/error_page/content/browser/net_error_auto_reloader.h"
++#include "third_party/blink/public/common/renderer_preferences/renderer_preferences.h"
++#endif
++
+ #if BUILDFLAG(IS_WIN)
+ #include "cef/libcef_dll/bootstrap/bootstrap_util_win.h"
+ #endif
+ 
++#if BUILDFLAG(ARKWEB_EXT_EXTENSIONS_HEADER_CLIENT)
++#include "ohos_nweb_ex/overrides/cef/libcef/browser/alloy/alloy_ark_web_global_config.h"
++#endif
++
++#if BUILDFLAG(ARKWEB_NO_STATE_PREFETCH)
++#include "base/base_switches.h"
++#endif // BUILDFLAG(ARKWEB_NO_STATE_PREFETCH)
++
+ namespace {
+ 
++#if BUILDFLAG(IS_ARKWEB)
++void TransferVector(const std::vector<std::string>& source,
++std::vector<CefString>& target) {
++if (!target.empty()) {
++target.clear();
++}
++
++if (!source.empty()) {
++std::vector<std::string>::const_iterator it = source.begin();
++for (; it != source.end(); ++it) {
++target.push_back(*it);
++}
++}
++}
++#endif
++
++#if BUILDFLAG(IS_ARKWEB)
++#include "cef/ohos_cef_ext/libcef/browser/chrome/chrome_content_browser_client_cef_for_include_verify_pin.cc"
++#endif  // BUILDFLAG(IS_ARKWEB)
++
+ class CefSelectClientCertificateCallbackImpl
+-    : public CefSelectClientCertificateCallback {
++    : public CefSelectClientCertificateCallbackExt {
+  public:
++#if !BUILDFLAG(IS_ARKWEB)
+   explicit CefSelectClientCertificateCallbackImpl(
+       std::unique_ptr<content::ClientCertificateDelegate> delegate)
+       : delegate_(std::move(delegate)) {}
++#endif
+ 
+   CefSelectClientCertificateCallbackImpl(
+       const CefSelectClientCertificateCallbackImpl&) = delete;
+   CefSelectClientCertificateCallbackImpl& operator=(
+       const CefSelectClientCertificateCallbackImpl&) = delete;
+ 
++#if !BUILDFLAG(IS_ARKWEB)
+   ~CefSelectClientCertificateCallbackImpl() override {
+     // If Select has not been called, call it with NULL to continue without any
+     // client certificate.
+     RunNow(std::move(delegate_), nullptr);
+   }
++#endif
+ 
++  #if !BUILDFLAG(IS_ARKWEB)
+   void Select(CefRefPtr<CefX509Certificate> cert) override {
+     if (!CEF_CURRENTLY_ON_UIT()) {
+       CEF_POST_TASK(
+           CEF_UIT,
+           base::BindOnce(&CefSelectClientCertificateCallbackImpl::Select, this,
+                          cert));
+     } else {
+       RunNow(std::move(delegate_), cert);
+     }
+   }
++#endif
+ 
+   [[nodiscard]] std::unique_ptr<content::ClientCertificateDelegate>
+   DisconnectDelegate() {
++    LOG(DEBUG) << "CefSelectClientCertificateCallbackImpl::DisconnectDelegate";
+     CEF_REQUIRE_UIT();
+     return std::move(delegate_);
+   }
+ 
+  private:
++#if !BUILDFLAG(IS_ARKWEB)
+   static void RunNow(
+       std::unique_ptr<content::ClientCertificateDelegate> delegate,
+       CefRefPtr<CefX509Certificate> cert) {
+     CEF_REQUIRE_UIT();
+ 
+@@ -177,10 +257,17 @@ HINSTANCE GetCodeModuleHandle() {
+ }
+ #endif
+ 
+ }  // namespace
+ 
++#if BUILDFLAG(IS_ARKWEB)
++// KEEP THIS HEADER FILE INCLUDED AFTER THE ANONYMOUS NAMESPACE.
++// ChromeContentBrowserClientCef's implementation depends on functions in this
++// file.
++#include "cef/ohos_cef_ext/libcef/browser/chrome/chrome_content_browser_client_cef_for_include_after.cc"
++#endif  // BUILDFLAG(IS_ARKWEB)
++
+ ChromeContentBrowserClientCef::ChromeContentBrowserClientCef() = default;
+ ChromeContentBrowserClientCef::~ChromeContentBrowserClientCef() = default;
+ 
+ void ChromeContentBrowserClientCef::CleanupOnUIThread() {
+   browser_main_parts_ = nullptr;
+@@ -423,20 +587,43 @@ void ChromeContentBrowserClientCef::OverrideWebPreferences(
+ 
+   SkColor base_background_color;
+   auto browser = CefBrowserHostBase::GetBrowserForContents(web_contents);
+   if (browser) {
+     renderer_prefs::SetCefPrefs(browser->settings(), *prefs);
++#if BUILDFLAG(ARKWEB_EXT_EXCEPTION_LIST)
++    renderer_prefs::SetJsDefaultContent(web_contents, *prefs);
++#endif
++#if BUILDFLAG(ARKWEB_DEVTOOLS)
++    renderer_prefs::SetDevToolsThemePrefs(web_contents, browser->settings(),
++        *prefs);
++#endif
++    auto frame = browser->GetMainFrame();
++
++#if BUILDFLAG(ARKWEB_COMPOSITE_RENDER)
++    if (frame && frame->IsValid() &&
++        (browser->settings().text_size_percent > 0)) {
++      (*prefs).force_enable_zoom = false;
++      (*prefs).text_zoom_factor =
++          browser->settings().text_size_percent / 100.0f;
++      static_cast<CefFrameHostImpl*>(frame.get())
++          ->PutZoomingForTextFactorEx((*prefs).text_zoom_factor);
++    }
++#endif
+ 
+     // Set the background color for the WebView.
+     base_background_color = browser->GetBackgroundColor();
+   } else {
+     // We don't know for sure that the browser will be windowless but assume
+     // that the global windowless state is likely to be accurate.
+     base_background_color =
+         CefContext::Get()->GetBackgroundColor(nullptr, STATE_DEFAULT);
+   }
+ 
++#if BUILDFLAG(ARKWEB_EXT_FORCE_ZOOM) || BUILDFLAG(ARKWEB_ZOOM)
++  (*prefs).force_enable_zoom = web_contents->GetForceEnableZoom();
++#endif
++
+   web_contents->SetPageBaseBackgroundColor(base_background_color);
+ }
+ 
+ void ChromeContentBrowserClientCef::WillCreateURLLoaderFactory(
+     content::BrowserContext* browser_context,
+@@ -487,15 +674,25 @@ void ChromeContentBrowserClientCef::WillCreateURLLoaderFactory(
+     intercepting_factory->overridden_factory_receiver =
+         intercepting_factory->overriding_factory
+             .InitWithNewPipeAndPassReceiver();
+   }
+ 
++  mojo::PendingRemote<network::mojom::TrustedURLLoaderHeaderClient>*
++    extensions_url_loader_header_client_remote_ptr = nullptr;
++
++#if BUILDFLAG(ARKWEB_EXT_EXTENSIONS_HEADER_CLIENT)
++  mojo::PendingRemote<network::mojom::TrustedURLLoaderHeaderClient> extensions_url_loader_header_client_remote;
++  if (nweb_ex::AlloyArkWebGlobalConfig::GetInstance()->ExtensionHeaderClientHandleEnable()) {
++    extensions_url_loader_header_client_remote_ptr = &extensions_url_loader_header_client_remote;
++  }
++#endif
++
+   // TODO(chrome): Is it necessary to proxy |header_client| callbacks?
+   ChromeContentBrowserClient::WillCreateURLLoaderFactory(
+       browser_context, frame, render_process_id, type, request_initiator,
+       isolation_info, navigation_id, ukm_source_id, factory_builder,
+-      /*header_client=*/nullptr, bypass_redirect_checks, disable_secure_dns,
++      /*header_client=*/extensions_url_loader_header_client_remote_ptr, bypass_redirect_checks, disable_secure_dns,
+       handler_override, navigation_response_task_runner);
+ 
+   DCHECK(intercepting_factory->overriding_factory);
+   DCHECK(intercepting_factory->overridden_factory_receiver);
+   if (!factory_override) {
+@@ -610,19 +833,44 @@ bool ChromeContentBrowserClientCef::ConfigureNetworkContextParams(
+     // Cancel NetworkContext creation in
+     // StoragePartitionImpl::InitNetworkContext.
+     return false;
+   }
+ 
++#if BUILDFLAG(IS_ARKWEB)
++  ArkWebInnerConfigureNetworkContextParamsBefore(context, network_context_params);
++#endif  // BUILDFLAG(IS_ARKWEB)
++
+   ChromeContentBrowserClient::ConfigureNetworkContextParams(
+       context, in_memory, relative_partition_path, network_context_params,
+       cert_verifier_creation_params);
+ 
+   auto cef_context = CefBrowserContext::FromBrowserContext(context);
++
++#if BUILDFLAG(IS_ARKWEB)
++  ArkWebInnerConfigureNetworkContextParamsAfter(context, network_context_params);
++#endif  // BUILDFLAG(IS_ARKWEB)
++
+   network_context_params->cookieable_schemes =
+       cef_context ? cef_context->GetCookieableSchemes()
+                   : CefBrowserContext::GetGlobalCookieableSchemes();
+ 
++#if BUILDFLAG(ARKWEB_EX_FALLBACK_PROXY)
++  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
++          switches::kEnableNwebEx)) {
++    if (fallback_proxy::FallbackProxyService::GetInstance()) {
++      network_context_params->custom_proxy_connection_observer_remote =
++          fallback_proxy::FallbackProxyService::GetInstance()
++              ->NewProxyConnectionObserverRemote();
++      mojo::Remote<network::mojom::CustomProxyConfigClient> config_client;
++      network_context_params->custom_proxy_config_client_receiver =
++          config_client.BindNewPipeAndPassReceiver();
++      fallback_proxy::FallbackProxyService::GetInstance()
++          ->AddCustomProxyConfigClient(std::move(config_client));
++    }
++  }
++#endif  // HW_WEBVIEW_NETWORK
++
+   return true;
+ }
+ 
+ std::unique_ptr<content::LoginDelegate>
+ ChromeContentBrowserClientCef::CreateLoginDelegate(

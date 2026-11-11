@@ -1,0 +1,15 @@
+diff a/libcef/browser/chrome/chrome_browser_delegate.h b/libcef/browser/chrome/chrome_browser_delegate.h	(rejected hunks)
+@@ -108,10 +108,13 @@ class ChromeBrowserDelegate : public cef::BrowserDelegate {
+   void LoadingStateChanged(content::WebContents* source,
+                            bool should_show_loading_ui) override;
+   void UpdateTargetURL(content::WebContents* source, const GURL& url) override;
+   bool DidAddMessageToConsole(content::WebContents* source,
+                               blink::mojom::ConsoleMessageLevel log_level,
++#if BUILDFLAG(ARKWEB_CONSOLE_LOGGING)
++                              blink::mojom::ConsoleMessageSource log_source,
++#endif
+                               const std::u16string& message,
+                               int32_t line_no,
+                               const std::u16string& source_id) override;
+   void EnterFullscreenModeForTab(
+       content::RenderFrameHost* requesting_frame,
