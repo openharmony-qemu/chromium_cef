@@ -1,0 +1,38 @@
+diff a/include/cef_client.h b/include/cef_client.h	(rejected hunks)
+@@ -76,31 +90,26 @@ class CefClient : public virtual CefBaseRefCounted {
+   /// implementation will be used.
+   ///
+   /*--cef()--*/
+   virtual CefRefPtr<CefCommandHandler> GetCommandHandler() { return nullptr; }
+ 
+-  ///
+-  /// Return the handler for context menus. If no handler is provided the
+-  /// default implementation will be used.
+-  ///
+-  /*--cef()--*/
+-  virtual CefRefPtr<CefContextMenuHandler> GetContextMenuHandler() {
++  virtual CefRefPtr<CefContextMenuHandlerExt> GetContextMenuHandler() {
+     return nullptr;
+   }
+ 
+   ///
+   /// Return the handler for dialogs. If no handler is provided the default
+   /// implementation will be used.
+   ///
+-  /*--cef()--*/
+-  virtual CefRefPtr<CefDialogHandler> GetDialogHandler() { return nullptr; }
++  virtual CefRefPtr<CefDialogHandlerExt> GetDialogHandler() { return nullptr; }
+ 
+   ///
+   /// Return the handler for browser display state events.
+   ///
+-  /*--cef()--*/
+-  virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() { return nullptr; }
++  virtual CefRefPtr<ArkWebDisplayHandlerExt> GetDisplayHandler() {
++    return nullptr;
++  }
+ 
+   ///
+   /// Return the handler for download events. If no handler is returned
+   /// downloads will not be allowed.
+   ///
