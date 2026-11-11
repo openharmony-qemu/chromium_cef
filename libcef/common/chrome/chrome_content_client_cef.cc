@@ -8,8 +8,10 @@
 #include "cef/libcef/common/app_manager.h"
 #include "chrome/common/media/cdm_registration.h"
 
+#if !BUILDFLAG(ARKWEB_ENABLE_CDM) && !defined(COMPONENT_BUILD)
 #if BUILDFLAG(ENABLE_CDM_HOST_VERIFICATION)
 #include "cef/libcef/common/cdm_host_file_path.h"
+#endif
 #endif
 
 ChromeContentClientCef::ChromeContentClientCef() = default;
@@ -22,10 +24,12 @@ void ChromeContentClientCef::AddContentDecryptionModules(
     RegisterCdmInfo(cdms);
   }
 
+#if !BUILDFLAG(ARKWEB_ENABLE_CDM) && !defined(COMPONENT_BUILD)
 #if BUILDFLAG(ENABLE_CDM_HOST_VERIFICATION)
   if (cdm_host_file_paths) {
     cef::AddCdmHostFilePaths(cdm_host_file_paths);
   }
+#endif
 #endif
 }
 
@@ -33,3 +37,13 @@ void ChromeContentClientCef::AddAdditionalSchemes(Schemes* schemes) {
   ChromeContentClient::AddAdditionalSchemes(schemes);
   CefAppManager::Get()->AddAdditionalSchemes(schemes);
 }
+
+#if BUILDFLAG(IS_ARKWEB)
+bool ChromeContentClientCef::ShouldAllowDefaultSiteInstanceGroup() {
+  // ArkWeb needs to keep the M132 subframe sharing behavior.
+  // Disabling kDefaultSiteInstanceGroups allows cross-origin subframes to share
+  // the parent SiteInstance. This matches other ad WebView's approach.
+  // See crbug.com/419595581
+  return false;
+}
+#endif

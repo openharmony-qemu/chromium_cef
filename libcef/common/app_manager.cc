@@ -86,6 +86,14 @@ void CefAppManager::AddAdditionalSchemes(
     schemeRegistrar.GetSchemes(schemes);
   }
 
+#if BUILDFLAG(ARKWEB_SCHEME_HANDLER)
+  AsArkWebAppManagerExt()->SchemeHandlerAddCustomScheme(schemes);
+#endif
+
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+  AsArkWebAppManagerExt()->RenderAddCustomSchemes();
+#endif
+
   scheme_info_list_locked_ = true;
 }
 
@@ -106,3 +114,4 @@ const wchar_t* CefAppManager::GetResourceDllName() {
   return file_path;
 }
 #endif  // BUILDFLAG(IS_WIN)
+

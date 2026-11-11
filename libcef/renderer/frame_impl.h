@@ -31,15 +31,19 @@ class WebLocalFrame;
 class GURL;
 
 class CefBrowserImpl;
+class ArkwebFrameExtImpl;
 
 // Implementation of CefFrame. CefFrameImpl objects are owned by the
 // CefBrowerImpl and will be detached when the browser is notified that the
 // associated renderer WebFrame will close.
 class CefFrameImpl
-    : public CefFrame,
+    : public virtual CefFrame,
       public cef::mojom::RenderFrame,
       public blink_glue::CefExecutionContextLifecycleStateObserver {
  public:
+#if BUILDFLAG(IS_ARKWEB)
+  friend class ArkwebFrameExtImpl;
+#endif
   CefFrameImpl(CefBrowserImpl* browser, blink::WebLocalFrame* frame);
 
   CefFrameImpl(const CefFrameImpl&) = delete;

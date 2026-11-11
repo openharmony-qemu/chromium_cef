@@ -1,0 +1,13 @@
+diff a/libcef/renderer/render_frame_observer.cc b/libcef/renderer/render_frame_observer.cc	(rejected hunks)
+@@ -197,10 +197,11 @@ void CefRenderFrameObserver::OnDestruct() {
+ 
+ void CefRenderFrameObserver::AttachFrame(CefFrameImpl* frame) {
+   DCHECK(frame);
+   DCHECK(!frame_);
+   frame_ = frame;
++  frame_->OnAttached();
+ }
+ 
+ void CefRenderFrameObserver::OnLoadStart() {
+   CefRefPtr<CefApp> app = CefAppManager::Get()->GetApplication();
+   if (app.get()) {
