@@ -128,8 +128,8 @@
       'libcef_dll/wrapper_types.h',
     ],
     'libcef_dll_wrapper_sources_base': [
-      'libcef_dll/base/cef_atomic_flag.cc',
-      'libcef_dll/base/cef_callback_helpers.cc',
+      #'libcef_dll/base/cef_atomic_flag.cc',
+      #'libcef_dll/base/cef_callback_helpers.cc',
       'libcef_dll/base/cef_callback_internal.cc',
       'libcef_dll/base/cef_dump_without_crashing.cc',
       'libcef_dll/base/cef_lock.cc',
@@ -160,7 +160,8 @@
       'libcef_dll/wrapper/cef_message_router.cc',
       'libcef_dll/wrapper/cef_message_router_utils.cc',
       'libcef_dll/wrapper/cef_message_router_utils.h',
-      'libcef_dll/wrapper/cef_resource_manager.cc',
+      # unused code, deleted for asan build
+      #'libcef_dll/wrapper/cef_resource_manager.cc',
       'libcef_dll/wrapper/cef_scoped_temp_dir.cc',
       'libcef_dll/wrapper/cef_stream_resource_handler.cc',
       'libcef_dll/wrapper/cef_xml_object.cc',

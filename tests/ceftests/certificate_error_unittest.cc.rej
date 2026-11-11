@@ -1,0 +1,28 @@
+diff a/tests/ceftests/certificate_error_unittest.cc b/tests/ceftests/certificate_error_unittest.cc	(rejected hunks)
+@@ -361,12 +361,11 @@ class RedirectMismatchedFromHandlerTest : public CertificateErrorTest {
+       : CertificateErrorTest(
+             /*cert_type=*/CEF_TEST_CERT_OK_DOMAIN,
+             /*expect_load_success=*/continue_invalid_certificate,
+             /*expect_certificate_error=*/true) {}
+ 
+-  CefRefPtr<CefResourceHandler> GetResourceHandler(
+-      CefRefPtr<CefBrowser> browser,
++  CefRefPtr<CefResourceHandler>(CefRefPtr<CefBrowser> browser,
+       CefRefPtr<CefFrame> frame,
+       CefRefPtr<CefRequest> request) override {
+     EXPECT_IO_THREAD();
+ 
+     const std::string& url = request->GetURL();
+@@ -375,11 +374,11 @@ class RedirectMismatchedFromHandlerTest : public CertificateErrorTest {
+       return new CefStreamResourceHandler(
+           301, "Permanent Redirect", "text/html", {{"Location", GetEndURL()}},
+           /*stream=*/nullptr);
+     }
+ 
+-    return TestHandler::GetResourceHandler(browser, frame, request);
++    return TestHandler::(browser, frame, request);
+   }
+ 
+  protected:
+   std::string GetStartURL() const override {
+     return "https://certificate-test.com/index.html";
