@@ -17,6 +17,10 @@
 #include "content/public/browser/render_process_host.h"
 #include "ipc/ipc_message.h"
 
+#if BUILDFLAG(IS_ARKWEB)
+#include "cef/ohos_cef_ext/libcef/browser/browser_info_for_include.cc"
+#endif
+
 CefBrowserInfo::FrameInfo::~FrameInfo() {
 #if DCHECK_IS_ON()
   if (frame_ && !IsCurrentMainFrame()) {
@@ -147,6 +151,10 @@ void CefBrowserInfo::MaybeCreateFrame(content::RenderFrameHost* host) {
                                    ->render_manager()
                                    ->current_frame_host() != host);
 
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+  bool is_prerendering = CefBrowserInfo::IsPrerendering(host);
+#endif
+
   {
     NotificationStateLock lock_scope(this);
     DCHECK(browser_);
@@ -164,13 +172,24 @@ void CefBrowserInfo::MaybeCreateFrame(content::RenderFrameHost* host) {
       // Update the associated RFH, which may have changed.
       info->frame_->MaybeAttach(this, host);
 
-      if (info->is_speculative_ && !is_speculative) {
+      if (info->is_speculative_ && !is_speculative
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+&&
+        !is_prerendering
+#endif
+        ) {
         // Upgrade the frame info from speculative to non-speculative.
         if (info->is_main_frame_) {
           // Set the main frame object.
           SetMainFrame(browser_, info->frame_);
         }
         info->is_speculative_ = false;
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+      if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+        ::switches::kEnableNwebEx)) {
+        info->is_prerendering_ = false;
+      }
+#endif
       }
       return;
     }
@@ -179,11 +198,22 @@ void CefBrowserInfo::MaybeCreateFrame(content::RenderFrameHost* host) {
     frame_info->global_id_ = global_id;
     frame_info->is_main_frame_ = is_main_frame;
     frame_info->is_speculative_ = is_speculative;
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+    ::switches::kEnableNwebEx)) {
+    frame_info->is_prerendering_ = is_prerendering;
+  }
+#endif
 
     // Create a new frame object.
-    frame_info->frame_ = new CefFrameHostImpl(this, host);
+    frame_info->frame_ = new ArkwebFrameHostExtImpl(this, host);
     MaybeNotifyFrameCreated(frame_info->frame_);
-    if (is_main_frame && !is_speculative) {
+    if (is_main_frame && !is_speculative
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+&&
+      !is_prerendering
+#endif
+      ) {
       SetMainFrame(browser_, frame_info->frame_);
     }
 
@@ -278,14 +308,41 @@ void CefBrowserInfo::RemoveFrame(content::RenderFrameHost* host) {
 
   auto frame_info = it->second;
 
+#if BUILDFLAG(IS_ARKWEB)
+  if (browser_.get()) {
+    auto request_context = browser_->request_context();
+    if (request_context) {
+      request_context->OnRenderFrameDeleted(global_id,
+                                            frame_info->is_main_frame_);
+    } else {
+      LOG(ERROR) << "CefBrowserInfo::RemoveFrame: request_context is NULL."
+                 << "GlobalId: " << global_id
+                 << ", MainFrame:" << frame_info->is_main_frame_;
+    }
+  } else {
+    LOG(ERROR) << "CefBrowserInfo::RemoveFrame: request_context is NULL."
+               << "GlobalId: " << global_id;
+  }
+#else
   browser_->request_context()->OnRenderFrameDeleted(global_id,
                                                     frame_info->is_main_frame_);
+#endif
 
+#if BUILDFLAG(IS_ARKWEB)
+  if (frame_info->is_speculative_) {
+    last_delete_speculative_rfh_id_ = global_id;
+  }
+#endif
   // Remove from the lookup maps.
   frame_id_map_.erase(it);
 
   {
     auto it2 = frame_token_to_id_map_.find(host->GetGlobalFrameToken());
+#if BUILDFLAG(IS_ARKWEB)
+    if (frame_info->is_speculative_) {
+      last_delete_speculative_rfh_token_ = host->GetGlobalFrameToken();
+    }
+#endif
     DCHECK(it2 != frame_token_to_id_map_.end());
     frame_token_to_id_map_.erase(it2);
   }
@@ -333,7 +390,7 @@ CefRefPtr<CefFrameHostImpl> CefBrowserInfo::CreateTempSubFrame(
     parent = GetMainFrame();
   }
   // Intentionally not notifying for temporary frames.
-  return new CefFrameHostImpl(this, parent->frame_token());
+  return new ArkwebFrameHostExtImpl(this, parent->frame_token());
 }
 
 CefRefPtr<CefFrameHostImpl> CefBrowserInfo::GetFrameForHost(
@@ -360,6 +417,13 @@ CefRefPtr<CefFrameHostImpl> CefBrowserInfo::GetFrameForGlobalId(
   const auto it = frame_id_map_.find(global_id);
   if (it != frame_id_map_.end()) {
     const auto info = it->second;
+
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+    if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+      ::switches::kEnableNwebEx) && info->is_prerendering_) {
+      prefer_speculative = info->is_prerendering_;
+    }
+#endif
 
     if (info->is_speculative_ && !prefer_speculative) {
       if (info->is_main_frame_ && main_frame_) {

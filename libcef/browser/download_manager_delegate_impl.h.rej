@@ -1,0 +1,21 @@
+diff a/libcef/browser/download_manager_delegate_impl.h b/libcef/browser/download_manager_delegate_impl.h	(rejected hunks)
+@@ -57,17 +66,18 @@ class CefDownloadManagerDelegateImpl
+   CefRefPtr<CefBrowserHostBase> GetBrowser(download::DownloadItem* item);
+ 
+   void ResetManager();
+ 
+   raw_ptr<content::DownloadManager> manager_;
+-  base::WeakPtrFactory<content::DownloadManager> manager_ptr_factory_;
+   const bool alloy_bootstrap_;
+ 
+   // Map of DownloadItem to originating CefBrowserHostBase. Maintaining this
+   // map is necessary because DownloadItem::GetWebContents() may return NULL if
+   // the browser navigates while the download is in progress.
+   using ItemBrowserMap =
+       std::map<raw_ptr<download::DownloadItem>, raw_ptr<CefBrowserHostBase>>;
+   ItemBrowserMap item_browser_map_;
++
++  base::WeakPtrFactory<content::DownloadManager> manager_ptr_factory_;
+ };
+ 
+ #endif  // CEF_LIBCEF_BROWSER_DOWNLOAD_MANAGER_DELEGATE_IMPL_H_

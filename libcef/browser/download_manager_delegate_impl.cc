@@ -107,6 +107,13 @@ class CefBeforeDownloadCallbackImpl : public CefBeforeDownloadCallback {
     return std::move(callback_);
   }
 
+#if BUILDFLAG(IS_ARKWEB)
+  // TODO:
+  void Cancel() override {}
+  void Pause() override {}
+  void Resume() override {}
+#endif
+
  private:
   static void GenerateFilename(base::WeakPtr<DownloadManager> manager,
                                uint32_t download_id,
@@ -334,6 +341,7 @@ void CefDownloadManagerDelegateImpl::OnDownloadUpdated(DownloadItem* download) {
   }
 
   if (handler.get()) {
+#if !BUILDFLAG(IS_ARKWEB)
     CefRefPtr<CefDownloadItemImpl> download_item(
         new CefDownloadItemImpl(download));
     CefRefPtr<CefDownloadItemCallback> callback(new CefDownloadItemCallbackImpl(
@@ -342,6 +350,7 @@ void CefDownloadManagerDelegateImpl::OnDownloadUpdated(DownloadItem* download) {
     handler->OnDownloadUpdated(browser.get(), download_item.get(), callback);
 
     std::ignore = download_item->Detach(nullptr);
+#endif
   }
 }
 
@@ -386,10 +395,12 @@ void CefDownloadManagerDelegateImpl::OnDownloadCreated(DownloadManager* manager,
     // associated WebContents and consequently no associated CEF browser. In
     // that case DetermineDownloadTarget will be called before this method.
     // TODO(cef): Figure out how to expose this via a client callback.
+#if !BUILDFLAG(ARKWEB_DOWNLOAD)
     const std::vector<GURL>& url_chain = item->GetUrlChain();
     if (!url_chain.empty()) {
       LOG(INFO) << "Rejected download of " << url_chain.back().spec();
     }
+#endif
     item->Cancel(true);
   }
 }

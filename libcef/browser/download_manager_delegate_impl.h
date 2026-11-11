@@ -16,6 +16,11 @@
 #include "components/download/public/common/download_target_info.h"
 #include "content/public/browser/download_manager.h"
 
+#if BUILDFLAG(ARKWEB_EX_DOWNLOAD)
+#include "base/compiler_specific.h"
+#include "cef/include/cef_download_handler.h"
+#endif  //  ARKWEB_EX_DOWNLOAD
+
 class CefBrowserHostBase;
 
 class CefDownloadManagerDelegateImpl
@@ -33,7 +38,11 @@ class CefDownloadManagerDelegateImpl
 
   ~CefDownloadManagerDelegateImpl() override;
 
+#if BUILDFLAG(ARKWEB_EX_DOWNLOAD)
+ protected:
+#else
  private:
+#endif
   // DownloadItem::Observer methods.
   void OnDownloadUpdated(download::DownloadItem* item) override;
   void OnDownloadDestroyed(download::DownloadItem* item) override;

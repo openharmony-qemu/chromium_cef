@@ -13,6 +13,9 @@
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "mojo/public/cpp/bindings/self_owned_receiver.h"
+#if BUILDFLAG(ARKWEB_CLIPBOARD)
+#include "cef/ohos_cef_ext/libcef/browser/browser_frame_cc_for_include.cc"
+#endif
 
 CefBrowserFrame::CefBrowserFrame(
     content::RenderFrameHost* render_frame_host,

@@ -1,0 +1,16 @@
+diff a/libcef/browser/iothread_state.h b/libcef/browser/iothread_state.h	(rejected hunks)
+@@ -50,10 +50,14 @@ class CefIOThreadState : public base::RefCountedThreadSafe<
+       content::BrowserThread::IO>;
+   friend class base::DeleteHelper<CefIOThreadState>;
+ 
+   ~CefIOThreadState();
+ 
++#if BUILDFLAG(ARKWEB_DEVTOOLS)
++  void InitOnIOThread();
++#endif // BUILDFLAG(ARKWEB_DEVTOOLS)
++
+   // Map IDs to CefRequestContextHandler objects.
+   CefRequestContextHandlerMap handler_map_;
+ 
+   // Map (scheme, domain) to factories.
+   using SchemeHandlerFactoryMap = std::map<std::pair<std::string, std::string>,

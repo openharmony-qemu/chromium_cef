@@ -1,0 +1,52 @@
+diff a/libcef/browser/download_manager_delegate_impl.cc b/libcef/browser/download_manager_delegate_impl.cc	(rejected hunks)
+@@ -18,10 +18,11 @@
+ #include "cef/libcef/browser/download_item_impl.h"
+ #include "cef/libcef/browser/thread_util.h"
+ #include "content/public/browser/browser_context.h"
+ #include "content/public/browser/download_item_utils.h"
+ #include "content/public/browser/web_contents.h"
++// #include "libcef/browser/cef_download_item_impl_ext.h"
+ #include "net/base/filename_util.h"
+ #include "third_party/blink/public/mojom/choosers/file_chooser.mojom.h"
+ 
+ using content::DownloadManager;
+ using content::WebContents;
+@@ -294,12 +302,12 @@ class CefDownloadItemCallbackImpl : public CefDownloadItemCallback {
+ 
+ CefDownloadManagerDelegateImpl::CefDownloadManagerDelegateImpl(
+     DownloadManager* manager,
+     bool alloy_bootstrap)
+     : manager_(manager),
+-      manager_ptr_factory_(manager),
+-      alloy_bootstrap_(alloy_bootstrap) {
++      alloy_bootstrap_(alloy_bootstrap),
++      manager_ptr_factory_(manager) {
+   DCHECK(manager);
+   manager->AddObserver(this);
+ 
+   DownloadManager::DownloadVector items;
+   manager->GetAllDownloads(&items);
+@@ -408,10 +420,11 @@ bool CefDownloadManagerDelegateImpl::DetermineDownloadTarget(
+   }
+ 
+   bool handled = false;
+   CefRefPtr<CefDownloadHandler> handler = GetDownloadHandler(browser);
+   if (handler) {
++#if !BUILDFLAG(IS_ARKWEB)
+     base::FilePath suggested_name = net::GenerateFileName(
+         item->GetURL(), item->GetContentDisposition(), std::string(),
+         item->GetSuggestedFilename(), item->GetMimeType(), "download");
+ 
+     CefRefPtr<CefDownloadItemImpl> download_item(new CefDownloadItemImpl(item));
+@@ -431,10 +444,11 @@ bool CefDownloadManagerDelegateImpl::DetermineDownloadTarget(
+     if (!handled) {
+       *callback = callbackObj->Detach();
+     }
+ 
+     std::ignore = download_item->Detach(nullptr);
++#endif
+   }
+ 
+   // Cancel by default with Alloy style.
+   return handled ? true : alloy_bootstrap_;
+ }

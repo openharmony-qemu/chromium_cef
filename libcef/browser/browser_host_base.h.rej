@@ -1,0 +1,60 @@
+diff a/libcef/browser/browser_host_base.h b/libcef/browser/browser_host_base.h	(rejected hunks)
+@@ -280,17 +340,20 @@ class CefBrowserHostBase : public CefBrowserHost,
+   bool IsRenderProcessUnresponsive() override;
+   cef_runtime_style_t GetRuntimeStyle() override;
+ 
+   // CefBrowser methods:
+   bool IsValid() override;
+-  CefRefPtr<CefBrowserHost> GetHost() override;
++  // CefRefPtr<CefBrowserHost> GetHost() override { return this; }
+   bool CanGoBack() override;
+   void GoBack() override;
+   bool CanGoForward() override;
+   void GoForward() override;
+   bool IsLoading() override;
+   void Reload() override;
++#if BUILDFLAG(ARKWEB_EXT_RECEIVE_RESPONSE)
++  void ReloadEx(int transition_type);
++#endif
+   void ReloadIgnoreCache() override;
+   void StopLoad() override;
+   int GetIdentifier() override;
+   bool IsSame(CefRefPtr<CefBrowser> that) override;
+   bool HasDocument() override;
+@@ -509,17 +669,36 @@ class CefBrowserHostBase : public CefBrowserHost,
+ 
+   std::unique_ptr<CefMediaStreamRegistrar> media_stream_registrar_;
+ 
+   int next_popup_id_ = 1;
+ 
++#if BUILDFLAG(ARKWEB_INPUT_EVENTS)
++  friend class ArkWebBrowserHostExtImpl;
++  friend class ArkWebBrowserHostExt;
++#endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
++#if BUILDFLAG(ARKWEB_PERMISSION)
++  bool UseLegacyGeolocationPermissionAPI();
++  CefRefPtr<CefGeolocationAcess> geolocation_permissions_;
++  std::unique_ptr<AlloyPermissionRequestHandler> permission_request_handler_;
++  // GURL is supplied by the content layer as requesting frame.
++  // Callback is supplied by the content layer, and is invoked with the result
++  // from the permission prompt.
++  typedef std::pair<std::string, cef_permission_callback_t> OriginCallback;
++  // The first element in the list is always the currently pending request.
++  std::list<OriginCallback> unhandled_geolocation_prompts_;
++#endif  // BUILDFLAG(ARKWEB_PERMISSION)
++
+   // Auto-resize constraints. Set if auto-resize is enabled.
+   struct AutoResizeConstraints {
+     gfx::Size min;
+     gfx::Size max;
+   };
+   std::optional<AutoResizeConstraints> auto_resize_;
+ 
+  private:
++#if BUILDFLAG(ARKWEB_USERAGENT)
++  std::string custom_user_agent_;
++#endif
+   IMPLEMENT_REFCOUNTING(CefBrowserHostBase);
+ };
+ 
+ #endif  // CEF_LIBCEF_BROWSER_BROWSER_HOST_BASE_H_

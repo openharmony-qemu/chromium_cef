@@ -99,6 +99,9 @@ class CefBrowserContentsDelegate : public content::WebContentsDelegate,
   void UpdateTargetURL(content::WebContents* source, const GURL& url) override;
   bool DidAddMessageToConsole(content::WebContents* source,
                               blink::mojom::ConsoleMessageLevel log_level,
+#if BUILDFLAG(ARKWEB_CONSOLE_LOGGING)
+                              blink::mojom::ConsoleMessageSource log_source,
+#endif
                               const std::u16string& message,
                               int32_t line_no,
                               const std::u16string& source_id) override;
@@ -164,8 +167,10 @@ class CefBrowserContentsDelegate : public content::WebContentsDelegate,
   // Accessors for state information. Changes will be signaled to
   // Observer::OnStateChanged.
   bool is_loading() const { return is_loading_; }
+#if !BUILDFLAG(ARKWEB_NETWORK_BASE)
   bool can_go_back() const { return can_go_back_; }
   bool can_go_forward() const { return can_go_forward_; }
+#endif
   bool has_document() const { return has_document_; }
   bool is_fullscreen() const { return is_fullscreen_; }
   CefRefPtr<CefFrameHostImpl> focused_frame() const { return focused_frame_; }
@@ -174,10 +179,19 @@ class CefBrowserContentsDelegate : public content::WebContentsDelegate,
   // TODO(cef): Make this private if/when possible.
   bool OnSetFocus(cef_focus_source_t source);
 
+#if BUILDFLAG(ARKWEB_RENDER_PROCESS_MODE)
+  friend class ArkWebBrowserContentsDelegateExt;
+#endif  // BUILDFLAG(ARKWEB_RENDER_PROCESS_MODE)
+
+#if BUILDFLAG(ARKWEB_INPUT_EVENTS)
+  virtual bool HandleUserKeyEvent(const input::NativeWebKeyboardEvent& event) = 0;
+#endif
+
  private:
   CefRefPtr<CefClient> client() const;
   CefRefPtr<CefBrowser> browser() const;
   CefBrowserPlatformDelegate* platform_delegate() const;
+  friend class ArkWebBrowserContentsDelegateExt;
 
   // Helpers for executing client callbacks.
   void OnAddressChange(const GURL& url);
@@ -187,16 +201,22 @@ class CefBrowserContentsDelegate : public content::WebContentsDelegate,
                  const GURL& url,
                  int http_status_code);
   void OnLoadError(CefRefPtr<CefFrame> frame, const GURL& url, int error_code);
-  void OnTitleChange(const std::u16string& title);
-  void OnFullscreenModeChange(bool fullscreen);
+  void OnTitleChange(const std::u16string& title, bool isRealTitle);
+  void OnFullscreenModeChange(bool fullscreen
+#if BUILDFLAG(ARKWEB_MEDIA)
+                              ,
+                              const CefSize& video_natural_size
+#endif  // BUILDFLAG(ARKWEB_MEDIA)
+  );
 
   void OnStateChanged(State state_changed);
 
   scoped_refptr<CefBrowserInfo> browser_info_;
-
   bool is_loading_ = false;
+#if !BUILDFLAG(ARKWEB_NETWORK_BASE)
   bool can_go_back_ = false;
   bool can_go_forward_ = false;
+#endif
   bool has_document_ = false;
   bool is_fullscreen_ = false;
 
@@ -211,6 +231,17 @@ class CefBrowserContentsDelegate : public content::WebContentsDelegate,
 
   // True if the focus is currently on an editable field on the page.
   bool focus_on_editable_field_ = false;
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+  std::string last_did_finish_load_url_;
+  bool need_report_title_when_stop_loading_ = false;
+#endif
+#if BUILDFLAG(ARKWEB_FAVICON)
+  // Store web site icon.
+  CefRefPtr<IconHelper> icon_helper_;
+#endif  // BUILDFLAG(ARKWEB_FAVICON)
+#if BUILDFLAG(ARKWEB_COMPOSITE_RENDER)
+  base::WeakPtrFactory<CefBrowserContentsDelegate> weak_factory_{this};
+#endif
 };
 
 #endif  // CEF_LIBCEF_BROWSER_BROWSER_CONTENTS_DELEGATE_H_
