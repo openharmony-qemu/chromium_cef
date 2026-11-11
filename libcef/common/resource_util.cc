@@ -11,10 +11,12 @@
 #include "base/base_paths.h"
 #include "base/command_line.h"
 #include "base/files/file_path.h"
+#include "base/files/file_util.h"
 #include "base/logging.h"
 #include "base/path_service.h"
 #include "chrome/common/chrome_paths.h"
 #include "chrome/common/chrome_switches.h"
+#include "arkweb/chromium_ext/content/public/common/content_switches_ext.h"
 
 #if BUILDFLAG(IS_LINUX)
 #include "base/environment.h"
@@ -23,6 +25,10 @@
 
 #if BUILDFLAG(IS_MAC)
 #include "cef/libcef/common/util_mac.h"
+#endif
+
+#if BUILDFLAG(IS_OHOS) || BUILDFLAG(ARKWEB_CRASHPAD)
+#include "cef/ohos_cef_ext/libcef/common/resource_util_for_include.cc"
 #endif
 
 namespace resource_util {
@@ -127,7 +133,19 @@ void OverrideUserDataDir(CefSettings* settings,
                          const base::CommandLine* command_line) {
   const base::FilePath& user_data_path =
       GetUserDataPath(settings, command_line);
+
+#if BUILDFLAG(IS_OHOS)
+  OverrideUserDataDirExt(user_data_path, command_line);
+#endif
+
+#if BUILDFLAG(IS_ARKWEB)
+  const std::string target_data_dir_tag = command_line->HasSwitch(switches::kEnableCacheDataDirSeparation) ?
+                                            "files/__arkweb" : "cache/web";
+  base::PathService::Override(chrome::DIR_USER_DATA,
+                              user_data_path.Append(target_data_dir_tag));
+#else
   base::PathService::Override(chrome::DIR_USER_DATA, user_data_path);
+#endif
 
   // Path used for crash dumps.
   base::PathService::Override(chrome::DIR_CRASH_DUMPS, user_data_path);

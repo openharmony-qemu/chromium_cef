@@ -1,0 +1,28 @@
+diff a/libcef/common/app_manager.cc b/libcef/common/app_manager.cc	(rejected hunks)
+@@ -1,10 +1,11 @@
+ // Copyright 2020 The Chromium Embedded Framework Authors. All rights reserved.
+ // Use of this source code is governed by a BSD-style license that can be
+ // found in the LICENSE file.
+ 
+ #include "cef/libcef/common/app_manager.h"
++#include "cef/ohos_cef_ext/libcef/common/arkweb_app_manager_ext.h"
+ 
+ #include "base/command_line.h"
+ #include "base/logging.h"
+ #include "cef/libcef/common/net/scheme_info.h"
+ #include "cef/libcef/common/scheme_registrar_impl.h"
+@@ -51,10 +52,14 @@ void CefAppManager::AddCustomScheme(const CefSchemeInfo* scheme_info) {
+         content::ChildProcessSecurityPolicy::GetInstance();
+     if (!policy->IsWebSafeScheme(scheme_info->scheme_name)) {
+       policy->RegisterWebSafeScheme(scheme_info->scheme_name);
+     }
+   }
++
++#if BUILDFLAG(ARKWEB_CUSTOM_SCHEME_CODECACHE)
++  AsArkWebAppManagerExt()->AddSchemeCodeCache(scheme_info);
++#endif
+ }
+ 
+ bool CefAppManager::HasCustomScheme(const std::string& scheme_name) {
+   DCHECK(scheme_info_list_locked_);
+   if (scheme_info_list_.empty()) {

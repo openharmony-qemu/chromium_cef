@@ -643,7 +643,11 @@ bool CefCrashReporterClient::GetCrashDumpLocation(base::FilePath* crash_dir) {
     base::PathService::Override(chrome::DIR_CRASH_DUMPS,
                                 base::FilePath::FromUTF8Unsafe(*val));
   }
+#if BUILDFLAG(ARKWEB_CRASHPAD)
+  return base::PathService::Get(base::DIR_OHOS_CRASHPAD, crash_dir);
+#else
   return base::PathService::Get(chrome::DIR_CRASH_DUMPS, crash_dir);
+#endif  // BUILDFLAG(ARKWEB_CRASHPAD)
 }
 
 #endif  // !BUILDFLAG(IS_POSIX)

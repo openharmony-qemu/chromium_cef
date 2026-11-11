@@ -541,6 +541,9 @@ ChromeMainDelegateCef::RunProcess(
     const std::string& process_type,
     content::MainFunctionParams main_function_params) {
   if (process_type.empty()) {
+#if BUILDFLAG(ARKWEB_LOGGER_REPORT)
+    ohos::logger::SetMainProcessMode(true);
+#endif
     return runner_->RunMainProcess(std::move(main_function_params));
   }
 
@@ -584,6 +587,9 @@ CefRefPtr<CefRequestContext> ChromeMainDelegateCef::GetGlobalRequestContext() {
   if (browser_client) {
     return browser_client->request_context();
   }
+#if BUILDFLAG(IS_ARKWEB)
+  LOG(ERROR) << "browser_client is nullptr";
+#endif
   return nullptr;
 }
 

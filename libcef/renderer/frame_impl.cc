@@ -4,6 +4,7 @@
 
 #include "cef/libcef/renderer/frame_impl.h"
 
+#include "arkweb/build/features/features.h"
 #include "build/build_config.h"
 
 // Enable deprecation warnings on Windows. See http://crbug.com/585142.
@@ -48,6 +49,10 @@
 #include "third_party/blink/public/web/web_script_source.h"
 #include "third_party/blink/public/web/web_view.h"
 #include "third_party/blink/renderer/platform/runtime_enabled_features.h"
+
+#if BUILDFLAG(IS_ARKWEB)
+#include "libcef/common/arkweb_request_impl_ext.h"
+#endif
 
 namespace {
 
@@ -149,7 +154,11 @@ void CefFrameImpl::LoadRequest(CefRefPtr<CefRequest> request) {
   }
 
   auto params = cef::mojom::RequestParams::New();
+#if BUILDFLAG(IS_ARKWEB)
+  request->AsArkWebRequestExt()->Get(params);
+#else
   static_cast<CefRequestImpl*>(request.get())->Get(params);
+#endif
   LoadRequest(std::move(params));
 }
 
