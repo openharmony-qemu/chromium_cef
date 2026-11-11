@@ -1,0 +1,54 @@
+diff a/libcef/browser/osr/render_widget_host_view_osr.h b/libcef/browser/osr/render_widget_host_view_osr.h	(rejected hunks)
+@@ -126,10 +146,13 @@ class CefRenderWidgetHostViewOSR
+   bool IsShowing() override;
+   void EnsureSurfaceSynchronizedForWebTest() override;
+   content::TouchSelectionControllerClientManager*
+   GetTouchSelectionControllerClientManager() override;
+   gfx::Rect GetViewBounds() override;
++#if BUILDFLAG(ARKWEB_INPUT_EVENTS)
++  virtual void WasKeyboardResizedEx() {}
++#endif
+   void SetBackgroundColor(SkColor color) override;
+   std::optional<SkColor> GetBackgroundColor() override;
+   void UpdateBackgroundColor() override;
+   std::optional<content::DisplayFeature> GetDisplayFeature() override;
+   void DisableDisplayFeatureOverrideForEmulation() override;
+@@ -462,9 +525,38 @@ class CefRenderWidgetHostViewOSR
+   ui::FilteredGestureProvider gesture_provider_;
+ 
+   CefMotionEventOSR pointer_state_;
+   bool forward_touch_to_popup_ = false;
+ 
++#if BUILDFLAG(IS_OHOS)
++  bool is_popup_ = false;
++#endif
++ protected:
++#if BUILDFLAG(ARKWEB_FIT_CONTENT)
++  int32_t is_fit_content_ = 0;
++#endif
++#if BUILDFLAG(ARKWEB_INPUT_EVENTS)
++  bool isKeyboardResized_ = false;
++#endif
++#if BUILDFLAG(ARKWEB_PERFORMANCE_JITTER)
++  bool isBoosting_ = false;
++  bool is_fling_ = false;
++#endif
++#if BUILDFLAG(ARKWEB_EXT_PULL_TO_REFRESH) || BUILDFLAG(ARKWEB_PULL_TO_REFRESH)
++  std::unique_ptr<content::OverscrollControllerOHOS> overscroll_controller_;
++  virtual void OnFocusInternal() {}
++  virtual void LostFocusInternal() {}
++#endif
++#if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS)
++  float top_controls_offset_ = 0.f;
++  float top_content_offset_ = 0.f;
++  float bottom_controls_offset_ = 0.f;
++  float bottom_content_offset_ = 0.f;
++#endif
++
++#if BUILDFLAG(ARKWEB_EVICT_UNLOCK_FRAMES)
++  base::OneShotTimer timer_;
++#endif
+   base::WeakPtrFactory<CefRenderWidgetHostViewOSR> weak_ptr_factory_;
+ };
+ 
+ #endif  // CEF_LIBCEF_BROWSER_OSR_RENDER_WIDGET_HOST_VIEW_OSR_H_
