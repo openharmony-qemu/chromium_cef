@@ -1,0 +1,54 @@
+diff a/libcef/browser/net_service/resource_handler_wrapper.cc b/libcef/browser/net_service/resource_handler_wrapper.cc	(rejected hunks)
+@@ -505,10 +515,52 @@ class ResourceResponseWrapper : public ResourceResponse {
+     for (const auto& value : headerMap) {
+       extra_headers->insert(std::make_pair(value.first, value.second));
+     }
+   }
+ 
++#if BUILDFLAG(ARKWEB_RESOURCE_INTERCEPTION)
++  const std::string& GetResponseData() override {
++    auto handler = handler_provider_->handler();
++    if (!handler) {
++      static const std::string data;
++      return data;
++    }
++    static const std::string data = handler->AsCefResourceHandlerExt()->GetResponseData();
++    return data;
++  }
++
++  size_t GetResponseDataBuffer(char* data, size_t dest_size) override {
++    auto handler = handler_provider_->handler();
++    if (!handler) {
++      return 0;
++    }
++    return handler->AsCefResourceHandlerExt()->GetResponseDataBuffer(data, dest_size);
++  }
++
++  size_t GetResponseDataBufferSize() override {
++    auto handler = handler_provider_->handler();
++    if (!handler) {
++      return 0;
++    }
++    return handler->AsCefResourceHandlerExt()->GetResponseDataBufferSize();
++  }
++#endif
++
++#if BUILDFLAG(ARKWEB_SCHEME_HANDLER)
++  int GetCustomErrorCode() override {
++    auto handler = handler_provider_->handler();
++    if (!handler) {
++      return 0;
++    }
++    auto* ext = handler->AsCefResourceHandlerExt();
++    if (!ext) {
++      return 0;
++    }
++    return ext->GetCustomErrorCode();
++  }
++#endif
++
+  private:
+   const int32_t request_id_;
+ 
+   CefRefPtr<CefRequestImpl> request_;
+   scoped_refptr<HandlerProvider> handler_provider_;
