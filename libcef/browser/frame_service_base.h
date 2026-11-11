@@ -10,6 +10,9 @@
 #include "base/functional/bind.h"
 #include "base/logging.h"
 #include "base/memory/raw_ptr.h"
+#if BUILDFLAG(IS_ARKWEB)
+#include "base/memory/weak_ptr.h"
+#endif
 #include "base/threading/thread_checker.h"
 #include "cef/libcef/common/frame_util.h"
 #include "content/public/browser/navigation_handle.h"

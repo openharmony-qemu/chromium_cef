@@ -20,6 +20,9 @@
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/render_widget_host_view.h"
 #include "third_party/blink/public/mojom/context_menu/context_menu.mojom.h"
+#if BUILDFLAG(ARKWEB_CLIPBOARD)
+#include "cef/ohos_cef_ext/libcef/browser/menu_manager_for_include.cc"
+#endif  // #if BUILDFLAG(ARKWEB_CLIPBOARD)
 
 #if BUILDFLAG(IS_WIN)
 #include "chrome/browser/spellchecker/spellcheck_factory.h"
@@ -101,7 +104,9 @@ CefMenuManager::CefMenuManager(AlloyBrowserHostImpl* browser,
     : content::WebContentsObserver(browser->web_contents()),
       browser_(browser),
       runner_(std::move(runner)),
-
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+      menu_manager_ext_(this),
+#endif // BUILDFLAG(ARKWEB_DEVTOOLS)
       weak_ptr_factory_(this) {
   DCHECK(web_contents());
   model_ = new CefMenuModelImpl(this, nullptr, false);
@@ -161,8 +166,18 @@ bool CefMenuManager::CreateContextMenu(const content::ContextMenuParams& params,
 
   model_->Clear();
 
+#if BUILDFLAG(ARKWEB_CLIPBOARD)
+  UpdateMenuEditStateFlags(params_);
+#endif  // #if BUILDFLAG(ARKWEB_CLIPBOARD)
+
   // Create the default menu model.
   CreateDefaultModel();
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+  if (params_.page_url.is_empty() ? params_.frame_url.spec().find("devtools://") != std::string::npos
+                                  : params_.page_url.spec().find("devtools://") != std::string::npos) {
+    menu_manager_ext_.SetMenuItems(web_contents(), params);
+  }
+#endif // BUILDFLAG(ARKWEB_DEVTOOLS)
 
   bool custom_menu = false;
   DCHECK(!custom_menu_callback_);
@@ -173,7 +188,11 @@ bool CefMenuManager::CreateContextMenu(const content::ContextMenuParams& params,
     CefRefPtr<CefContextMenuHandler> handler = client->GetContextMenuHandler();
     if (handler.get()) {
       CefRefPtr<CefContextMenuParamsImpl> paramsPtr(
+#if BUILDFLAG(IS_ARKWEB)
+          new ArkWebCefContextMenuParamsImplExt(&params_));
+#else
           new CefContextMenuParamsImpl(&params_));
+#endif
       CefRefPtr<CefFrame> frame = browser_->GetFocusedFrame();
 
       handler->OnBeforeContextMenu(browser_.get(), frame, paramsPtr.get(),
@@ -246,7 +265,11 @@ void CefMenuManager::ExecuteCommand(CefRefPtr<CefMenuModelImpl> source,
     CefRefPtr<CefContextMenuHandler> handler = client->GetContextMenuHandler();
     if (handler.get()) {
       CefRefPtr<CefContextMenuParamsImpl> paramsPtr(
+#if BUILDFLAG(IS_ARKWEB)
+          new ArkWebCefContextMenuParamsImplExt(&params_));
+#else
           new CefContextMenuParamsImpl(&params_));
+#endif
 
       bool handled = handler->OnContextMenuCommand(
           browser_.get(), browser_->GetFocusedFrame(), paramsPtr.get(),
@@ -324,6 +347,13 @@ void CefMenuManager::ExecuteCommandCallback(int command_id,
                                             cef_event_flags_t event_flags) {
   DCHECK(IsShowingContextMenu());
   DCHECK(custom_menu_callback_);
+#if BUILDFLAG(ARKWEB_MENU)
+  if (command_id == MENU_ID_IMAGE_COPY &&
+      params_.media_type == ContextMenuDataMediaType::kCanvas) {
+    LOG(INFO) << "Handling canvas image copy command";
+    command_id = MENU_ID_IMAGE_COPY_AT;
+  }
+#endif
   if (command_id != kInvalidCommandId) {
     ExecuteCommand(model_, command_id, event_flags);
   }
@@ -512,6 +542,15 @@ void CefMenuManager::ExecuteDefaultCommand(int command_id) {
     case MENU_ID_ADD_TO_DICTIONARY:
       browser_->GetHost()->AddWordToDictionary(params_.misspelled_word);
       break;
+
+#if BUILDFLAG(ARKWEB_MENU)
+    case MENU_ID_IMAGE_SAVE:
+      ExecuteSaveImage();
+      break;
+    case MENU_ID_IMAGE_COPY_AT:
+      ExecuteCopyImageAt();
+      break;
+#endif
 
     default:
       break;

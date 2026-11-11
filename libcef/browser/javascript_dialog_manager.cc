@@ -7,6 +7,7 @@
 
 #include <utility>
 
+#include "arkweb/build/features/features.h"
 #include "base/functional/bind.h"
 #include "base/functional/callback_helpers.h"
 #include "base/logging.h"
@@ -14,6 +15,10 @@
 #include "cef/libcef/browser/browser_host_base.h"
 #include "cef/libcef/browser/thread_util.h"
 #include "components/javascript_dialogs/tab_modal_dialog_manager.h"
+
+#if BUILDFLAG(IS_ARKWEB)
+#include "cef/ohos_cef_ext/libcef/browser/ark_web_javascript_dialog_manager.h"
+#endif  // BUILDFLAG(IS_ARKWEB)
 
 namespace {
 
@@ -181,7 +186,11 @@ void CefJavaScriptDialogManager::RunBeforeUnloadDialog(
     content::RenderFrameHost* render_frame_host,
     bool is_reload,
     DialogClosedCallback callback) {
+#if BUILDFLAG(ARKWEB_NETWORK_BASE)
+  const std::u16string& message_text = ArkWebGetBeforeUnloadDialogMessage();
+#else
   const std::u16string& message_text = u"Is it OK to leave/reload this page?";
+#endif
 
   // Always call DialogClosed().
   callback =
@@ -307,6 +316,18 @@ void CefJavaScriptDialogManager::DialogClosed(
     const std::u16string& user_input) {
   if (handler_) {
     handler_->OnDialogClosed(browser_.get());
+#if BUILDFLAG(ARKWEB_NWEB_EX)
+    DLOG(INFO) << "DialogClosed success=" << success
+               << ", has_handler=" << (handler_ != nullptr)
+               << ", has_callback=" << !callback.is_null();
+    // ArkWeb: notify handler with full dialog result (success + user_input)
+    // for CDP handleJavaScriptDialog -> ArkUI dialog close chain.
+    if (callback.is_null()) {
+      DLOG(INFO) << " DialogClosed calling from CDP handleJavaScriptDialog";
+      handler_->OnHandleJavaScriptDialog(browser_.get(), success,
+                                         CefString(user_input));
+    }
+#endif  // BUILDFLAG(ARKWEB_NWEB_EX)
     // Call OnResetDialogState.
     CancelDialogs(/*web_contents=*/nullptr, /*reset_state=*/true);
   }

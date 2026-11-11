@@ -4,6 +4,7 @@
 
 #include "cef/libcef/browser/frame_host_impl.h"
 
+#include "arkweb/build/features/features.h"
 #include "cef/include/cef_request.h"
 #include "cef/include/cef_stream.h"
 #include "cef/include/cef_v8.h"
@@ -23,6 +24,17 @@
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
 #include "services/service_manager/public/cpp/interface_provider.h"
+
+#if BUILDFLAG(IS_ARKWEB)
+#include "cef/ohos_cef_ext/libcef/browser/ark_web_frame_host_impl.h"
+#include "libcef/common/arkweb_request_impl_ext.h"
+#endif
+
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+#include "base/command_line.h"
+#include "content/browser/renderer_host/frame_tree.h"
+#include "content/public/common/content_switches.h"
+#endif
 
 namespace {
 
@@ -101,9 +113,17 @@ CefFrameHostImpl::CefFrameHostImpl(scoped_refptr<CefBrowserInfo> browser_info,
           is_main_frame_
               ? std::optional<content::GlobalRenderFrameHostToken>()
               : render_frame_host->GetParent()->GetGlobalFrameToken()),
-      render_frame_host_(render_frame_host) {
+      render_frame_host_(render_frame_host)
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+,
+      rfh_global_id_(render_frame_host->GetGlobalId()),
+      initial_is_prerendering_(
+          static_cast<content::RenderFrameHostImpl *>(render_frame_host)
+              ->frame_tree()
+              ->is_prerendering())
+#endif
+      {
   DCHECK(browser_info_);
-  DVLOG(1) << __func__ << ": " << GetDebugString() << " created ";
 }
 
 CefFrameHostImpl::~CefFrameHostImpl() {
@@ -166,7 +186,11 @@ void CefFrameHostImpl::GetText(CefRefPtr<CefStringVisitor> visitor) {
 
 void CefFrameHostImpl::LoadRequest(CefRefPtr<CefRequest> request) {
   auto params = cef::mojom::RequestParams::New();
+#if BUILDFLAG(IS_ARKWEB)
+  request->AsArkWebRequestExt()->Get(params);
+#else
   static_cast<CefRequestImpl*>(request.get())->Get(params);
+#endif
   LoadRequest(std::move(params));
 }
 
@@ -366,11 +390,29 @@ void CefFrameHostImpl::LoadRequest(cef::mojom::RequestParamsPtr params) {
 void CefFrameHostImpl::LoadURLWithExtras(const std::string& url,
                                          const content::Referrer& referrer,
                                          ui::PageTransition transition,
-                                         const std::string& extra_headers) {
+                                         const std::string& extra_headers
+#if BUILDFLAG(ARKWEB_POST_URL)
+                                         ,
+                                         const std::string& method,
+                                         const std::vector<char>& post_data
+#endif
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+                                         ,
+                                         bool user_gesture
+#endif
+) {
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+  // Only known frame ids or kMainFrameId are supported.
+  const auto frame_id = GetFrameId();
+  if (frame_id < ::kMainFrameId) {
+    return;
+  }
+  GURL gurl = ArkWebFixupFileUrl(url);
+#else
   // Any necessary fixup will occur in LoadRequest.
   GURL gurl = url_util::MakeGURL(url, /*fixup=*/false);
-
-  if (is_main_frame_) {
+#endif
+  if (frame_id == ::kMainFrameId) {
     // Load via the browser using NavigationController.
     auto browser = GetBrowserHostBase();
     if (browser) {
@@ -378,8 +420,12 @@ void CefFrameHostImpl::LoadURLWithExtras(const std::string& url,
           gurl, referrer, WindowOpenDisposition::CURRENT_TAB, transition,
           /*is_renderer_initiated=*/false);
       params.extra_headers = extra_headers;
-      params.user_gesture = false;
-
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+      params.user_gesture = user_gesture;
+#endif
+#if BUILDFLAG(ARKWEB_POST_URL)
+      ArkWebDealWithPostData(method, post_data, &params);
+#endif
       browser->LoadMainFrameURL(params);
     }
   } else {
@@ -388,6 +434,9 @@ void CefFrameHostImpl::LoadURLWithExtras(const std::string& url,
     params->referrer =
         blink::mojom::Referrer::New(referrer.url, referrer.policy);
     params->headers = extra_headers;
+#if BUILDFLAG(ARKWEB_POST_URL)
+    ArkWebDealWithPostUploadData(method, post_data, params);
+#endif
     LoadRequest(std::move(params));
   }
 }
@@ -444,7 +493,11 @@ void CefFrameHostImpl::SendJavaScript(const std::u16string& jsCode,
 }
 
 void CefFrameHostImpl::MaybeSendDidStopLoading() {
+#if BUILDFLAG(IS_ARKWEB)
+  auto* rfh = content::RenderFrameHost::FromID(rfh_global_id_);
+#else
   auto rfh = GetRenderFrameHost();
+#endif
   if (!rfh) {
     return;
   }
@@ -599,6 +652,13 @@ void CefFrameHostImpl::MaybeAttach(
 
   DVLOG(1) << __func__ << ": " << GetDebugString() << " host changed";
   render_frame_host_ = render_frame_host;
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+  rfh_global_id_ = render_frame_host->GetGlobalId();
+  initial_is_prerendering_ =
+      static_cast<content::RenderFrameHostImpl *>(render_frame_host)
+          ->frame_tree()
+          ->is_prerendering();
+#endif
   RefreshAttributes();
 
   // We expect a reconnect to be triggered via FrameAttached().
@@ -723,7 +783,7 @@ void CefFrameHostImpl::FrameAttached(
       [](CefRefPtr<CefFrameHostImpl> self, bool reattached,
          CefRefPtr<CefFrameHandler> handler) {
         if (auto browser = self->GetBrowserHostBase()) {
-          handler->OnFrameAttached(browser, self, reattached);
+          handler->OnFrameAttached(browser.get(), self, reattached);
         }
       },
       CefRefPtr<CefFrameHostImpl>(this), reattached));
@@ -762,7 +822,7 @@ std::string CefFrameHostImpl::GetDebugString() const {
 
 void CefExecuteJavaScriptWithUserGestureForTests(CefRefPtr<CefFrame> frame,
                                                  const CefString& javascript) {
-  CefFrameHostImpl* impl = static_cast<CefFrameHostImpl*>(frame.get());
+  auto impl = frame.get()->AsCefFrameHostImpl();
   if (impl) {
     impl->ExecuteJavaScriptWithUserGestureForTests(javascript);
   }
