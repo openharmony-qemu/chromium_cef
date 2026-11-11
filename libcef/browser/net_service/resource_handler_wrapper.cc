@@ -4,6 +4,7 @@
 
 #include "cef/libcef/browser/net_service/resource_handler_wrapper.h"
 
+#include "arkweb/build/features/features.h"
 #include "base/memory/raw_ptr.h"
 #include "base/strings/string_number_conversions.h"
 #include "cef/libcef/browser/net_service/proxy_url_loader_factory.h"
@@ -11,6 +12,11 @@
 #include "cef/libcef/common/net_service/net_service_util.h"
 #include "cef/libcef/common/request_impl.h"
 #include "net/http/http_status_code.h"
+#include "arkweb/chromium_ext/cef/include/cef_resource_handler_ext.h"
+
+#if BUILDFLAG(IS_ARKWEB)
+#include "cef/ohos_cef_ext/libcef/common/arkweb_request_impl_ext.h"
+#endif
 
 namespace net_service {
 
@@ -413,7 +419,11 @@ class ResourceResponseWrapper : public ResourceResponse {
     }
 
     // May be recreated on redirect.
+#if BUILDFLAG(IS_ARKWEB)
+    request_ = new ArkWebRequestImplExt();
+#else
     request_ = new CefRequestImpl();
+#endif
     request_->Set(&request, request_id);
     request_->SetReadOnly(true);
 

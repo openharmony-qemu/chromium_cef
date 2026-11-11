@@ -9,6 +9,7 @@
 #include <optional>
 #include <string_view>
 
+#include "arkweb/build/features/features.h"
 #include "base/containers/unique_ptr_adapters.h"
 #include "base/functional/callback.h"
 #include "base/hash/hash.h"
@@ -21,6 +22,14 @@
 #include "services/network/public/mojom/network_context.mojom.h"
 #include "services/network/public/mojom/url_loader_factory.mojom.h"
 
+#if BUILDFLAG(IS_ARKWEB)
+#include "include/internal/cef_ptr.h"
+#include "cef/ohos_cef_ext/libcef/browser/net_service/net_helpers.h"
+
+class CefRequest;
+class CefResponse;
+#endif
+
 namespace net_service {
 
 class InterceptedRequest;
@@ -31,6 +40,10 @@ class ProxyURLLoaderFactory;
 // the UI thread and are never reused.
 using ContextId = uint64_t;
 constexpr ContextId kInvalidContextId = 0;
+
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+NET_EXPORT BASE_DECLARE_FEATURE(kEnableSyncMethodOnRedirect);
+#endif
 
 // Implement this interface to to evaluate requests. All methods are called on
 // the IO thread, and all callbacks must be executed on the IO thread.
@@ -60,6 +73,10 @@ class InterceptedRequestHandler {
   virtual void OnBeforeRequest(int32_t request_id,
                                network::ResourceRequest* request,
                                bool request_was_redirected,
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+                               base::WeakPtr<InterceptedRequest> intercepted_request,
+                               bool current_request_uses_header_client,
+#endif
                                OnBeforeRequestResultCallback callback,
                                CancelRequestCallback cancel_callback);
 
@@ -115,6 +132,9 @@ class InterceptedRequestHandler {
                                  network::ResourceRequest* request,
                                  net::HttpResponseHeaders* headers,
                                  std::optional<net::RedirectInfo> redirect_info,
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+                                 bool current_request_uses_header_client,
+#endif
                                  OnRequestResponseResultCallback callback);
 
   // Called to optionally filter the response body.
@@ -134,7 +154,47 @@ class InterceptedRequestHandler {
   virtual void OnRequestError(int32_t request_id,
                               const network::ResourceRequest& request,
                               int error_code,
+#if BUILDFLAG(ARKWEB_SCHEME_HANDLER)
+                              int custom_error_code,
+#endif
                               bool safebrowsing_hit) {}
+
+#if BUILDFLAG(ARKWEB_NETWORK_CONNINFO)
+  // To get setting of net helper.
+  virtual void GetSettingOfNetHelper(const GURL& url, struct NetHelperSetting& setting) {}
+#endif  // BUILDFLAG(ARKWEB_NETWORK_CONNINFO)
+#if BUILDFLAG(ARKWEB_NETWORK_BASE)
+  // Called on received http request error.
+  virtual void OnHttpError(int32_t request_id,
+                           CefRefPtr<CefRequest> request,
+                           bool is_main_frame,
+                           bool has_user_gesture,
+                           CefRefPtr<CefResponse> error_response) {}
+#endif
+#if BUILDFLAG(ARKWEB_USERAGENT)
+  virtual std::string GetCustomUserAgent() { return ""; }
+#endif
+
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+  virtual void OnRewriteUrlForNavigation(
+      const std::string& original_url,
+      const std::string& referrer,
+      int transition_type,
+      bool is_key_request,
+      int32_t request_id,
+      base::OnceCallback<void(std::string)>) {}
+#endif
+
+#if BUILDFLAG(ARKWEB_EXT_RECEIVE_RESPONSE)
+  virtual void OnReceiveResponse(CefRefPtr<CefRequest> request,
+                                 bool is_request_gesture,
+                                 int transition_type,
+                                 bool is_main_frame,
+                                 bool is_redirect,
+                                 int resource_type,
+                                 CefRefPtr<CefResponse> response_info,
+                                 bool is_from_network) {}
+#endif
 };
 
 // URL Loader Factory that supports request/response interception, processing
@@ -150,6 +210,19 @@ class ProxyURLLoaderFactory
 
   ~ProxyURLLoaderFactory() override;
 
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+  // Create a proxy object on the UI thread.
+  static void CreateProxy(
+      content::BrowserContext* browser_context,
+      network::URLLoaderFactoryBuilder& factory_builder,
+      mojo::PendingRemote<network::mojom::TrustedURLLoaderHeaderClient>*
+          header_client,
+#if BUILDFLAG(ARKWEB_EXT_EXTENSIONS_HEADER_CLIENT)
+      mojo::PendingRemote<network::mojom::TrustedURLLoaderHeaderClient> extensions_url_loader_header_client_remote,
+#endif
+      std::unique_ptr<InterceptedRequestHandler> request_handler,
+      network::mojom::URLLoaderFactoryOverridePtr* factory_override);
+#else
   // Create a proxy object on the UI thread.
   static void CreateProxy(
       content::BrowserContext* browser_context,
@@ -157,6 +230,7 @@ class ProxyURLLoaderFactory
       mojo::PendingRemote<network::mojom::TrustedURLLoaderHeaderClient>*
           header_client,
       std::unique_ptr<InterceptedRequestHandler> request_handler);
+#endif
 
   // Create a proxy object on the IO thread for a WebContents.
   static void CreateProxyForWebContents(
@@ -204,6 +278,7 @@ class ProxyURLLoaderFactory
 
  private:
   friend class InterceptedRequest;
+  friend class InterceptedRequestUtils;
 
   ProxyURLLoaderFactory(
       mojo::PendingReceiver<network::mojom::URLLoaderFactory> factory_receiver,
@@ -211,6 +286,9 @@ class ProxyURLLoaderFactory
           target_factory_remote,
       mojo::PendingReceiver<network::mojom::TrustedURLLoaderHeaderClient>
           header_client_receiver,
+#if BUILDFLAG(ARKWEB_EXT_EXTENSIONS_HEADER_CLIENT)
+      mojo::PendingRemote<network::mojom::TrustedURLLoaderHeaderClient> extensions_url_loader_header_client_remote,
+#endif
       std::unique_ptr<InterceptedRequestHandler> request_handler);
 
   static void CreateOnIOThread(
@@ -219,6 +297,9 @@ class ProxyURLLoaderFactory
           target_factory_remote,
       mojo::PendingReceiver<network::mojom::TrustedURLLoaderHeaderClient>
           header_client_receiver,
+#if BUILDFLAG(ARKWEB_EXT_EXTENSIONS_HEADER_CLIENT)
+      mojo::PendingRemote<network::mojom::TrustedURLLoaderHeaderClient> extensions_url_loader_header_client_remote,
+#endif
       ContextId context_id,
       std::unique_ptr<InterceptedRequestHandler> request_handler);
 
@@ -226,11 +307,25 @@ class ProxyURLLoaderFactory
   void OnProxyBindingError();
   void RemoveRequest(InterceptedRequest* request);
   void MaybeDestroySelf();
+#if BUILDFLAG(ARKWEB_DOWNLOAD)
+  void CreateLoaderAndStartForDownloadRequest(
+      mojo::PendingReceiver<network::mojom::URLLoader> receiver,
+      int32_t request_id,
+      uint32_t options,
+      network::ResourceRequest request,
+      mojo::PendingRemote<network::mojom::URLLoaderClient> client,
+      const net::MutableNetworkTrafficAnnotationTag& traffic_annotation);
+#endif
 
   mojo::ReceiverSet<network::mojom::URLLoaderFactory> proxy_receivers_;
   mojo::Remote<network::mojom::URLLoaderFactory> target_factory_;
   mojo::Receiver<network::mojom::TrustedURLLoaderHeaderClient>
       url_loader_header_client_receiver_{this};
+
+#if BUILDFLAG(ARKWEB_EXT_EXTENSIONS_HEADER_CLIENT)
+  mojo::Remote<network::mojom::TrustedURLLoaderHeaderClient>
+      extensions_url_loader_header_client_;
+#endif // ARKWEB_EXT_EXTENSIONS_HEADER_CLIENT
 
   std::unique_ptr<InterceptedRequestHandler> request_handler_;
 
@@ -238,8 +333,14 @@ class ProxyURLLoaderFactory
   DisconnectCallback on_disconnect_;
 
   // Map of request ID to request object.
+#if BUILDFLAG(ARKWEB_NETWORK_BASE)
+  std::map<int32_t,
+           std::pair<std::unique_ptr<InterceptedRequest>,
+                     base::WeakPtr<InterceptedRequest>>>
+      requests_;
+#else
   std::map<int32_t, std::unique_ptr<InterceptedRequest>> requests_;
-
+#endif
   base::WeakPtrFactory<ProxyURLLoaderFactory> weak_factory_;
 };
 
