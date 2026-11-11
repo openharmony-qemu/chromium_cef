@@ -1,0 +1,75 @@
+diff a/libcef/browser/file_dialog_manager.cc b/libcef/browser/file_dialog_manager.cc	(rejected hunks)
+@@ -12,10 +12,11 @@
+ #include "base/strings/utf_string_conversions.h"
+ #include "cef/include/cef_dialog_handler.h"
+ #include "cef/libcef/browser/browser_host_base.h"
+ #include "cef/libcef/browser/context.h"
+ #include "cef/libcef/browser/thread_util.h"
++#include "cef/ohos_cef_ext/libcef/browser/arkweb_file_dialog_manager_utils.h"
+ #include "chrome/browser/file_select_helper.h"
+ #include "content/public/browser/file_select_listener.h"
+ #include "content/public/browser/render_frame_host.h"
+ #include "ui/shell_dialogs/select_file_policy.h"
+ #include "ui/shell_dialogs/selected_file_info.h"
+@@ -156,10 +163,13 @@ FileChooserParams SelectFileToFileChooserParams(
+         // which is the only instance of multiple file extensions.
+         params.accept_types.push_back(FilePathTypeToString16(
+             FILE_PATH_LITERAL(".") + file_types->extensions[i][0]));
+       }
+     }
++#if BUILDFLAG(ARKWEB_FILE_UPLOAD)
++    ArkwebFileDialogManagerUtils::HandleFileParams(*file_types, params);
++#endif
+   }
+ 
+   return params;
+ }
+ 
+@@ -373,17 +387,27 @@ void CefFileDialogManager::RunSelectFile(
+     const std::u16string& title,
+     const base::FilePath& default_path,
+     const ui::SelectFileDialog::FileTypeInfo* file_types,
+     int file_type_index,
+     const base::FilePath::StringType& default_extension,
++#if BUILDFLAG(ARKWEB_FILE_UPLOAD)
++    gfx::NativeWindow owning_window,
++    std::vector<std::u16string> accept_types,
++    bool use_media_capture) {
++#else
+     gfx::NativeWindow owning_window) {
++#endif
+   CEF_REQUIRE_UIT();
+ 
+   active_listeners_.insert(listener);
+ 
+   auto chooser_params =
+       SelectFileToFileChooserParams(type, title, default_path, file_types);
++#if BUILDFLAG(ARKWEB_FILE_UPLOAD)
++  chooser_params.mime_types = accept_types;
++  chooser_params.use_media_capture = use_media_capture;
++#endif
+   auto callback = base::BindOnce(
+       &CefFileDialogManager::SelectFileDoneByDelegateCallback,
+       weak_ptr_factory_.GetWeakPtr(), base::UnsafeDangling(listener));
+   callback = MaybeRunDelegate(chooser_params, file_types->extensions,
+                               file_types->extension_description_overrides,
+@@ -507,10 +545,19 @@ CefFileDialogManager::MaybeRunDelegate(
+         // Empty descriptions.
+         accept_descriptions.resize(params.accept_types.size());
+       } else {
+         // There may be 1 additional entry in |extensions| and |descriptions|
+         // that we want to ignore (for the "Custom Files" filter).
++#if BUILDFLAG(ARKWEB_FILE_UPLOAD)
++        const auto& extension_list = extensions[extensions.size() - 1];
++        for (auto& ext : extension_list) {
++            accept_extensions.push_back(FilePathTypeToString16(FILE_PATH_LITERAL(".") + ext));
++        }
++        for (auto& description : descriptions) {
++            accept_descriptions.push_back(description);
++        }
++#else
+         for (size_t i = 0; i < params.accept_types.size(); ++i) {
+           const auto& extension_list = extensions[i];
+           std::u16string ext_str;
+           for (auto& ext : extension_list) {
+             if (!ext_str.empty()) {

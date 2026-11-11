@@ -1,0 +1,53 @@
+diff a/libcef/browser/browser_contents_delegate.h b/libcef/browser/browser_contents_delegate.h	(rejected hunks)
+@@ -6,20 +6,26 @@
+ #define CEF_LIBCEF_BROWSER_BROWSER_CONTENTS_DELEGATE_H_
+ #pragma once
+ 
+ #include <memory>
+ 
++#include "arkweb/build/features/features.h"
+ #include "base/callback_list.h"
+ #include "base/observer_list.h"
+ #include "cef/libcef/browser/frame_host_impl.h"
+ #include "content/public/browser/web_contents_delegate.h"
+ #include "content/public/browser/web_contents_observer.h"
+ 
++#if BUILDFLAG(ARKWEB_FAVICON)
++#include "ohos_cef_ext/libcef/browser/arkweb_icon_helper_ext.h"
++#endif  // BUILDFLAG(ARKWEB_FAVICON)
++
+ class CefBrowser;
+ class CefBrowserInfo;
+ class CefBrowserPlatformDelegate;
+ class CefClient;
++class ArkWebBrowserContentsDelegateExt;
+ 
+ // Flags that represent which states have changed.
+ enum class CefBrowserContentsState : uint8_t {
+   kNone = 0,
+   kNavigation = (1 << 0),
+@@ -46,10 +52,24 @@ constexpr inline CefBrowserContentsState operator|(
+ // Includes functionality that is shared by Alloy and Chrome styles. Only
+ // accessed on the UI thread.
+ class CefBrowserContentsDelegate : public content::WebContentsDelegate,
+                                    public content::WebContentsObserver {
+  public:
++  virtual ArkWebBrowserContentsDelegateExt*
++  AsArkWebBrowserContentsDelegateExt() {
++    return nullptr;
++  }
++#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
++  virtual void OnRefreshAccessedHistoryEx(CefRefPtr<CefFrame> frame,
++                                          const GURL& url,
++                                          bool isReload,
++                                          bool isMainFrame) {}
++
++  void DidStartLoading() override {
++    need_report_title_when_stop_loading_ = true;
++  }
++#endif
+   using State = CefBrowserContentsState;
+ 
+   // Interface to implement for observers that wish to be informed of changes
+   // to the delegate. All methods will be called on the UI thread.
+   class Observer : public base::CheckedObserver {

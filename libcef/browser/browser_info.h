@@ -168,6 +168,11 @@ class CefBrowserInfo : public base::RefCountedThreadSafe<CefBrowserInfo> {
   void MaybeNotifyFrameDetached(CefRefPtr<CefBrowserHostBase> browser,
                                 CefRefPtr<CefFrameHostImpl> frame);
 
+#if BUILDFLAG(IS_ARKWEB)
+  content::GlobalRenderFrameHostId GetLastDeleteSpeculativeRFHId();
+  content::GlobalRenderFrameHostToken GetLastDeleteSpeculativeRFHToken();
+#endif
+
  private:
   friend class base::RefCountedThreadSafe<CefBrowserInfo>;
 
@@ -183,6 +188,9 @@ class CefBrowserInfo : public base::RefCountedThreadSafe<CefBrowserInfo> {
     content::GlobalRenderFrameHostId global_id_;
     bool is_main_frame_;
     bool is_speculative_;
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+    bool is_prerendering_ = false;
+#endif
     bool is_in_bfcache_ = false;
     CefRefPtr<CefFrameHostImpl> frame_;
   };
@@ -198,6 +206,8 @@ class CefBrowserInfo : public base::RefCountedThreadSafe<CefBrowserInfo> {
                                    CefRefPtr<CefFrameHostImpl> new_frame);
 
   void RemoveAllFrames(CefRefPtr<CefBrowserHostBase> old_browser);
+
+  static bool IsPrerendering(content::RenderFrameHost* host);
 
   const int browser_id_;
   const bool is_popup_;
@@ -263,6 +273,11 @@ class CefBrowserInfo : public base::RefCountedThreadSafe<CefBrowserInfo> {
 
   // Only accessed on the UI thread.
   std::vector<CefDraggableRegion> draggable_regions_;
+
+#if BUILDFLAG(IS_ARKWEB)
+  content::GlobalRenderFrameHostId last_delete_speculative_rfh_id_;
+  content::GlobalRenderFrameHostToken last_delete_speculative_rfh_token_;
+#endif
 };
 
 #endif  // CEF_LIBCEF_BROWSER_BROWSER_INFO_H_

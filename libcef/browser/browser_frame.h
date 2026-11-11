@@ -44,6 +44,7 @@ class CefBrowserFrame : public CefFrameServiceBase<cef::mojom::BrowserFrame> {
 
   CefRefPtr<CefFrameHostImpl> GetFrameHost(bool prefer_speculative,
                                            bool* is_excluded = nullptr) const;
+#include "cef/ohos_cef_ext/libcef/browser/browser_frame_for_include.cc"
 };
 
 #endif  // CEF_LIBCEF_BROWSER_BROWSER_FRAME_H_
