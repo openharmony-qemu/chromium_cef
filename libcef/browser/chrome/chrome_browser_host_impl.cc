@@ -68,7 +68,7 @@ CefRefPtr<ChromeBrowserHostImpl> ChromeBrowserHostImpl::FromBaseChecked(
     return nullptr;
   }
   CHECK(host_base->IsChromeStyle());
-  return static_cast<ChromeBrowserHostImpl*>(host_base.get());
+  return host_base.get()->AsChromeBrowserHostImpl();
 }
 
 // static

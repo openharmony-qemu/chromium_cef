@@ -34,6 +34,10 @@ class ChromeBrowserHostImpl : public CefBrowserHostBase {
     CefBrowserCreateParams create_params_;
   };
 
+  CefRefPtr<ChromeBrowserHostImpl> AsChromeBrowserHostImpl() override {
+    return this;
+  }
+
   // Create a new Browser with a single tab (WebContents) and associated
   // ChromeBrowserHostImpl instance.
   static CefRefPtr<ChromeBrowserHostImpl> Create(
@@ -118,6 +122,17 @@ class ChromeBrowserHostImpl : public CefBrowserHostBase {
     return weak_ptr_factory_.GetWeakPtr();
   }
 
+#if BUILDFLAG(ARKWEB_PIP)
+  void SetPipNativeWindow(int delegate_id,
+                          int child_id,
+                          int frame_routing_id,
+                          cef_native_window_t window) override {}
+  void SendPipEvent(int delegate_id,
+                    int child_id,
+                    int frame_routing_id,
+                    int event) override {}
+#endif
+
  protected:
   bool Navigate(const content::OpenURLParams& params) override;
 
@@ -165,6 +180,17 @@ class ChromeBrowserHostImpl : public CefBrowserHostBase {
   // Returns the current tab index for the associated WebContents, or
   // TabStripModel::kNoTab if not found.
   int GetCurrentTabIndex() const;
+
+#if BUILDFLAG(ARKWEB_COMPOSITE_RENDER)
+  void SetShouldFrameSubmissionBeforeDraw(bool should) override {}
+  std::string GetCurrentLanguage() override { return ""; }
+  void GetWebLanguageAsync(
+      CefRefPtr<CefWebLanguageDetectedCallback> callback) override {
+    if (callback) {
+      callback->OnWebLanguageDetected(ArkWebLanguageDetectionDetails());
+    }
+  }
+#endif  // BUILDFLAG(ARKWEB_COMPOSITE_RENDER)
 
   raw_ptr<Browser> browser_ = nullptr;
   CefWindowHandle host_window_handle_ = kNullWindowHandle;

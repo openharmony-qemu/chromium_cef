@@ -11,6 +11,11 @@
 #include "base/memory/weak_ptr.h"
 #include "cef/include/cef_client.h"
 
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+#include "ohos_cef_ext/libcef/common/cef_open_devtools_ext_opt.h"
+class CefDevToolsFrontend;
+#endif // BUILDFLAG(ARKWEB_DEVTOOLS)
+
 class CefBrowserHostBase;
 class ChromeBrowserHostImpl;
 
@@ -37,11 +42,32 @@ class CefDevToolsWindowRunner final {
   CefDevToolsWindowRunner() = default;
 
   CefDevToolsWindowRunner(const CefDevToolsWindowRunner&) = delete;
-  CefDevToolsWindowRunner& operator=(const CefDevToolsWindowRunner&) =
-      delete;
+  CefDevToolsWindowRunner& operator=(const CefDevToolsWindowRunner&) = delete;
 
   void ShowDevTools(CefBrowserHostBase* opener,
                     std::unique_ptr<CefShowDevToolsParams> params);
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+  static void StaticShowDevToolsWith(
+      const CefString& source_id,
+      const CefString& target_id,
+      const CefString& type,
+      CefRefPtr<ArkWebBrowserHostExt> frontend_browser,
+      CefRefPtr<CefDevToolsMessageHandlerDelegate> devtools_message_handler,
+      const CefPoint& inspect_element_at,
+      const CefOpenDevToolsExtOpt& ext_opt);
+  void ShowDevToolsWith(
+      CefRefPtr<ArkWebBrowserHostExt> frontend_browser,
+      CefBrowserHostBase* inspected_browser,
+      CefRefPtr<CefDevToolsMessageHandlerDelegate> devtools_message_handler,
+      const CefPoint& inspect_element_at);
+
+  void ShowDevToolsWithByPb(
+      CefRefPtr<ArkWebBrowserHostExt> frontend_browser,
+      CefBrowserHostBase* inspected_browser,
+      CefRefPtr<CefDevToolsMessageHandlerDelegate> devtools_message_handler,
+      const CefPoint& inspect_element_at,
+      const CefOpenDevToolsExtOpt& ext_opt);
+#endif // BUILDFLAG(ARKWEB_DEVTOOLS)
   void CloseDevTools();
   bool HasDevTools();
 
@@ -51,9 +77,20 @@ class CefDevToolsWindowRunner final {
       base::WeakPtr<ChromeBrowserHostImpl> browser_host);
 
  private:
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+  void OnFrontEndDestroyed();
+  static void OnStaticFrontEndDestroyed();
+#endif // BUILDFLAG(ARKWEB_DEVTOOLS)
+
   std::unique_ptr<CefShowDevToolsParams> pending_params_;
 
   base::WeakPtr<ChromeBrowserHostImpl> browser_host_;
+
+#if BUILDFLAG(ARKWEB_DEVTOOLS)
+  raw_ptr<CefDevToolsFrontend> devtools_frontend_ = nullptr;
+  static raw_ptr<CefDevToolsFrontend> static_devtools_frontend_;
+  base::WeakPtrFactory<CefDevToolsWindowRunner> weak_ptr_factory_{this};
+#endif // BUILDFLAG(ARKWEB_DEVTOOLS)
 };
 
 #endif  // CEF_LIBCEF_BROWSER_DEVTOOLS_DEVTOOLS_WINDOW_RUNNER_H_

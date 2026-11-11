@@ -805,7 +805,9 @@ void CefWindowImpl::SendMouseEvents(cef_mouse_button_type_t button,
     state |= ui_controls::UP;
   }
 
+#if !BUILDFLAG(IS_OHOS)
   ui_controls::SendMouseEvents(type, state);
+#endif
 }
 
 void CefWindowImpl::SetAccelerator(int command_id,

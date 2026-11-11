@@ -1,0 +1,44 @@
+diff a/libcef/browser/alloy/alloy_browser_host_impl.h b/libcef/browser/alloy/alloy_browser_host_impl.h	(rejected hunks)
+@@ -21,14 +23,20 @@
+ #include "cef/libcef/browser/menu_manager.h"
+ #include "cef/libcef/browser/request_context_impl.h"
+ #include "content/public/browser/web_contents.h"
+ #include "content/public/browser/web_contents_delegate.h"
+ #include "content/public/browser/web_contents_observer.h"
++#include "ohos_cef_ext/libcef/browser/arkweb_browser_host_ext.h"
+ 
+ class CefAudioCapturer;
+ class CefBrowserInfo;
++class AlloyBrowserHostImplExt;
++class AlloyBrowserHostImplUtils;
++
++#if !BUILDFLAG(ARKWEB_ZOOM)
+ class SiteInstance;
++#endif
+ 
+ // CefBrowser implementation for Alloy style. Method calls are delegated to the
+ // CefPlatformDelegate or the WebContents as appropriate. All methods are
+ // thread-safe unless otherwise indicated.
+ //
+@@ -219,14 +258,18 @@ class AlloyBrowserHostImpl : public CefBrowserHostBase,
+                           int opener_render_process_id,
+                           int opener_render_frame_id,
+                           const std::string& frame_name,
+                           const GURL& target_url,
+                           content::WebContents* new_contents) override;
+-  void RendererUnresponsive(
+-      content::WebContents* source,
++  void RendererUnresponsive(content::WebContents* source,
+       content::RenderWidgetHost* render_widget_host,
+-      base::RepeatingClosure hang_monitor_restarter) override;
++                            base::RepeatingClosure hang_monitor_restarter
++#if BUILDFLAG(ARKWEB_RENDERER_ANR_DUMP)
++                            ,
++                            content::RendererIsUnresponsiveReason reason
++#endif
++                            ) override;
+   void RendererResponsive(
+       content::WebContents* source,
+       content::RenderWidgetHost* render_widget_host) override;
+   content::JavaScriptDialogManager* GetJavaScriptDialogManager(
+       content::WebContents* source) override;
