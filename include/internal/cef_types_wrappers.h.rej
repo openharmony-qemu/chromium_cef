@@ -1,0 +1,47 @@
+diff a/include/internal/cef_types_wrappers.h b/include/internal/cef_types_wrappers.h	(rejected hunks)
+@@ -466,10 +488,14 @@ struct CefSettingsTraits {
+     target->chrome_app_icon_id = src->chrome_app_icon_id;
+ 
+ #if defined(OS_POSIX) && !defined(OS_ANDROID)
+     target->disable_signal_handlers = src->disable_signal_handlers;
+ #endif
++
++#if BUILDFLAG(ARKWEB_INCOGNITO_MODE)
++    target->incognito_mode = src->incognito_mode;
++#endif
+   }
+ };
+ 
+ ///
+ /// Class representing initialization settings.
+@@ -574,10 +612,30 @@ struct CefBrowserSettingsTraits {
+ 
+     target->background_color = src->background_color;
+ 
+     target->chrome_status_bubble = src->chrome_status_bubble;
+     target->chrome_zoom_bubble = src->chrome_zoom_bubble;
++
++    setForInclude(src, target, copy);
++#if BUILDFLAG(ARKWEB_SCROLLBAR_AVOID_CORNER)
++    target->border_radius_top_left = src->border_radius_top_left;
++    target->border_radius_top_right = src->border_radius_top_right;
++    target->border_radius_bottom_left = src->border_radius_bottom_left;
++    target->border_radius_bottom_right = src->border_radius_bottom_right;
++#endif  // ARKWEB_SCROLLBAR_AVOID_CORNER
++
++#if BUILDFLAG(ARKWEB_MENU)
++    target->touch_handle_exist = src->touch_handle_exist;
++    target->click_ext_enabled = src->click_ext_enabled;
++    target->viewport_scale = src->viewport_scale;
++#endif  // BUILDFLAG(ARKWEB_MENU)
++
++#if BUILDFLAG(ARKWEB_INPUT_EVENTS)
++    target->scrollbar_layout_policy =
++        src->scrollbar_layout_policy;
++    target->is_system_rtl_enabled = src->is_system_rtl_enabled;
++#endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
+   }
+ };
+ 
+ ///
+ /// Class representing browser initialization settings.

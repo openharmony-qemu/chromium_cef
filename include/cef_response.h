@@ -163,6 +163,21 @@ class CefResponse : public virtual CefBaseRefCounted {
   ///
   /*--cef(optional_param=url)--*/
   virtual void SetURL(const CefString& url) = 0;
+
+#if BUILDFLAG(ARKWEB_SCHEME_HANDLER)
+  ///
+  /// Set the custom error code. This can be used by custom scheme handlers
+  /// to return custom error information.
+  ///
+  /*--cef()--*/
+  virtual void SetCustomErrorCode(int custom_error_code) = 0;
+
+  ///
+  /// Get the custom error code. Returns 0 if there was no custom error.
+  ///
+  /*--cef(default_retval=0)--*/
+  virtual int GetCustomErrorCode() = 0;
+#endif
 };
 
 #endif  // CEF_INCLUDE_CEF_RESPONSE_H_

@@ -1,0 +1,58 @@
+diff a/include/cef_browser.h b/include/cef_browser.h	(rejected hunks)
+@@ -1070,8 +1137,56 @@ class CefBrowserHost : public virtual CefBaseRefCounted {
+   /// Returns the runtime style for this browser (ALLOY or CHROME). See
+   /// cef_runtime_style_t documentation for details.
+   ///
+   /*--cef(default_retval=CEF_RUNTIME_STYLE_DEFAULT)--*/
+   virtual cef_runtime_style_t GetRuntimeStyle() = 0;
++
++#if BUILDFLAG(ARKWEB_PIP)
++  ///
++  /// Set pip native window.
++  ///
++  /*--cef()--*/
++  virtual void SetPipNativeWindow(int delegate_id,
++                                  int child_id,
++                                  int frame_routing_id,
++                                  cef_native_window_t window) = 0;
++
++  ///
++  /// Send pip evnet.
++  ///
++  /*--cef()--*/
++  virtual void SendPipEvent(int delegate_id,
++                            int child_id,
++                            int frame_routing_id,
++                            int event) = 0;
++#endif
++#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
++  ///
++  /// Prerender Page.
++  ///
++  /*--cef()--*/
++  virtual int PrerenderPage(const CefString& url,
++                            const CefString& additional_headers) = 0;
++  ///
++  /// Cancel All Prerendering.
++  ///
++  /*--cef()--*/
++  virtual void CancelAllPrerendering() = 0;
++
++#if BUILDFLAG(ARKWEB_BLANK_SCREEN_DETECTION)
++  ///
++  /// Set blank screen detection config.
++  ///
++  /*--cef()--*/
++  virtual void SetBlankScreenDetectionConfig(
++      bool enable,
++      const std::vector<double> &detectionTiming,
++      const std::vector<int32_t> &detectionMethods,
++      int32_t contentfulNodesCountThreshold) = 0;
++#endif
++
++#endif
+ };
+ 
++#include "ohos_cef_ext/include/arkweb_browser_ext.h"
++
+ #endif  // CEF_INCLUDE_CEF_BROWSER_H_

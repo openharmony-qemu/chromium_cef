@@ -1,0 +1,82 @@
+diff a/include/internal/cef_types.h b/include/internal/cef_types.h	(rejected hunks)
+@@ -497,10 +502,16 @@ typedef struct _cef_settings_t {
+ 
+   ///
+   /// Specify whether signal handlers must be disabled on POSIX systems.
+   ///
+   int disable_signal_handlers;
++#if BUILDFLAG(ARKWEB_INCOGNITO_MODE)
++  bool incognito_mode;
++#endif
++#if BUILDFLAG(ARKWEB_RENDER_PROCESS_SHARE)
++  std::string shared_render_process_token;
++#endif
+ } cef_settings_t;
+ 
+ ///
+ /// Request context initialization settings. Specify NULL or 0 to get the
+ /// recommended default values.
+@@ -709,10 +830,63 @@ typedef struct _cef_browser_settings_t {
+   ///
+   /// Controls whether the Chrome zoom bubble will be shown when zooming. Only
+   /// supported with Chrome style.
+   ///
+   cef_state_t chrome_zoom_bubble;
++
++#if BUILDFLAG(ARKWEB_INCOGNITO_MODE)
++  bool incognito_mode;
++#endif
++#if BUILDFLAG(ARKWEB_CUSTOM_VIDEO_PLAYER)
++  bool custom_video_player_enable;
++  bool custom_video_player_overlay;
++#endif  // ARKWEB_CUSTOM_VIDEO_PLAYER
++#if BUILDFLAG(ARKWEB_FULLSCREEN_VIDEO_OVERLAY)
++  bool fullscreen_video_overlay_enable;
++#endif  // ARKWEB_FULLSCREEN_VIDEO_OVERLAY
++#if BUILDFLAG(ARKWEB_MULTI_WINDOW)
++  bool supports_multiple_windows;
++#endif  // ARKWEB_MULTI_WINDOW
++
++#if BUILDFLAG(ARKWEB_SOFTWARE_COMPOSITOR)
++  bool record_whole_document;
++#endif
++
++#if BUILDFLAG(ARKWEB_MEDIA_CAPABILITIES_ENHANCE)
++  int32_t usage_scenario;
++#endif
++
++#if BUILDFLAG(ARKWEB_RENDER_PROCESS_SHARE)
++  cef_string_t shared_render_process_token;
++#endif
++#if BUILDFLAG(ARKWEB_ACTIVE_POLICY)
++  int64_t delay_for_background_tab_freezing;
++#endif
++#if BUILDFLAG(ARKWEB_INPUT_EVENTS)
++  int blur_enabled;
++#endif
++#if BUILDFLAG(ARKWEB_MEDIA_NETWORK_TRAFFIC_PROMPT)
++  bool enable_media_network_traffic_prompt;
++#endif  // ARKWEB_MEDIA_NETWORK_TRAFFIC_PROMPT
++#if BUILDFLAG(ARKWEB_CLIPBOARD)
++  std::optional<bool> clipboard_site_permission_enabled;
++#endif  // BUILDFLAG(ARKWEB_CLIPBOARD)
++#if BUILDFLAG(ARKWEB_INPUT_EVENTS)
++  bool is_compatible_converting_enabled;
++#endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
++
++#if BUILDFLAG(ARKWEB_FONT_SETTINGS)
++  bool has_web_set_default_font_size;
++  bool has_web_set_default_fixed_font_size;
++  bool has_web_set_font_size_lower_limit;
++  bool has_web_set_standard_font;
++  bool has_web_set_fixed_font;
++  bool has_web_set_serif_font;
++  bool has_web_set_sans_serif_font;
++  bool has_web_set_cursive_font;
++  bool has_web_set_fantasy_font;
++#endif
+ } cef_browser_settings_t;
+ 
+ ///
+ /// Return value types.
+ ///

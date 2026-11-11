@@ -38,6 +38,7 @@
 #define CEF_INCLUDE_CEF_CLIENT_H_
 #pragma once
 
+#include "cef/ohos_cef_ext/include/arkweb_display_handler_ext.h"
 #include "include/cef_audio_handler.h"
 #include "include/cef_base.h"
 #include "include/cef_command_handler.h"
@@ -53,11 +54,23 @@
 #include "include/cef_keyboard_handler.h"
 #include "include/cef_life_span_handler.h"
 #include "include/cef_load_handler.h"
+#include "cef/ohos_cef_ext/include/cef_media_player_controller.h"
 #include "include/cef_permission_handler.h"
 #include "include/cef_print_handler.h"
 #include "include/cef_process_message.h"
 #include "include/cef_render_handler.h"
 #include "include/cef_request_handler.h"
+#include "cef/ohos_cef_ext/include/cef_safe_browsing_detection_callback.h"
+
+
+class ArkWebClientExt;
+class ArkWebLoadHandlerExt;
+class ArkWebRenderHandlerExt;
+class CefDialogHandlerExt;
+class ArkWebDisplayHandlerExt;
+class CefMediaPlayerListenerForVAST;
+class CefMediaPlayerController;
+class CefWebExtensionApiHandler;
 
 ///
 /// Implement this interface to provide handler implementations.
@@ -65,6 +78,7 @@
 /*--cef(source=client,no_debugct_check)--*/
 class CefClient : public virtual CefBaseRefCounted {
  public:
+  virtual CefRefPtr<ArkWebClientExt> AsArkWebClient() { return nullptr; }
   ///
   /// Return the handler for audio rendering events.
   ///
@@ -164,8 +178,7 @@ class CefClient : public virtual CefBaseRefCounted {
   ///
   /// Return the handler for browser load status events.
   ///
-  /*--cef()--*/
-  virtual CefRefPtr<CefLoadHandler> GetLoadHandler() { return nullptr; }
+  virtual CefRefPtr<ArkWebLoadHandlerExt> GetLoadHandler() { return nullptr; }
 
   ///
   /// Return the handler for printing on Linux. If a print handler is not
@@ -177,8 +190,9 @@ class CefClient : public virtual CefBaseRefCounted {
   ///
   /// Return the handler for off-screen rendering events.
   ///
-  /*--cef()--*/
-  virtual CefRefPtr<CefRenderHandler> GetRenderHandler() { return nullptr; }
+  virtual CefRefPtr<ArkWebRenderHandlerExt> GetRenderHandler() {
+    return nullptr;
+  }
 
   ///
   /// Return the handler for browser request events.
@@ -198,6 +212,84 @@ class CefClient : public virtual CefBaseRefCounted {
                                         CefRefPtr<CefProcessMessage> message) {
     return false;
   }
+
+  ///
+  /// notify application to show toast.
+  ///
+  /*--cef()--*/
+  virtual void OnShowToast(double duration, const CefString& toast) {}
+
+  ///
+  /// notify application to show video assistant.
+  ///
+  /*--cef()--*/
+  virtual void OnShowVideoAssistant(const CefString& videoAssistantItems) {}
+
+  ///
+  /// notify application to report statistic log.
+  ///
+  /*--cef()--*/
+  virtual void OnReportStatisticLog(const CefString& content) {}
+
+#if BUILDFLAG(ARKWEB_VIDEO_ASSISTANT)
+  ///
+  /// Return the interface for listening to the full-screen video.
+  ///
+  virtual CefOwnPtr<CefMediaPlayerListenerForVAST> OnFullScreenOverlayEnter(
+      CefOwnPtr<CefMediaPlayerController> media_player_controller,
+      const std::string& extra_info) { return nullptr; }
+
+  ///
+  /// Return the interface for listening to the avcast video.
+  ///
+  virtual CefOwnPtr<CefMediaPlayerListenerForVAST> OnAVCastStarted(
+      CefOwnPtr<CefMediaPlayerController> media_player_controller,
+      const std::string& extra_info) { return nullptr; }
+
+#endif // ARKWEB_VIDEO_ASSISTANT
+
+  ///
+  /// Detect whether the website has security risks.
+  ///
+  /*--cef()--*/
+  virtual void HandleSafeBrowsingDetection(int detectMode,
+                                           int detectSwitch,
+                                           const CefString& url) {}
+ 
+#if BUILDFLAG(ARKWEB_ARKWEB_EXTENSIONS)
+  ///
+  /// notify application to show confirm infobar.
+  ///
+  /*--cef()--*/
+  virtual void OnShowConfirmInfoBar(const CefString& title,
+                                    const CefString& infoId,
+                                    const CefString& message,
+                                    int buttons,
+                                    const CefString& buttonLabelOK,
+                                    const CefString& buttonLabelCancel) {}
+  ///
+  /// notify application to hide confirm infobar.
+  ///
+  /*--cef()--*/
+  virtual void OnHideConfirmInfoBar(const CefString& title,
+                                    const CefString& infoId,
+                                    const CefString& message,
+                                    int buttons,
+                                    const CefString& buttonLabelOK,
+                                    const CefString& buttonLabelCancel) {}
+#endif // ARKWEB_ARKWEB_EXTENSIONS
+
+#if BUILDFLAG(ARKWEB_FULLSCREEN_VIDEO_OVERLAY)
+  ///
+  /// Return whether fullscreen video overlay is enabled.
+  ///
+  virtual bool IsFullscreenVideoOverlayEnabled() const { return false; }
+  ///
+  /// Called when video playback status changed.
+  ///
+  virtual void OnVideoStatusChanged(int action,
+                                    std::map<std::string, std::string>& param) {}
+#endif  // ARKWEB_FULLSCREEN_VIDEO_OVERLA
 };
 
 #endif  // CEF_INCLUDE_CEF_CLIENT_H_
