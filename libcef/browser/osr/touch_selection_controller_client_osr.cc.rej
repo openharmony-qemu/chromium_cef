@@ -1,0 +1,102 @@
+diff a/libcef/browser/osr/touch_selection_controller_client_osr.cc b/libcef/browser/osr/touch_selection_controller_client_osr.cc	(rejected hunks)
+@@ -6,10 +6,14 @@
+ #include "cef/libcef/browser/osr/touch_selection_controller_client_osr.h"
+ 
+ #include <cmath>
+ #include <set>
+ 
++#include "arkweb/build/features/features.h"
++#if BUILDFLAG(IS_ARKWEB_EXT)
++#include "arkweb/ohos_nweb_ex/build/features/features.h"
++#endif
+ #include "base/functional/bind.h"
+ #include "cef/libcef/browser/osr/render_widget_host_view_osr.h"
+ #include "cef/libcef/browser/osr/touch_handle_drawable_osr.h"
+ #include "content/browser/renderer_host/render_widget_host_delegate.h"
+ #include "content/browser/renderer_host/render_widget_host_impl.h"
+@@ -255,21 +275,26 @@ bool CefTouchSelectionControllerClientOSR::IsQuickMenuAvailable() const {
+   };
+   return std::any_of(std::cbegin(kMenuCommands), std::cend(kMenuCommands),
+                      is_enabled);
+ }
+ 
+-void CefTouchSelectionControllerClientOSR::CloseQuickMenu() {
++void CefTouchSelectionControllerClientOSR::TemporarilyCloseQuickMenu() {
+   if (!quick_menu_running_) {
+     return;
+   }
+ 
+   quick_menu_running_ = false;
+ 
+   auto browser = rwhv_->browser_impl();
+   if (auto handler = browser->client()->GetContextMenuHandler()) {
+-    handler->OnQuickMenuDismissed(browser.get(), browser->GetFocusedFrame());
++    handler->AsCefContextMenuHandlerExt()->OnQuickMenuDismissed(
++        browser.get(), browser->GetFocusedFrame(), false);
++  }
+   }
++
++void CefTouchSelectionControllerClientOSR::CloseQuickMenu() {
++  TemporarilyCloseQuickMenu();
+ }
+ 
+ void CefTouchSelectionControllerClientOSR::ShowQuickMenu() {
+   auto browser = rwhv_->browser_impl();
+   if (auto handler = browser->client()->GetContextMenuHandler()) {
+@@ -279,42 +304,26 @@ void CefTouchSelectionControllerClientOSR::ShowQuickMenu() {
+     gfx::PointF origin = rect.origin();
+     gfx::PointF bottom_right = rect.bottom_right();
+     auto client_bounds = gfx::RectF(rwhv_->GetViewBounds());
+     origin.SetToMax(client_bounds.origin());
+     bottom_right.SetToMin(client_bounds.bottom_right());
+-    if (origin.x() > bottom_right.x() || origin.y() > bottom_right.y()) {
+-      return;
+-    }
+-
+     gfx::Vector2dF diagonal = bottom_right - origin;
+     gfx::SizeF size(diagonal.x(), diagonal.y());
+ 
+     int quickmenuflags = 0;
+     for (const auto& command : kMenuCommands) {
+       if (active_menu_client_->IsCommandIdEnabled(command)) {
+         quickmenuflags |= command;
+       }
+     }
+-
++    LOG(INFO) << "Quick Menu Flags Is = " << quickmenuflags;
+     CefRefPtr<CefRunQuickMenuCallbackImpl> callbackImpl(
+         new CefRunQuickMenuCallbackImpl(base::BindOnce(
+             &CefTouchSelectionControllerClientOSR::ExecuteCommand,
+             weak_ptr_factory_.GetWeakPtr())));
+ 
+     quick_menu_running_ = true;
+-    if (!handler->RunQuickMenu(
+-            browser, browser->GetFocusedFrame(),
+-            {static_cast<int>(std::round(origin.x())),
+-             static_cast<int>(std::round(origin.y()))},
+-            {static_cast<int>(std::round(size.width())),
+-             static_cast<int>(std::round(size.height()))},
+-            static_cast<CefContextMenuHandler::QuickMenuEditStateFlags>(
+-                quickmenuflags),
+-            callbackImpl)) {
+-      callbackImpl->Disconnect();
+-      CloseQuickMenu();
+-    }
+   }
+ }
+ 
+ void CefTouchSelectionControllerClientOSR::UpdateQuickMenu() {
+   // Hide the quick menu if there is any. This should happen even if the menu
+@@ -470,11 +488,11 @@ bool CefTouchSelectionControllerClientOSR::IsCommandIdEnabled(
+     case QM_EDITFLAG_CAN_COPY:
+       return readable && has_selection;
+     case QM_EDITFLAG_CAN_PASTE: {
+       std::u16string result;
+       ui::DataTransferEndpoint data_dst = ui::DataTransferEndpoint(
+-          ui::EndpointType::kDefault, {.notify_if_restricted = false});
++          ui::EndpointType::kDefault, /*notify_if_restricted=*/false);
+       ui::Clipboard::GetForCurrentThread()->ReadText(
+           ui::ClipboardBuffer::kCopyPaste, &data_dst, &result);
+       return editable && !result.empty();
+     }
+     default:

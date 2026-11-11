@@ -1,0 +1,25 @@
+diff a/libcef/browser/osr/touch_selection_controller_client_osr.h b/libcef/browser/osr/touch_selection_controller_client_osr.h	(rejected hunks)
+@@ -88,14 +139,22 @@ class CefTouchSelectionControllerClientOSR
+ 
+  private:
+   class EnvEventObserver;
+ 
+   bool IsQuickMenuAvailable() const;
++
++#if BUILDFLAG(IS_ARKWEB)
++  virtual void CloseQuickMenu();
++  virtual void ShowQuickMenu();
++  void UpdateQuickMenu() override;
++  virtual void TemporarilyCloseQuickMenu();
++#else
+   void CloseQuickMenu();
+   void ShowQuickMenu();
+   void UpdateQuickMenu();
+-
++  void TemporarilyCloseQuickMenu();
++#endif
+   // ui::TouchSelectionControllerClient:
+   bool SupportsAnimation() const override;
+   void SetNeedsAnimate() override;
+   void MoveCaret(const gfx::PointF& position) override;
+   void MoveRangeSelectionExtent(const gfx::PointF& extent) override;
