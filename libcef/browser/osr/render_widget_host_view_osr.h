@@ -11,6 +11,7 @@
 #include <set>
 #include <vector>
 
+#include "arkweb/build/features/features.h"
 #include "base/memory/raw_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "build/build_config.h"
@@ -47,6 +48,14 @@
 #if BUILDFLAG(IS_WIN)
 #include "ui/gfx/win/window_impl.h"
 #endif
+#if BUILDFLAG(ARKWEB_CLIPBOARD)
+#include <queue>
+#include "cef/ohos_cef_ext/libcef/browser/osr/arkweb_touch_selection_controller_client_osr_ext.h"
+#endif
+#if BUILDFLAG(ARKWEB_EXT_PULL_TO_REFRESH) || BUILDFLAG(ARKWEB_PULL_TO_REFRESH)
+#include "arkweb/chromium_ext/content/browser/ohos/overscroll_controller_ohos.h"
+#include "arkweb/chromium_ext/ui/ohos/overscroll_refresh_handler.h"
+#endif
 
 namespace ui {
 class TouchSelectionController;
@@ -70,6 +79,9 @@ class CefSoftwareOutputDeviceOSR;
 class CefTouchSelectionControllerClientOSR;
 class CefVideoConsumerOSR;
 class CefWebContentsViewOSR;
+class ArkWebRenderWidgetHostViewOSRExt;
+class ArkWebRenderWidgetHostViewOSRUtils;
+class ArkWebTouchSelectionControllerClientOSRExt;
 
 ///////////////////////////////////////////////////////////////////////////////
 // CefRenderWidgetHostViewOSR
@@ -98,8 +110,14 @@ class CefRenderWidgetHostViewOSR
       public content::RenderFrameMetadataProvider::Observer,
       public ui::CompositorDelegate,
       public content::TextInputManager::Observer,
-      public ui::GestureProviderClient {
+      public ui::GestureProviderClient
+#if BUILDFLAG(ARKWEB_EXT_PULL_TO_REFRESH) || BUILDFLAG(ARKWEB_PULL_TO_REFRESH)
+    ,
+      public ui::OverscrollRefreshHandler
+#endif
+{
  public:
+  virtual ArkWebRenderWidgetHostViewOSRExt* AsArkWebRenderWidgetHostViewOSRExt() { return nullptr; }
   CefRenderWidgetHostViewOSR(SkColor background_color,
                              bool use_shared_texture,
                              bool use_external_begin_frame,
@@ -111,6 +129,8 @@ class CefRenderWidgetHostViewOSR
       delete;
 
   ~CefRenderWidgetHostViewOSR() override;
+  friend class ArkWebRenderWidgetHostViewOSRExt;
+  friend class ArkWebRenderWidgetHostViewOSRUtils;
 
   // RenderWidgetHostView implementation.
   void InitAsChild(gfx::NativeView parent_view) override;
@@ -247,7 +267,12 @@ class CefRenderWidgetHostViewOSR
   void WasResized();
   void SynchronizeVisualProperties(
       const cc::DeadlinePolicy& deadline_policy,
+#if BUILDFLAG(ARKWEB_COMPOSITE_RENDER)
+      const absl::optional<viz::LocalSurfaceId>& child_local_surface_id,
+      bool isKeyboard = false);
+#else
       const std::optional<viz::LocalSurfaceId>& child_local_surface_id);
+#endif  // BUILDFLAG(ARKWEB_COMPOSITE_RENDER)
   void OnScreenInfoChanged();
   void Invalidate(CefBrowserHost::PaintElementType type);
   void SendExternalBeginFrame();
@@ -260,6 +285,7 @@ class CefRenderWidgetHostViewOSR
   void UpdateFrameRate();
 
   gfx::Size SizeInPixels();
+
   void OnPaint(const gfx::Rect& damage_rect,
                const gfx::Size& pixel_size,
                const void* pixels);
@@ -319,7 +345,11 @@ class CefRenderWidgetHostViewOSR
     return selection_controller_.get();
   }
 
+#if BUILDFLAG(ARKWEB_CLIPBOARD)
+  ArkWebTouchSelectionControllerClientOSRExt* selection_controller_client() const {
+#else
   CefTouchSelectionControllerClientOSR* selection_controller_client() const {
+#endif
     return selection_controller_client_.get();
   }
 
@@ -327,6 +357,26 @@ class CefRenderWidgetHostViewOSR
 
   bool is_hidden() const { return !is_showing_; }
 
+#if BUILDFLAG(ARKWEB_EXT_TOPCONTROLS) || BUILDFLAG(ARKWEB_EX_TOPCONTROLS)
+  gfx::Rect GetPhysicalViewBounds();
+  virtual float GetShrinkViewportHeight() { return 0; }
+  virtual float GetShrinkVisualViewportHeight() { return 0; }
+  float GetTopControlsOffset() const override { return 0; }
+  float GetTopContentOffset() const override { return 0; }
+  float GetBottomContentOffset() const override { return 0; }
+#endif
+
+#if BUILDFLAG(ARKWEB_EVICT_UNLOCK_FRAMES)
+  ArkWebRenderWidgetHostViewOSRUtils* GetUtils() const;
+  void OnDisplayFirstRealSwap();
+  void SetUseSpecifiedDeadlinePolicy(bool shouldUse);
+  bool evictUnlockFrameEnabled_ = false;
+#endif
+
+ protected:
+#if BUILDFLAG(ARKWEB_FLING)
+  void IgnorePendingWheelEndEvent();
+#endif
  private:
   void SetFrameRate();
   bool SetScreenInfo();
@@ -386,7 +436,11 @@ class CefRenderWidgetHostViewOSR
   gfx::SelectionBound selection_start_;
   gfx::SelectionBound selection_end_;
 
+#if BUILDFLAG(ARKWEB_CLIPBOARD)
+  std::unique_ptr<ArkWebTouchSelectionControllerClientOSRExt>
+#else
   std::unique_ptr<CefTouchSelectionControllerClientOSR>
+#endif
       selection_controller_client_;
   std::unique_ptr<ui::TouchSelectionController> selection_controller_;
 
@@ -437,12 +491,18 @@ class CefRenderWidgetHostViewOSR
   raw_ptr<CefRenderWidgetHostViewOSR> child_host_view_ = nullptr;
   std::set<raw_ptr<CefRenderWidgetHostViewOSR>> guest_host_views_;
 
+  std::unique_ptr<ArkWebRenderWidgetHostViewOSRUtils> arkweb_rwhv_osr_utils_;
   CefRefPtr<AlloyBrowserHostImpl> browser_impl_;
 
   bool is_showing_ = false;
   bool is_destroyed_ = false;
   bool is_first_navigation_ = true;
   gfx::Rect current_view_bounds_;
+#if BUILDFLAG(ARKWEB_INPUT_EVENTS) || BUILDFLAG(ARKWEB_COMPOSITE_RENDER)
+  gfx::Size current_visible_view_bounds_ = {0, 0};
+  bool should_wait_ = false;
+  int32_t needFocusViewport_ = 0;
+#endif
   gfx::Rect popup_position_;
   base::Lock damage_rect_lock_;
   std::map<uint32_t, gfx::Rect> damage_rects_;
