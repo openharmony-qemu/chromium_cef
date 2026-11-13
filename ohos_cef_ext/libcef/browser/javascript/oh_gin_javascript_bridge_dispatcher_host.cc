@@ -147,6 +147,7 @@ void OhGinJavascriptBridgeDispatcherHost::RemoteDisconnected(
 }
 
 void OhGinJavascriptBridgeDispatcherHost::DidFinishNavigation(content::NavigationHandle* navigation_handle) {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
   if (!navigation_handle->HasCommitted() || navigation_handle->IsErrorPage()) {
     LOG(ERROR) << "DidFinishNavigation invalid navigation_handle";
     return;
@@ -163,28 +164,37 @@ void OhGinJavascriptBridgeDispatcherHost::DidFinishNavigation(content::Navigatio
     LOG(ERROR) << "DidFinishNavigation get site instance failed";
     return;
   }
-  site_instance_gurl_ = site_instance->GetSiteURL();
+  site_instance_gurl_[render_frame_host->GetGlobalId()] = site_instance->GetSiteURL();
 }
 
-bool OhGinJavascriptBridgeDispatcherHost::IsSameSite(const GURL& document_gurl) {
+bool OhGinJavascriptBridgeDispatcherHost::IsSameSite(
+    const content::GlobalRenderFrameHostId& global_id, const GURL& document_gurl) {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
   if (!content::SiteIsolationPolicy::UseDedicatedProcessesForAllSites()) {
     return true;
   }
 
-  if (!site_instance_gurl_.SchemeIsHTTPOrHTTPS() ||
-      site_instance_gurl_.possibly_invalid_spec() == "http://unisolated.invalid/") {
+  auto it = site_instance_gurl_.find(global_id);
+  if (it == site_instance_gurl_.end()) {
+    LOG(ERROR) << "IsSameSite global_id is invalid";
+    return false;
+  }
+  const GURL& site_instance_gurl = it->second;
+
+  if (!site_instance_gurl.SchemeIsHTTPOrHTTPS() ||
+      site_instance_gurl.possibly_invalid_spec() == "http://unisolated.invalid/") {
     return true;
   }
 
   if (document_gurl.scheme().empty() ||
-      document_gurl.scheme() != site_instance_gurl_.scheme()) {
+      document_gurl.scheme() != site_instance_gurl.scheme()) {
     LOG(INFO) << "IsSameSite scheme not same";
     return false;
   }
 
   if (document_gurl.host().empty() ||
-      document_gurl.host() != site_instance_gurl_.host()) {
-    const size_t suffix_length = site_instance_gurl_.GetHost().length() + 1;
+      document_gurl.host() != site_instance_gurl.host()) {
+    const size_t suffix_length = site_instance_gurl.GetHost().length() + 1;
     const std::string url_host = document_gurl.GetHost();
 
     if (url_host.length() <= suffix_length) {
@@ -194,7 +204,7 @@ bool OhGinJavascriptBridgeDispatcherHost::IsSameSite(const GURL& document_gurl) 
       const size_t dot_pos = url_host.length() - suffix_length;
       const std::string host_suffix = url_host.substr(dot_pos + 1);
       if (url_host[dot_pos] != '.' ||
-          host_suffix != site_instance_gurl_.host()) {
+          host_suffix != site_instance_gurl.host()) {
         LOG(INFO) << "IsSameSite host not subdomain";
         return false;
       }
@@ -233,6 +243,12 @@ void OhGinJavascriptBridgeDispatcherHost::RenderFrameCreated(
           ->AddNamedObject(object_name, object_id, std::move(empty_list), false);
     }
   }
+}
+
+void OhGinJavascriptBridgeDispatcherHost::RenderFrameDeleted(
+    content::RenderFrameHost* render_frame_host) {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+  site_instance_gurl_.erase(render_frame_host->GetGlobalId());
 }
 
 void OhGinJavascriptBridgeDispatcherHost::WebContentsDestroyed() {
@@ -1551,7 +1567,8 @@ void OhGinJavascriptBridgeDispatcherHost::InvokeMethod(const std::string& method
                                                        const std::string& document_url,
                                                        base::Value::List arguments,
                                                        InvokeMethodCallback callback) {
-  if (!web_contents() || !IsSameSite(GURL(document_url))) {
+  if (!web_contents() ||
+      !IsSameSite(object_receivers_.current_context().first, GURL(document_url))) {
     base::Value::List wrapped_result;
     std::move(callback).Run(content::mojom::OhGinJavascriptBridgeError::kOhGinJavascriptBridgeObjectIsGone,
         std::move(wrapped_result));
@@ -1606,7 +1623,8 @@ void OhGinJavascriptBridgeDispatcherHost::OnInvokeMethodCallback(content::mojom:
 void OhGinJavascriptBridgeDispatcherHost::InvokeMethodAsync(const std::string& method_name,
                                                             const std::string& document_url,
                                                             base::Value::List arguments) {
-  if (!web_contents() || !IsSameSite(GURL(document_url))) {
+  if (!web_contents() ||
+      !IsSameSite(object_receivers_.current_context().first, GURL(document_url))) {
     return;
   }
 
@@ -1630,7 +1648,8 @@ void OhGinJavascriptBridgeDispatcherHost::InvokeMethodFlowbuf(const std::string&
                                                               base::Value::List arguments,
                                                               base::ReadOnlySharedMemoryRegion flowbuf_region,
                                                               InvokeMethodFlowbufCallback callback) {
-  if (!web_contents() || !IsSameSite(GURL(document_url))) {
+  if (!web_contents() ||
+      !IsSameSite(object_receivers_.current_context().first, GURL(document_url))) {
     base::Value::List wrapped_result;
     std::move(callback).Run(content::mojom::OhGinJavascriptBridgeError::kOhGinJavascriptBridgeObjectIsGone,
         std::move(wrapped_result));

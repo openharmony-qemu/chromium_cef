@@ -89,9 +89,11 @@ class OhGinJavascriptBridgeDispatcherHost
   // WebContentsObserver
   void DidFinishNavigation(content::NavigationHandle* navigation_handle) override;
   void RenderFrameCreated(content::RenderFrameHost* render_frame_host) override;
+  void RenderFrameDeleted(content::RenderFrameHost* render_frame_host) override;
   void WebContentsDestroyed() override;
 
-  bool IsSameSite(const GURL& document_gurl);
+  bool IsSameSite(const content::GlobalRenderFrameHostId& global_id,
+                  const GURL& document_gurl);
   // Run on the background thread.
   void OnGetMethods(int32_t object_id,
                     std::set<std::string>* returned_method_names);
@@ -275,7 +277,7 @@ class OhGinJavascriptBridgeDispatcherHost
   PermissionMap javascript_async_permission_map_;
   std::shared_mutex share_mutex_;
   int32_t object_id_ = MIN_NATIVE_OBJ_ID;
-  GURL site_instance_gurl_;
+  std::map<content::GlobalRenderFrameHostId, GURL> site_instance_gurl_;
 
   std::unordered_map<int32_t, std::unordered_set<std::string>> object_id_map_;
   std::unordered_map<int32_t, std::unordered_set<std::string>>
