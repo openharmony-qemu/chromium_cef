@@ -17,6 +17,7 @@
 #include "base/logging.h"
 #include "base/trace_event/trace_event.h"
 #include "third_party/ohos_ndk/includes/ohos_adapter/res_sched_client_adapter.h"
+#include "arkweb/chromium_ext/base/ohos/sys_info_utils_ext.h"
 
 RenderProcessStateHandler* RenderProcessStateHandler::instance = nullptr;
 
@@ -161,6 +162,12 @@ void RenderProcessStateHandler::PushNwebForNotInitRender(int rph_unique_id, int 
              << ", is_to_background: " << is_to_background
              << ", rph_unique_id: " << rph_unique_id
              << ", render_process_id: " << render_process_id;
+  if (!is_to_background && render_process_id == 0) {
+    if (base::ohos::IsMobileDevice()) {
+      TRACE_EVENT2("base", "PushNwebForNotInitRender::ReportWindowId", "nweb_id", nweb_id, "windowId", windowId);
+      OHOS::NWeb::ResSchedClientAdapter::ReportWindowId(windowId, nweb_id);
+    }
+  }
   for (auto& web_item : initial_web_component_with_render_list_) {
     if (web_item.render_process_id == render_process_id && web_item.nweb_id == nweb_id) {
       web_item.state = is_to_background;
