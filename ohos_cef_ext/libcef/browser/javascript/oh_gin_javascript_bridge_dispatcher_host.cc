@@ -3,6 +3,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include <algorithm>
 #include <sys/mman.h>
 #include <unistd.h>
 #include "arkweb/build/features/features.h"
@@ -25,6 +26,7 @@
 #include "libcef/common/javascript/oh_gin_javascript_bridge_value.h"
 #include "libcef/common/values_impl.h"
 #include "oh_gin_javascript_bridge_dispatcher_host.h"
+#include "third_party/bounds_checking_function/include/securec.h"
 
 namespace {
 #define JS_BRIDGE_BINARY_ARGS_COUNT 2
@@ -32,6 +34,12 @@ namespace {
 const size_t MAX_RECURSION_DEPTH = 11;
 const size_t MAX_DATA_LENGTH = 10000;
 const size_t kMaxUrlLength = 2 * 1024 * 1024;
+
+#if BUILDFLAG(ARKWEB_SECURE_JAVASCRIPT_PROXY)
+struct LastCallingFrameUrlInfo {
+  char url[kMaxUrlLength + 1];
+};
+#endif
 
 class ValueConvertState {
  public:
@@ -1188,14 +1196,16 @@ void SetLastCallingFrameUrlTLS(const std::string& url) {
       LastCallingFrameUrlContentTLS().Get());
   if (!info) {
     info = new LastCallingFrameUrlInfo();
-    info->url.reserve(kMaxUrlLength);
     LastCallingFrameUrlContentTLS().Set(info);
   }
-  if (url.size() > kMaxUrlLength) {
-    info->url = url.substr(0, kMaxUrlLength);
-  } else {
-    info->url = url;
+  auto length = std::min(url.length(), kMaxUrlLength);
+  if (memcpy_s(info->url, sizeof(info->url), url.c_str(), length) != EOK) {
+    LOG(ERROR) << "OhGinJavascriptBridgeDispatcherHost::"
+        "SetLastCallingFrameUrlTLS memcpy_s failed";
+    info->url[0] = '\0';
+    return;
   }
+  info->url[length] = '\0';
 }
 #endif
 }  // namespace
@@ -1204,7 +1214,7 @@ void SetLastCallingFrameUrlTLS(const std::string& url) {
 const char* OhGinJavascriptBridgeDispatcherHost::GetLastCallingFrameUrlTLS() {
   void* value = LastCallingFrameUrlContentTLS().Get();
   if (value) {
-    return static_cast<LastCallingFrameUrlInfo*>(value)->url.c_str();
+    return static_cast<LastCallingFrameUrlInfo*>(value)->url;
   }
 
   return nullptr;
