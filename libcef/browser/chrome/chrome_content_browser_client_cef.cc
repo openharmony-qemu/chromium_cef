@@ -193,6 +193,13 @@ HINSTANCE GetCodeModuleHandle() {
 
 }  // namespace
 
+#if BUILDFLAG(IS_ARKWEB)
+// KEEP THIS HEADER FILE INCLUDED AFTER THE ANONYMOUS NAMESPACE.
+// ChromeContentBrowserClientCef's implementation depends on functions in this
+// file.
+#include "cef/ohos_cef_ext/libcef/browser/chrome/chrome_content_browser_client_cef_for_include_after.cc"
+#endif  // BUILDFLAG(IS_ARKWEB)
+
 ChromeContentBrowserClientCef::ChromeContentBrowserClientCef() = default;
 ChromeContentBrowserClientCef::~ChromeContentBrowserClientCef() = default;
 

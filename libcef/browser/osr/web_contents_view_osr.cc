@@ -170,6 +170,9 @@ void CefWebContentsViewOSR::StartDragging(
   if (browser.get()) {
     browser->StartDragging(drop_data, allowed_ops, image, cursor_offset,
                            event_info, source_rwh);
+#if BUILDFLAG(ARKWEB_DRAG_DROP)
+  AsArkWebCefWebContentsViewOSRExt()->SetTextHandlesTemporarilyHiddenByDrag();
+#endif
   } else if (web_contents_) {
     static_cast<content::WebContentsImpl*>(web_contents_)
         ->SystemDragEnded(source_rwh);
