@@ -254,10 +254,14 @@ class AlloyBrowserHostImpl : public ArkWebBrowserHostExtImpl,
                           const std::string& frame_name,
                           const GURL& target_url,
                           content::WebContents* new_contents) override;
-  void RendererUnresponsive(
-      content::WebContents* source,
+  void RendererUnresponsive(content::WebContents* source,
       content::RenderWidgetHost* render_widget_host,
-      base::RepeatingClosure hang_monitor_restarter) override;
+                            base::RepeatingClosure hang_monitor_restarter
+#if BUILDFLAG(ARKWEB_RENDERER_ANR_DUMP)
+                            ,
+                            content::RendererIsUnresponsiveReason reason
+#endif
+                            ) override;
   void RendererResponsive(
       content::WebContents* source,
       content::RenderWidgetHost* render_widget_host) override;
