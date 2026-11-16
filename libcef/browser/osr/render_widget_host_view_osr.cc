@@ -393,7 +393,11 @@ void CefRenderWidgetHostViewOSR::InitAsChild(gfx::NativeView parent_view) {
   // The parent view should not render while the full-screen view exists.
   parent_host_view_->Hide();
 
+#if BUILDFLAG(ARKWEB_INPUT_EVENTS)
+  arkweb_rwhv_osr_utils_->SetRootLayerSizeEx(false /* force */);
+#else
   SetRootLayerSize(false /* force */);
+#endif
   ShowWithVisibility(content::PageVisibilityState::kVisible);
 }
 
@@ -973,10 +977,14 @@ gfx::Rect CefRenderWidgetHostViewOSR::GetBoundsInScreen() {
   CefRefPtr<CefRenderHandler> handler =
       browser_impl_->client()->GetRenderHandler();
   CHECK(handler);
+#if BUILDFLAG(ARKWEB_SCREEN_OFFSET)
+  return  arkweb_rwhv_osr_utils_->CalculateViewBounds(handler, rc);
+#else
   if (handler->GetRootScreenRect(browser_impl_.get(), rc)) {
     return gfx::Rect(rc.x, rc.y, rc.width, rc.height);
   }
   return GetViewBounds();
+#endif
 }
 
 viz::ScopedSurfaceIdAllocator

@@ -75,22 +75,6 @@ diff a/libcef/browser/osr/render_widget_host_view_osr.cc b/libcef/browser/osr/re
  CefRenderWidgetHostViewOSR::~CefRenderWidgetHostViewOSR() {
    ReleaseCompositor();
    root_layer_.reset(nullptr);
-@@ -339,11 +416,15 @@ void CefRenderWidgetHostViewOSR::InitAsChild(gfx::NativeView parent_view) {
-   parent_host_view_->set_child_host_view(this);
- 
-   // The parent view should not render while the full-screen view exists.
-   parent_host_view_->Hide();
- 
-+#if BUILDFLAG(ARKWEB_INPUT_EVENTS)
-+  arkweb_rwhv_osr_utils_->SetRootLayerSizeEx(false /* force */);
-+#else
-   SetRootLayerSize(false /* force */);
-+#endif
-   Show();
- }
- 
- void CefRenderWidgetHostViewOSR::SetSize(const gfx::Size& size) {}
- 
 @@ -385,18 +466,36 @@ void CefRenderWidgetHostViewOSR::ShowWithVisibility(
      return;
    }
@@ -203,25 +187,6 @@ diff a/libcef/browser/osr/render_widget_host_view_osr.cc b/libcef/browser/osr/re
  
  uint32_t CefRenderWidgetHostViewOSR::GetCaptureSequenceNumber() const {
    return latest_capture_sequence_number_;
-@@ -801,14 +1000,18 @@ gfx::Rect CefRenderWidgetHostViewOSR::GetBoundsInRootWindow() {
- 
-   CefRect rc;
-   CefRefPtr<CefRenderHandler> handler =
-       browser_impl_->client()->GetRenderHandler();
-   CHECK(handler);
-+#if BUILDFLAG(ARKWEB_SCREEN_OFFSET)
-+  return  arkweb_rwhv_osr_utils_->CalculateViewBounds(handler, rc);
-+#else
-   if (handler->GetRootScreenRect(browser_impl_.get(), rc)) {
-     return gfx::Rect(rc.x, rc.y, rc.width, rc.height);
-   }
-   return GetViewBounds();
-+#endif
- }
- 
- #if !BUILDFLAG(IS_MAC)
- viz::ScopedSurfaceIdAllocator
- CefRenderWidgetHostViewOSR::DidUpdateVisualProperties(
 @@ -1187,12 +1474,19 @@ void CefRenderWidgetHostViewOSR::SendExternalBeginFrame() {
  
    if (render_widget_host_) {
