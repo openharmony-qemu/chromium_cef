@@ -707,6 +707,12 @@ bool AlloyBrowserHostImpl::IsFullscreenForTabOrPending(
 
 blink::mojom::DisplayMode AlloyBrowserHostImpl::GetDisplayMode(
     const content::WebContents* web_contents) {
+#if BUILDFLAG(ARKWEB_VIDEO_ASSISTANT)
+  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+        "enable-nweb-ex-video-assistant")) {
+    return blink::mojom::DisplayMode::kBrowser;
+  }
+#endif // ARKWEB_VIDEO_ASSISTANT
   return is_fullscreen_ ? blink::mojom::DisplayMode::kFullscreen
                         : blink::mojom::DisplayMode::kBrowser;
 }

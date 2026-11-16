@@ -49,9 +49,22 @@
 #include "cef/libcef/common/util_linux.h"
 #endif
 
+#if BUILDFLAG(ARKWEB_NETWORK_BASE)
+#include "cef/ohos_cef_ext/libcef/common/chrome/chrome_main_delegate_cef_for_include.cc"
+#endif
+
+#if BUILDFLAG(ARKWEB_LOGGER_REPORT)
+#include "arkweb/chromium_ext/base/ohos/logger.h"
+#include "base/logging.h"
+#endif
+
 namespace {
 
+#if BUILDFLAG(IS_ARKWEB)
+base::LazyInstance<ArkWebContentRendererClientCefExt>::DestructorAtExit
+#else
 base::LazyInstance<ChromeContentRendererClientCef>::DestructorAtExit
+#endif
     g_chrome_content_renderer_client = LAZY_INSTANCE_INITIALIZER;
 
 template <typename FeatureType>

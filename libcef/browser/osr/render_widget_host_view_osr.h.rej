@@ -1,18 +1,4 @@
 diff a/libcef/browser/osr/render_widget_host_view_osr.h b/libcef/browser/osr/render_widget_host_view_osr.h	(rejected hunks)
-@@ -126,10 +146,13 @@ class CefRenderWidgetHostViewOSR
-   bool IsShowing() override;
-   void EnsureSurfaceSynchronizedForWebTest() override;
-   content::TouchSelectionControllerClientManager*
-   GetTouchSelectionControllerClientManager() override;
-   gfx::Rect GetViewBounds() override;
-+#if BUILDFLAG(ARKWEB_INPUT_EVENTS)
-+  virtual void WasKeyboardResizedEx() {}
-+#endif
-   void SetBackgroundColor(SkColor color) override;
-   std::optional<SkColor> GetBackgroundColor() override;
-   void UpdateBackgroundColor() override;
-   std::optional<content::DisplayFeature> GetDisplayFeature() override;
-   void DisableDisplayFeatureOverrideForEmulation() override;
 @@ -462,9 +525,38 @@ class CefRenderWidgetHostViewOSR
    ui::FilteredGestureProvider gesture_provider_;
  

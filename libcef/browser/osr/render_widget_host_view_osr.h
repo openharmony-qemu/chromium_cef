@@ -150,6 +150,9 @@ class CefRenderWidgetHostViewOSR
   content::TouchSelectionControllerClientManager*
   GetTouchSelectionControllerClientManager() override;
   gfx::Rect GetViewBounds() override;
+#if BUILDFLAG(ARKWEB_INPUT_EVENTS)
+  virtual void WasKeyboardResizedEx() {}
+#endif
   void SetBackgroundColor(SkColor color) override;
   std::optional<SkColor> GetBackgroundColor() override;
   void UpdateBackgroundColor() override;
