@@ -90,7 +90,11 @@ CefRefPtr<CefRequest> CreateRequest(const std::string& address,
     }
   }
 
+#if BUILDFLAG(IS_ARKWEB)
+  CefRefPtr<CefRequestImpl> request = new ArkWebRequestImplExt();
+#else
   CefRefPtr<CefRequestImpl> request = new CefRequestImpl();
+#endif
   request->Set((is_websocket ? "ws://" : "http://") + address + info.path,
                info.method, post_data, header_map);
   if (!referer.empty()) {

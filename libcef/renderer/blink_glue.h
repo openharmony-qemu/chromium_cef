@@ -126,6 +126,11 @@ BLINK_EXPORT bool HasPluginFrameOwner(blink::WebLocalFrame* frame);
 BLINK_EXPORT void StartNavigation(blink::WebLocalFrame* frame,
                                   const blink::WebURLRequest& request);
 
+#if BUILDFLAG(ARKWEB_INPUT_EVENTS)
+BLINK_EXPORT extern const int64_t kInvalidFrameId;
+BLINK_EXPORT void PenTouchInputFocus(blink::WebNode webNode);
+#endif  // BUILDFLAG(ARKWEB_INPUT_EVENTS)
+
 }  // namespace blink_glue
 
 #endif  // CEF_LIBCEF_RENDERER_BLINK_GLUE_H_
