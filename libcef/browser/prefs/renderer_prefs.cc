@@ -9,6 +9,7 @@
 #include "cef/libcef/common/cef_switches.h"
 #include "content/public/common/content_switches.h"
 #include "third_party/blink/public/common/web_preferences/web_preferences.h"
+#include "cef/ohos_cef_ext/libcef/browser/prefs/renderer_prefs_for_include1.cc"
 
 namespace renderer_prefs {
 

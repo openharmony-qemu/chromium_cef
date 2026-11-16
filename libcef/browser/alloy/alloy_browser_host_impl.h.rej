@@ -20,25 +20,3 @@ diff a/libcef/browser/alloy/alloy_browser_host_impl.h b/libcef/browser/alloy/all
  // CefPlatformDelegate or the WebContents as appropriate. All methods are
  // thread-safe unless otherwise indicated.
  //
-@@ -219,14 +258,18 @@ class AlloyBrowserHostImpl : public CefBrowserHostBase,
-                           int opener_render_process_id,
-                           int opener_render_frame_id,
-                           const std::string& frame_name,
-                           const GURL& target_url,
-                           content::WebContents* new_contents) override;
--  void RendererUnresponsive(
--      content::WebContents* source,
-+  void RendererUnresponsive(content::WebContents* source,
-       content::RenderWidgetHost* render_widget_host,
--      base::RepeatingClosure hang_monitor_restarter) override;
-+                            base::RepeatingClosure hang_monitor_restarter
-+#if BUILDFLAG(ARKWEB_RENDERER_ANR_DUMP)
-+                            ,
-+                            content::RendererIsUnresponsiveReason reason
-+#endif
-+                            ) override;
-   void RendererResponsive(
-       content::WebContents* source,
-       content::RenderWidgetHost* render_widget_host) override;
-   content::JavaScriptDialogManager* GetJavaScriptDialogManager(
-       content::WebContents* source) override;

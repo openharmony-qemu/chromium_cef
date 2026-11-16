@@ -1,16 +1,4 @@
 diff a/libcef/browser/net_service/resource_request_handler_wrapper.cc b/libcef/browser/net_service/resource_request_handler_wrapper.cc	(rejected hunks)
-@@ -19,10 +23,11 @@
- #include "cef/libcef/common/app_manager.h"
- #include "cef/libcef/common/net/scheme_registration.h"
- #include "cef/libcef/common/net_service/net_service_util.h"
- #include "cef/libcef/common/request_impl.h"
- #include "cef/libcef/common/response_impl.h"
-+#include "cef/ohos_cef_ext/libcef/browser/arkweb_browser_host_ext.h"
- #include "chrome/browser/profiles/profile.h"
- #include "components/language/core/browser/pref_names.h"
- #include "components/prefs/pref_service.h"
- #include "content/browser/renderer_host/frame_tree_node.h"
- #include "content/browser/renderer_host/render_frame_host_impl.h"
 @@ -31,16 +36,42 @@
  #include "content/public/browser/render_frame_host.h"
  #include "content/public/browser/render_process_host.h"

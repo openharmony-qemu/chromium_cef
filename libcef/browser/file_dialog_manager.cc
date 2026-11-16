@@ -14,6 +14,7 @@
 #include "cef/libcef/browser/browser_host_base.h"
 #include "cef/libcef/browser/context.h"
 #include "cef/libcef/browser/thread_util.h"
+#include "cef/ohos_cef_ext/libcef/browser/arkweb_file_dialog_manager_utils.h"
 #include "chrome/browser/file_select_helper.h"
 #include "content/public/browser/file_select_listener.h"
 #include "content/public/browser/render_frame_host.h"

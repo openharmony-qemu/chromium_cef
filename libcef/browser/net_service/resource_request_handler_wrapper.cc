@@ -26,6 +26,7 @@
 #include "cef/libcef/common/net_service/net_service_util.h"
 #include "cef/libcef/common/request_impl.h"
 #include "cef/libcef/common/response_impl.h"
+#include "cef/ohos_cef_ext/libcef/browser/arkweb_browser_host_ext.h"
 #include "chrome/browser/profiles/profile.h"
 #include "components/language/core/browser/pref_names.h"
 #include "components/prefs/pref_service.h"

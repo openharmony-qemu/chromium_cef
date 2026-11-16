@@ -1,16 +1,4 @@
 diff a/libcef/browser/file_dialog_manager.cc b/libcef/browser/file_dialog_manager.cc	(rejected hunks)
-@@ -12,10 +12,11 @@
- #include "base/strings/utf_string_conversions.h"
- #include "cef/include/cef_dialog_handler.h"
- #include "cef/libcef/browser/browser_host_base.h"
- #include "cef/libcef/browser/context.h"
- #include "cef/libcef/browser/thread_util.h"
-+#include "cef/ohos_cef_ext/libcef/browser/arkweb_file_dialog_manager_utils.h"
- #include "chrome/browser/file_select_helper.h"
- #include "content/public/browser/file_select_listener.h"
- #include "content/public/browser/render_frame_host.h"
- #include "ui/shell_dialogs/select_file_policy.h"
- #include "ui/shell_dialogs/selected_file_info.h"
 @@ -156,10 +163,13 @@ FileChooserParams SelectFileToFileChooserParams(
          // which is the only instance of multiple file extensions.
          params.accept_types.push_back(FilePathTypeToString16(
