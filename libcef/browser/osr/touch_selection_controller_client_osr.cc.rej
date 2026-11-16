@@ -14,35 +14,6 @@ diff a/libcef/browser/osr/touch_selection_controller_client_osr.cc b/libcef/brow
  #include "cef/libcef/browser/osr/touch_handle_drawable_osr.h"
  #include "content/browser/renderer_host/render_widget_host_delegate.h"
  #include "content/browser/renderer_host/render_widget_host_impl.h"
-@@ -255,21 +275,26 @@ bool CefTouchSelectionControllerClientOSR::IsQuickMenuAvailable() const {
-   };
-   return std::any_of(std::cbegin(kMenuCommands), std::cend(kMenuCommands),
-                      is_enabled);
- }
- 
--void CefTouchSelectionControllerClientOSR::CloseQuickMenu() {
-+void CefTouchSelectionControllerClientOSR::TemporarilyCloseQuickMenu() {
-   if (!quick_menu_running_) {
-     return;
-   }
- 
-   quick_menu_running_ = false;
- 
-   auto browser = rwhv_->browser_impl();
-   if (auto handler = browser->client()->GetContextMenuHandler()) {
--    handler->OnQuickMenuDismissed(browser.get(), browser->GetFocusedFrame());
-+    handler->AsCefContextMenuHandlerExt()->OnQuickMenuDismissed(
-+        browser.get(), browser->GetFocusedFrame(), false);
-+  }
-   }
-+
-+void CefTouchSelectionControllerClientOSR::CloseQuickMenu() {
-+  TemporarilyCloseQuickMenu();
- }
- 
- void CefTouchSelectionControllerClientOSR::ShowQuickMenu() {
-   auto browser = rwhv_->browser_impl();
-   if (auto handler = browser->client()->GetContextMenuHandler()) {
 @@ -279,42 +304,26 @@ void CefTouchSelectionControllerClientOSR::ShowQuickMenu() {
      gfx::PointF origin = rect.origin();
      gfx::PointF bottom_right = rect.bottom_right();

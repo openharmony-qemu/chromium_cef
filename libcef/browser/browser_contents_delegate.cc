@@ -804,16 +804,27 @@ void CefBrowserContentsDelegate::DidFinishLoad(
   }
 
   OnLoadEnd(frame, validated_url, http_status_code);
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+  if (render_frame_host->IsInPrimaryMainFrame() && (validated_url.spec().compare(FAILING_URL) != 0)) {
+    last_did_finish_load_url_ = validated_url.spec();
+  }
+#endif
 }
 
 void CefBrowserContentsDelegate::TitleWasSet(content::NavigationEntry* entry) {
   // |entry| may be NULL if a popup is created via window.open and never
   // navigated.
   if (entry) {
-    OnTitleChange(entry->GetTitle());
+    OnTitleChange(entry->GetTitle(), entry->GetIsRealTitle());
   } else if (web_contents()) {
-    OnTitleChange(web_contents()->GetTitle());
+    OnTitleChange(web_contents()->GetTitle(), web_contents()->GetIsRealTitle());
   }
+
+#if BUILDFLAG(ARKWEB_NETWORK_LOAD)
+  if (entry || web_contents()) {
+    need_report_title_when_stop_loading_ = false;
+  }
+#endif
 }
 
 void CefBrowserContentsDelegate::DidUpdateFaviconURL(
