@@ -518,6 +518,48 @@ class ResourceResponseWrapper : public ResourceResponse {
     }
   }
 
+#if BUILDFLAG(ARKWEB_RESOURCE_INTERCEPTION)
+  const std::string& GetResponseData() override {
+    auto handler = handler_provider_->handler();
+    if (!handler) {
+      static const std::string data;
+      return data;
+    }
+    static const std::string data = handler->AsCefResourceHandlerExt()->GetResponseData();
+    return data;
+  }
+
+  size_t GetResponseDataBuffer(char* data, size_t dest_size) override {
+    auto handler = handler_provider_->handler();
+    if (!handler) {
+      return 0;
+    }
+    return handler->AsCefResourceHandlerExt()->GetResponseDataBuffer(data, dest_size);
+  }
+
+  size_t GetResponseDataBufferSize() override {
+    auto handler = handler_provider_->handler();
+    if (!handler) {
+      return 0;
+    }
+    return handler->AsCefResourceHandlerExt()->GetResponseDataBufferSize();
+  }
+#endif
+
+#if BUILDFLAG(ARKWEB_SCHEME_HANDLER)
+  int GetCustomErrorCode() override {
+    auto handler = handler_provider_->handler();
+    if (!handler) {
+      return 0;
+    }
+    auto* ext = handler->AsCefResourceHandlerExt();
+    if (!ext) {
+      return 0;
+    }
+    return ext->GetCustomErrorCode();
+  }
+#endif
+
  private:
   const int32_t request_id_;
 
