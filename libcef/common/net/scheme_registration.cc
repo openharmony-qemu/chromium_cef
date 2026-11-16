@@ -3,6 +3,7 @@
 // can be found in the LICENSE file.
 
 #include "cef/libcef/common/net/scheme_registration.h"
+#include "arkweb/build/features/features.h"
 
 #include <algorithm>
 
