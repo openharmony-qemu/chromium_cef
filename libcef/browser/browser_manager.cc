@@ -11,6 +11,12 @@
 #include "mojo/public/cpp/bindings/pending_receiver.h"
 #include "mojo/public/cpp/bindings/self_owned_receiver.h"
 #include "services/service_manager/public/cpp/binder_registry.h"
+#if BUILDFLAG(ARKWEB_PDF)
+#include "arkweb/chromium_ext/content/browser/web_contents/web_contents_impl_utils.h"
+#include "content/browser/web_contents/web_contents_impl.h"
+#include "content/browser/renderer_host/render_frame_host_impl.h"
+#include "content/public/browser/global_routing_id.h"
+#endif
 
 CefBrowserManager::CefBrowserManager(content::ChildProcessId render_process_id)
     : render_process_id_(render_process_id) {}
