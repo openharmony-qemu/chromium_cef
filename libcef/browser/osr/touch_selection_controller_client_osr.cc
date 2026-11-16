@@ -277,7 +277,7 @@ bool CefTouchSelectionControllerClientOSR::IsQuickMenuAvailable(
                      is_enabled);
 }
 
-void CefTouchSelectionControllerClientOSR::CloseQuickMenu() {
+void CefTouchSelectionControllerClientOSR::TemporarilyCloseQuickMenu() {
   if (!quick_menu_running_) {
     return;
   }
@@ -286,8 +286,13 @@ void CefTouchSelectionControllerClientOSR::CloseQuickMenu() {
 
   auto browser = rwhv_->browser_impl();
   if (auto handler = browser->client()->GetContextMenuHandler()) {
-    handler->OnQuickMenuDismissed(browser.get(), browser->GetFocusedFrame());
+    handler->AsCefContextMenuHandlerExt()->OnQuickMenuDismissed(
+        browser.get(), browser->GetFocusedFrame(), false);
   }
+  }
+
+void CefTouchSelectionControllerClientOSR::CloseQuickMenu() {
+  TemporarilyCloseQuickMenu();
 }
 
 void CefTouchSelectionControllerClientOSR::ShowQuickMenu() {
