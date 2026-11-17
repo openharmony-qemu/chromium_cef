@@ -171,33 +171,6 @@ diff a/libcef/browser/chrome/chrome_content_browser_client_cef.cc b/libcef/brows
  
  void ChromeContentBrowserClientCef::WillCreateURLLoaderFactory(
      content::BrowserContext* browser_context,
-@@ -487,15 +674,25 @@ void ChromeContentBrowserClientCef::WillCreateURLLoaderFactory(
-     intercepting_factory->overridden_factory_receiver =
-         intercepting_factory->overriding_factory
-             .InitWithNewPipeAndPassReceiver();
-   }
- 
-+  mojo::PendingRemote<network::mojom::TrustedURLLoaderHeaderClient>*
-+    extensions_url_loader_header_client_remote_ptr = nullptr;
-+
-+#if BUILDFLAG(ARKWEB_EXT_EXTENSIONS_HEADER_CLIENT)
-+  mojo::PendingRemote<network::mojom::TrustedURLLoaderHeaderClient> extensions_url_loader_header_client_remote;
-+  if (nweb_ex::AlloyArkWebGlobalConfig::GetInstance()->ExtensionHeaderClientHandleEnable()) {
-+    extensions_url_loader_header_client_remote_ptr = &extensions_url_loader_header_client_remote;
-+  }
-+#endif
-+
-   // TODO(chrome): Is it necessary to proxy |header_client| callbacks?
-   ChromeContentBrowserClient::WillCreateURLLoaderFactory(
-       browser_context, frame, render_process_id, type, request_initiator,
-       isolation_info, navigation_id, ukm_source_id, factory_builder,
--      /*header_client=*/nullptr, bypass_redirect_checks, disable_secure_dns,
-+      /*header_client=*/extensions_url_loader_header_client_remote_ptr, bypass_redirect_checks, disable_secure_dns,
-       handler_override, navigation_response_task_runner);
- 
-   DCHECK(intercepting_factory->overriding_factory);
-   DCHECK(intercepting_factory->overridden_factory_receiver);
-   if (!factory_override) {
 @@ -610,19 +833,44 @@ bool ChromeContentBrowserClientCef::ConfigureNetworkContextParams(
      // Cancel NetworkContext creation in
      // StoragePartitionImpl::InitNetworkContext.
